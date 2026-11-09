@@ -1378,9 +1378,11 @@ async function rescanPdf(file, button){
     });
     if(!hasSearchableText(text)) throw new Error("no readable text found, so the old text was kept");
     button.textContent = "Saving…";
-    const {data, error} = await db.from("pdfs").update({content_text:text}).eq("id", file.id).select("id");
+    const {data, error} = await db.from("pdfs").update({content_text:text, rescanned:true}).eq("id", file.id).select("id");
     if(error) throw error;
     if(!data || !data.length) throw new Error("you do not have permission to update this book");
+    file.rescanned = true;
+    button.remove();
     showToast("Re-scan finished");
   }catch(e){
     console.error("Re-scan failed:", e);
@@ -1406,7 +1408,7 @@ function pdfItem(file){
     link.href = safeUrl(file.file_url); link.target = "_blank"; link.rel = "noopener noreferrer";
     actions.appendChild(link);
   }
-  if(file.id && file.file_url){
+  if(file.id && file.file_url && !file.rescanned){
     const rescan = makeElement("button","link-btn","Re-scan");
     rescan.type = "button";
     rescan.style.cursor = "pointer";
