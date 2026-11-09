@@ -1,0 +1,3276 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassHub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CLASSHUB — MASTERPIECE EDITION · Design System
+   ============================================================ */
+:root{
+  --bg:#05080f;
+  --bg-soft:rgba(10,16,30,.7);
+  --panel:rgba(15,23,42,.66);
+  --panel2:rgba(23,34,58,.6);
+  --panel-hover:rgba(31,45,76,.75);
+  --text:#f2f6ff;
+  --muted:#93a5c8;
+  --muted2:#5c6f92;
+  --accent:#7c9aff;
+  --accent2:#a78bfa;
+  --accent3:#5eead4;
+  --grad:linear-gradient(135deg,#6d8dff 0%,#8b7cf6 52%,#c084fc 100%);
+  --grad-soft:linear-gradient(135deg,rgba(109,141,255,.16),rgba(192,132,252,.12));
+  --accent-soft:rgba(124,154,255,.15);
+  --green:#5eead4;
+  --green-soft:rgba(94,234,212,.12);
+  --red:#fb8fa8;
+  --red-soft:rgba(251,143,168,.12);
+  --amber:#fcd34d;
+  --border:rgba(148,170,220,.13);
+  --border-strong:rgba(148,170,220,.28);
+  --glow:0 0 24px rgba(124,154,255,.28);
+  --shadow:0 24px 60px -18px rgba(2,6,18,.75);
+  --shadow-sm:0 10px 30px -10px rgba(2,6,18,.6);
+  --r-lg:22px; --r-md:16px; --r-sm:12px;
+  --topbar-h:66px;
+  --nav-h:64px;
+}
+[data-theme="light"]{
+  --bg:#eef2fb;
+  --bg-soft:rgba(255,255,255,.72);
+  --panel:rgba(255,255,255,.82);
+  --panel2:rgba(244,247,253,.85);
+  --panel-hover:rgba(238,243,252,.95);
+  --text:#101a30;
+  --muted:#52648a;
+  --muted2:#8b9abc;
+  --accent:#4f6df0;
+  --accent2:#8b5cf6;
+  --accent3:#0d9488;
+  --grad:linear-gradient(135deg,#4f6df0 0%,#7c5cf0 52%,#a855f7 100%);
+  --grad-soft:linear-gradient(135deg,rgba(79,109,240,.1),rgba(168,85,247,.08));
+  --accent-soft:rgba(79,109,240,.11);
+  --green:#0d9f6e;
+  --green-soft:rgba(13,159,110,.1);
+  --red:#dc3a5c;
+  --red-soft:rgba(220,58,92,.09);
+  --amber:#b57a14;
+  --border:rgba(60,80,130,.14);
+  --border-strong:rgba(60,80,130,.3);
+  --glow:0 0 22px rgba(79,109,240,.22);
+  --shadow:0 24px 50px -20px rgba(40,60,120,.28);
+  --shadow-sm:0 10px 26px -12px rgba(40,60,120,.22);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);
+  background:
+    radial-gradient(1100px 520px at 85% -10%, rgba(124,154,255,.14), transparent 60%),
+    radial-gradient(900px 520px at -10% 30%, rgba(167,139,250,.12), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, rgba(94,234,212,.08), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  transition:background .3s,color .3s;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{opacity:.55;cursor:not-allowed}
+h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.025em}
+::selection{background:var(--accent);color:#0b1020}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--border-strong),var(--border));border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- AURORA BACKDROP ---------- */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{
+  position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;
+  animation:drift 22s ease-in-out infinite alternate;
+}
+.aurora i:nth-child(1){width:46vw;height:46vw;left:-12vw;top:-18vw;background:radial-gradient(circle,rgba(109,141,255,.35),transparent 65%)}
+.aurora i:nth-child(2){width:40vw;height:40vw;right:-10vw;top:-8vw;background:radial-gradient(circle,rgba(192,132,252,.3),transparent 65%);animation-delay:-6s}
+.aurora i:nth-child(3){width:34vw;height:34vw;left:22vw;bottom:-16vw;background:radial-gradient(circle,rgba(94,234,212,.22),transparent 65%);animation-delay:-12s}
+.aurora i:nth-child(4){width:26vw;height:26vw;right:16vw;bottom:-10vw;background:radial-gradient(circle,rgba(124,154,255,.22),transparent 65%);animation-delay:-16s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(4vw,-3vh) scale(1.12)}}
+[data-theme="light"] .aurora i{opacity:.4}
+
+/* ---------- SVG ICONS ---------- */
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ic-sm{width:16px;height:16px}
+.ic-lg{width:24px;height:24px}
+
+/* ---------- TOPBAR ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;height:var(--topbar-h);
+  display:flex;align-items:center;gap:10px;padding:0 16px;
+  background:color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid var(--border);
+}
+.topbar::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+  opacity:.55;
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Space Grotesk";font-weight:700;font-size:20px;letter-spacing:-.5px;user-select:none}
+.brand-mark{
+  width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+  background:var(--grad);color:#fff;position:relative;
+  box-shadow:var(--glow), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.brand-mark .ic{width:19px;height:19px;stroke-width:2.2;position:relative;z-index:1}
+.brand span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.conn-pill{
+  display:none;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);
+  border:1px solid var(--border);border-radius:99px;padding:6px 13px;
+  background:var(--panel);backdrop-filter:blur(8px);
+}
+@media(min-width:700px){.conn-pill{display:flex}}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2.4s infinite}
+.status-dot.off{background:var(--red);box-shadow:0 0 10px var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.icon-btn{
+  position:relative;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  color:var(--muted);border:1px solid transparent;transition:.18s;
+}
+.icon-btn:hover{background:var(--panel2);color:var(--text);border-color:var(--border);transform:translateY(-1px)}
+.badge{
+  position:absolute;top:3px;right:3px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:99px;background:var(--grad);color:#fff;font-size:10px;font-weight:800;
+  display:grid;place-items:center;line-height:1;box-shadow:0 3px 10px rgba(124,154,255,.5);
+}
+.avatar-btn{width:37px;height:37px;border-radius:50%;overflow:hidden;border:2px solid transparent;padding:0;transition:.18s;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--grad) border-box;}
+.avatar-btn:hover{transform:scale(1.06);box-shadow:var(--glow)}
+.avatar-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-fallback{width:100%;height:100%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:14px}
+
+/* ---------- SHELL / SIDEBAR ---------- */
+.app-shell{display:flex;min-height:calc(100vh - var(--topbar-h));position:relative;z-index:1}
+.sidebar{
+  display:none;width:236px;flex-shrink:0;position:sticky;top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));overflow-y:auto;
+  padding:20px 12px;border-right:1px solid var(--border);
+}
+@media(min-width:960px){.sidebar{display:block}}
+.side-label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);padding:14px 12px 7px}
+.side-link{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:10.5px 12px;border-radius:13px;color:var(--muted);
+  font-size:13.5px;font-weight:600;transition:.16s;margin-bottom:3px;position:relative;
+}
+.side-link:hover{background:var(--panel2);color:var(--text);transform:translateX(2px)}
+.side-link.active{
+  background:var(--grad-soft);color:var(--text);
+  border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px -8px var(--accent);
+}
+.side-link.active::before{
+  content:"";position:absolute;left:-12px;top:20%;bottom:20%;width:3.5px;border-radius:99px;background:var(--grad);
+}
+.side-link.active .ic{stroke:var(--accent);stroke-width:2.2}
+main{flex:1;min-width:0;max-width:860px;margin:0 auto;padding:20px 16px calc(var(--nav-h) + 34px)}
+@media(min-width:960px){main{padding:30px 30px 50px;max-width:940px}}
+
+/* ---------- PAGES ---------- */
+.page{display:none;animation:appear .3s cubic-bezier(.2,.8,.2,1)}
+.page.active{display:block}
+@keyframes appear{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:none}}
+.eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.page-title{font-size:clamp(24px,3.6vw,31px);margin:0 0 6px;font-weight:700}
+.page-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;line-height:1.6}
+.section-head{margin-bottom:24px}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;
+  color:var(--muted);font-size:13px;font-weight:600;padding:8px 14px 8px 9px;
+  border:1px solid var(--border);border-radius:99px;background:var(--panel);
+  backdrop-filter:blur(8px);transition:.16s;
+}
+.back-btn:hover{color:var(--text);border-color:var(--accent);box-shadow:var(--glow);transform:translateX(-2px)}
+
+/* ---------- CARDS / PANELS ---------- */
+.panel{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:19px;margin-bottom:15px;
+  box-shadow:var(--shadow-sm);backdrop-filter:blur(14px);
+  transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+.panel:hover{border-color:var(--border-strong)}
+.panel-title{font-size:15.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:700}
+.muted{color:var(--muted);font-size:13px;line-height:1.55}
+
+/* ---------- HOME ---------- */
+.hero{
+  position:relative;overflow:hidden;border-radius:26px;padding:34px 24px;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(29,43,80,.85) 0%,rgba(17,25,48,.9) 55%,rgba(35,25,64,.85) 100%);
+  border:1px solid var(--border-strong);
+  box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.07);
+}
+[data-theme="light"] .hero{background:linear-gradient(135deg,#dfe8ff,#f0f3fe 60%,#efe6ff);border-color:#c9d6f2}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(148,170,220,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,170,220,.07) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse at 70% 0%,#000 20%,transparent 75%);
+}
+.hero::after{
+  content:"";position:absolute;top:-90px;right:-60px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,154,255,.35),transparent 70%);
+  animation:heroGlow 7s ease-in-out infinite alternate;
+}
+@keyframes heroGlow{from{transform:scale(1);opacity:.8}to{transform:scale(1.18);opacity:1}}
+.hero h1{font-size:clamp(23px,3.8vw,30px);margin:0 0 8px;position:relative;font-weight:700}
+.hero p{margin:0;color:var(--muted);font-size:13.5px;position:relative}
+.hero .hero-cta{
+  position:relative;display:inline-flex;align-items:center;gap:8px;margin-top:18px;
+  padding:11px 20px;border-radius:99px;font-weight:700;font-size:13.5px;color:#fff;
+  background:var(--grad);box-shadow:0 10px 26px -8px rgba(124,124,255,.65);
+  transition:.18s;text-decoration:none;
+}
+.hero .hero-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px -8px rgba(124,124,255,.8)}
+button.hero-cta{border:0;cursor:pointer;font:inherit}
+.hero .hero-chip{
+  position:relative;display:inline-flex;align-items:center;gap:6px;margin:14px 8px 0 0;
+  padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:600;color:var(--muted);
+  border:1px solid var(--border);background:rgba(255,255,255,.04);
+}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(min-width:560px){.quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:820px){.quick-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.quick-card{
+  position:relative;display:flex;flex-direction:column;gap:11px;text-align:left;
+  padding:18px;border:1px solid var(--border);border-radius:var(--r-lg);
+  background:var(--panel);backdrop-filter:blur(12px);transition:.2s;overflow:hidden;
+}
+.quick-card::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;opacity:0;transition:.25s;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),transparent 70%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+}
+.quick-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:transparent}
+.quick-card:hover::before{opacity:1}
+.quick-card:active{transform:translateY(-1px) scale(.98)}
+.quick-icon{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;
+  background:var(--grad);box-shadow:0 8px 20px -6px rgba(124,124,255,.6), inset 0 1px 0 rgba(255,255,255,.35);
+  transition:.2s;
+}
+.quick-card:hover .quick-icon{transform:rotate(-6deg) scale(1.07)}
+.quick-card strong{font-size:14.5px;font-weight:700}
+.quick-card small{color:var(--muted);font-size:12px;line-height:1.45}
+
+/* ---------- OPTION / SUBJECT CARDS ---------- */
+.option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+@media(min-width:600px){.option-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.option-card{
+  display:flex;flex-direction:column;gap:6px;text-align:left;
+  padding:17px;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--panel);backdrop-filter:blur(10px);min-height:88px;transition:.18s;
+}
+.option-card:hover{border-color:var(--accent);background:var(--panel-hover);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.option-card strong{font-size:14px}
+.option-card small{font-size:12px;color:var(--muted)}
+
+/* ---------- FORMS ---------- */
+.field{
+  width:100%;background:var(--bg-soft);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:12px 14px;outline:none;margin:5px 0;
+  transition:border-color .18s, box-shadow .18s, background .18s;font-size:14px;
+  backdrop-filter:blur(8px);
+}
+.field::placeholder{color:var(--muted2)}
+.field:hover{border-color:var(--border-strong)}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft), var(--glow)}
+textarea.field{resize:vertical;min-height:90px}
+label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:9px 0 2px}
+.btn{
+  position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:var(--r-sm);background:var(--grad);color:#fff;
+  font-weight:700;padding:12px 19px;transition:.18s;font-size:14px;
+  box-shadow:0 10px 24px -8px rgba(124,124,255,.55), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.btn::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);
+  background-size:250% 100%;background-position:200% 0;transition:background-position .6s ease;
+}
+.btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 32px -8px rgba(124,124,255,.75)}
+.btn:hover:not(:disabled)::after{background-position:-100% 0}
+.btn:active:not(:disabled){transform:translateY(0) scale(.98)}
+.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border-strong);box-shadow:none}
+.btn.secondary::after{display:none}
+.btn.secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent);box-shadow:var(--glow)}
+.btn.danger{background:var(--red-soft);color:var(--red);border:1px solid color-mix(in srgb, var(--red) 35%, transparent);box-shadow:none}
+.btn.danger::after{display:none}
+.btn.ghost{background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);box-shadow:none}
+.btn.ghost::after{display:none}
+.btn.ghost:hover:not(:disabled){border-color:var(--border-strong);color:var(--text)}
+.btn.full{width:100%}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+
+/* ---------- SEARCH ---------- */
+.search-wrap{position:relative;margin:4px 0 12px}
+.search-wrap .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted2)}
+.search-wrap .field{margin:0;padding-left:38px}
+
+/* ---------- LISTS ---------- */
+.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.item:last-child{border-bottom:0}
+.item-icon{
+  width:42px;height:42px;border-radius:12px;color:#fff;
+  background:var(--grad);display:grid;place-items:center;flex-shrink:0;
+  box-shadow:0 6px 16px -6px rgba(124,124,255,.6);
+}
+.item-info{min-width:0;flex:1}
+.item-info strong{display:block;overflow-wrap:anywhere;font-size:13.5px}
+.item-info small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.link-btn{
+  display:inline-flex;align-items:center;gap:5px;text-decoration:none;
+  background:var(--grad-soft);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;transition:.16s;white-space:nowrap;
+}
+.link-btn:hover{background:var(--grad);color:#fff;box-shadow:0 8px 18px -6px rgba(124,124,255,.7)}
+.empty{text-align:center;color:var(--muted);padding:28px 10px;font-size:13px}
+.empty .ic{width:30px;height:30px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
+
+/* ---------- SKELETON ---------- */
+.skeleton{position:relative;overflow:hidden;background:var(--panel2);border-radius:10px}
+.skeleton::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(148,170,220,.12),transparent);
+  animation:shimmer 1.4s infinite;
+}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.sk-item{display:flex;gap:12px;padding:12px 0}
+.sk-icon{width:42px;height:42px;border-radius:12px;flex-shrink:0}
+.sk-line{height:12px;margin-bottom:7px}
+.sk-line.w60{width:60%}.sk-line.w40{width:40%}
+
+/* ---------- CHAT ---------- */
+.chat-box{
+  min-height:280px;overflow-y:auto;
+  background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:14px;margin-bottom:12px;backdrop-filter:blur(10px);
+}
+.chat-message{margin:11px 0;max-width:85%}
+.chat-message.mine{margin-left:auto;text-align:right}
+.chat-bubble{
+  display:inline-block;text-align:left;padding:10.5px 15px;border-radius:16px;
+  background:var(--panel2);border:1px solid var(--border);
+  overflow-wrap:anywhere;white-space:pre-wrap;font-size:13.5px;line-height:1.5;
+}
+.chat-message.mine .chat-bubble{
+  background:var(--grad);color:#fff;border:0;font-weight:500;
+  box-shadow:0 8px 20px -8px rgba(124,124,255,.7);border-bottom-right-radius:5px;
+}
+.chat-name{font-size:11px;font-weight:700;margin-bottom:4px;background:var(--grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.chat-time{font-size:10px;color:var(--muted2);margin-top:4px}
+.chat-compose{display:flex;gap:8px;align-items:center;position:sticky;bottom:calc(var(--nav-h) + 8px)}
+@media(min-width:960px){.chat-compose{bottom:12px}}
+.chat-compose input{flex:1;min-width:0;margin:0}
+.send-btn{width:46px;height:46px;padding:0;border-radius:14px;flex-shrink:0}
+
+/* ---------- COMMUNITY ---------- */
+.post-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:17px;margin-bottom:14px;box-shadow:var(--shadow-sm);backdrop-filter:blur(12px);
+  transition:opacity .25s ease, transform .25s ease, border-color .2s;
+}
+.post-card:hover{border-color:var(--border-strong)}
+.post-header{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.post-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--panel2);border:1px solid var(--border);flex-shrink:0}
+.post-avatar-fb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:14px;flex-shrink:0;
+  box-shadow:0 6px 14px -5px rgba(124,124,255,.6)}
+.anon-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--bg-soft);color:var(--muted);flex-shrink:0}
+.post-author{flex:1;min-width:0;overflow-wrap:anywhere}
+.post-author strong{display:block;font-size:13.5px}
+.post-author small{display:block;color:var(--muted2);font-size:11px;margin-top:2px}
+.anon-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--amber);background:rgba(252,211,77,.12);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.cr-badge{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--grad);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.post-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:6px 0;font-size:14px}
+.post-media{max-width:100%;border-radius:14px;margin:8px 0;border:1px solid var(--border)}
+.post-actions{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);margin-top:12px}
+.post-action{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.03);color:var(--muted);border:1px solid var(--border);
+  border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:700;transition:.16s;
+}
+.post-action:hover{color:var(--text);border-color:var(--border-strong);transform:translateY(-1px)}
+.post-action.liked{color:var(--red);border-color:color-mix(in srgb, var(--red) 45%, transparent);background:var(--red-soft)}
+.comment-list{margin-top:12px;border-top:1px dashed var(--border);padding-top:8px}
+.comment-item{padding:8px 0;font-size:13px;overflow-wrap:anywhere;border-bottom:1px solid var(--border)}
+.comment-item:last-child{border-bottom:0}
+.comment-item strong{font-size:12.5px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.comment-item .c-time{display:block;font-size:10.5px;color:var(--muted2);margin-top:2px}
+.comment-compose{display:flex;gap:7px;margin-top:10px}
+.comment-compose input{flex:1;min-width:0;margin:0;padding:9px 12px;font-size:13px}
+.comment-compose button{padding:9px 14px;font-size:13px}
+
+/* ---------- PROFILE ---------- */
+.profile-hero{display:flex;align-items:center;gap:15px}
+.profile-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--panel2);
+  border:3px solid transparent;padding:0;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--grad) border-box;}
+.profile-avatar-fb{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:24px;
+  border:3px solid transparent;box-shadow:var(--glow)}
+.privacy-row{display:flex;gap:10px;align-items:center;margin:12px 0;color:var(--muted);font-size:13px;cursor:pointer;user-select:none}
+.privacy-row input{width:17px;height:17px;accent-color:var(--accent)}
+
+/* ---------- AUTH ---------- */
+.auth-bar{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:13px 15px;margin-bottom:18px;box-shadow:var(--shadow-sm);
+  backdrop-filter:blur(12px);
+}
+.auth-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--panel2);border:2px solid var(--border-strong)}
+.auth-info{flex:1;min-width:130px}
+.auth-info strong{display:block;font-size:13.5px;overflow-wrap:anywhere}
+.auth-info small{color:var(--muted);font-size:12px}
+.auth-hidden{display:none !important}
+.google-btn{
+  position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;padding:12px;border-radius:var(--r-sm);
+  background:#fff;color:#1f2430;border:1px solid #dadce0;font-weight:700;font-size:14px;transition:.18s;
+}
+.google-btn:hover:not(:disabled){box-shadow:0 6px 20px rgba(0,0,0,.28);transform:translateY(-1px)}
+.gate{
+  text-align:center;padding:44px 18px;
+  background:var(--panel);border:1.5px dashed var(--border-strong);border-radius:var(--r-lg);
+  backdrop-filter:blur(10px);
+}
+
+/* compact signed-in bar */
+.auth-bar.compact{padding:7px 12px}
+.auth-bar.compact .auth-avatar{width:30px;height:30px}
+.auth-bar.compact .auth-info small{display:none}
+.auth-bar.compact .google-btn{width:auto;padding:8px 14px;font-size:13px}
+.auth-bar .dismiss-btn{width:28px;height:28px;border-radius:9px;color:var(--muted2);font-size:17px;line-height:1;display:grid;place-items:center;flex-shrink:0}
+.auth-bar .dismiss-btn:hover{background:var(--panel2);color:var(--text)}
+
+/* ---------- BOTTOM NAV (mobile) ---------- */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  display:flex;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+}
+.bottom-nav::before{
+  content:"";position:absolute;top:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.5;
+}
+@media(min-width:960px){.bottom-nav{display:none}}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--muted);border-radius:13px;font-size:10.5px;font-weight:600;transition:.16s;max-width:86px;
+}
+.nav-btn .ic{width:21px;height:21px}
+.nav-btn.active{color:var(--text);background:var(--grad-soft);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent)}
+.nav-btn.active .ic{stroke:var(--accent);stroke-width:2.3}
+
+/* ---------- TOASTS ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + 22px);transform:translateX(-50%) translateY(10px);
+  background:var(--grad);color:#fff;padding:13px 20px;border-radius:14px;
+  z-index:60;max-width:90%;font-size:13px;font-weight:700;display:none;
+  box-shadow:0 16px 40px -10px rgba(124,124,255,.7);opacity:0;transition:.22s;
+}
+@media(min-width:960px){#toast{bottom:26px}}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#noticeToast{
+  position:fixed;left:12px;right:12px;top:calc(var(--topbar-h) + 10px);z-index:55;
+  background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--r-lg);
+  padding:16px;display:none;box-shadow:var(--shadow);animation:slideDown .28s cubic-bezier(.2,.9,.3,1.2);
+  max-width:420px;margin:0 auto;backdrop-filter:blur(16px);
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-14px) scale(.97)}to{opacity:1;transform:none}}
+#noticeToast .nt-head{display:flex;align-items:center;gap:8px;color:var(--amber);font-weight:800;font-size:13px;margin-bottom:5px}
+#noticeToast p{font-size:13px;margin:0 0 12px;color:var(--muted);white-space:pre-wrap}
+
+.status{font-size:12.5px;min-height:18px;color:var(--muted);margin:7px 0}
+.status.error{color:var(--red)}
+.status.success{color:var(--green)}
+.file-label{
+  display:block;border:1.5px dashed var(--border-strong);border-radius:var(--r-md);
+  padding:17px;color:var(--muted);font-size:13px;margin:8px 0;text-align:center;transition:.16s;cursor:pointer;
+}
+.file-label:hover{border-color:var(--accent);color:var(--text);background:var(--grad-soft)}
+.file-label input{display:block;width:100%;margin-top:10px;color:var(--text);font-size:12.5px}
+@media(max-width:380px){
+  .option-grid{grid-template-columns:1fr}
+  .quick-grid{grid-template-columns:1fr 1fr}
+}
+
+/* chat: fills the whole screen, compose bar pinned at bottom */
+#chat.active{display:flex;flex-direction:column;min-height:calc(100dvh - var(--topbar-h) - 46px)}
+#chat.active .chat-box{flex:1;height:auto;min-height:340px}
+@media(min-width:960px){#chat.active{min-height:calc(100dvh - var(--topbar-h) - 66px)}}
+
+/* ---------- TOPIC SEARCH RESULTS ---------- */
+.book-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+.book-head .item-icon{width:38px;height:38px}
+.book-title{font-family:"Space Grotesk",Inter,sans-serif;font-size:14.5px;font-weight:700;margin:0;overflow-wrap:anywhere;line-height:1.35}
+.book-meta{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.5}
+.hit-list{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.hit-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:12px 14px;border-radius:var(--r-sm);
+  background:var(--panel2);border:1px solid var(--border);transition:.15s;
+}
+.hit-row:hover{border-color:var(--accent);background:var(--panel-hover);transform:translateX(3px)}
+.hit-row:active{transform:scale(.99)}
+.hit-snippet{flex:1;min-width:0;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
+.hit-page{
+  flex-shrink:0;min-width:36px;text-align:center;color:#fff;
+  background:var(--grad);border-radius:10px;padding:5px 8px;
+  box-shadow:0 5px 14px -5px rgba(124,124,255,.6);
+}
+.hit-page small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.75);text-transform:uppercase}
+.hit-page b{font-size:15px}
+mark.hl-text{background:rgba(252,211,77,.3);color:var(--amber);border-radius:3px;padding:0 2px;font-weight:700}
+[data-theme="light"] mark.hl-text{background:rgba(245,180,30,.4);color:#7a4d00}
+.more-hits{margin-top:10px}
+
+/* ---------- IN-APP PDF VIEWER ---------- */
+#pdfViewer{
+  position:fixed;inset:0;z-index:90;background:var(--bg);
+  display:none;flex-direction:column;
+}
+#pdfViewer.open{display:flex}
+.pv-head{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-bottom:1px solid var(--border);background:var(--panel);
+  padding-top:calc(10px + env(safe-area-inset-top));backdrop-filter:blur(14px);
+}
+.pv-title{flex:1;min-width:0;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-body{flex:1;overflow:auto;background:var(--bg-soft);padding:10px 8px;text-align:center;-webkit-overflow-scrolling:touch}
+.pv-page{position:relative;display:inline-block;background:#fff;box-shadow:var(--shadow);margin:0 auto;text-align:left;border-radius:4px;overflow:hidden}
+.pv-page canvas{display:block}
+.pv-hl{position:absolute;background:rgba(255,214,0,.4);mix-blend-mode:multiply;border-radius:2px;pointer-events:none}
+.pv-msg{padding:40px 16px;color:var(--muted);font-size:13.5px;line-height:1.6}
+.pv-foot{
+  display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--border);background:var(--panel);backdrop-filter:blur(14px);
+}
+.pv-btn{
+  min-width:40px;height:40px;padding:0 12px;border-radius:12px;
+  border:1px solid var(--border-strong);background:var(--panel2);color:var(--text);
+  font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:.15s;
+}
+.pv-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);box-shadow:var(--glow)}
+.pv-page-input{
+  width:56px;height:40px;text-align:center;border-radius:12px;
+  background:var(--bg-soft);border:1px solid var(--border);outline:none;font-size:14px;font-weight:700;
+}
+.pv-page-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pv-total{font-size:13px;color:var(--muted);font-weight:600}
+
+/* ---------- MOBILE POLISH ---------- */
+@media (max-width: 640px) {
+  .post-card{padding:14px 12px;border-radius:17px}
+  .post-header{gap:10px}
+  .post-actions{gap:6px;flex-wrap:wrap}
+  .post-action{padding:9px 14px;font-size:13px;min-height:40px}
+  .comment-compose{gap:8px}
+  .comment-compose input{padding:11px 13px;font-size:14px}
+  .comment-compose button{padding:11px 16px;min-height:42px}
+  .panel{padding:16px 14px}
+  .btn.full{padding:14px 18px;font-size:15px}
+  #communityPosts .status.error{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--red-soft)}
+}
+
+/* ---------- Accounts directory ---------- */
+.accounts-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:15px}
+.accounts-toolbar .field{margin:0;flex:1;min-width:0}
+.account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.account-card{min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:var(--shadow-sm);overflow:hidden;backdrop-filter:blur(12px);transition:.18s}
+.account-card:hover{transform:translateY(-3px);border-color:var(--border-strong);box-shadow:var(--shadow-sm), var(--glow)}
+.account-card-head{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:12px}
+.account-avatar-wrap{width:54px;height:54px;flex:0 0 54px;position:relative}
+.account-avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid var(--border-strong);background:var(--panel2);display:block}
+.account-avatar-fb{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:18px;border:2px solid transparent;box-shadow:0 8px 18px -6px rgba(124,124,255,.6)}
+.account-name{font-size:14px;font-weight:800;overflow-wrap:anywhere;margin:0 0 4px}
+.account-status{font-size:12px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.4;overflow-wrap:anywhere;font-weight:600}
+.account-email{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin:0 0 9px}
+.account-bio{font-size:12.5px;line-height:1.55;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.account-empty{grid-column:1/-1}
+@media(max-width:430px){.account-grid{grid-template-columns:1fr}.account-card{padding:14px}}
+/* classhub-fix1 */
+.item-actions{display:flex;gap:8px;flex-shrink:0}
+#chat.active{height:calc(100dvh - var(--topbar-h) - var(--nav-h) - 60px);min-height:420px}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+<!-- SVG SPRITE -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-grad" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<!-- ============ TOPBAR ============ -->
+<header class="topbar" style="position:sticky;z-index:40">
+  <div class="brand" onclick="openSection('home')" style="cursor:pointer">
+    <span class="brand-mark"><svg class="ic"><use href="#i-grad"/></svg></span>
+    Class<span>Hub</span>
+  </div>
+  <div class="topbar-right">
+    <div class="conn-pill"><span class="status-dot" id="connDot"></span><span id="connectionStatus">Connecting…</span></div>
+    <button class="icon-btn" onclick="openSection('notices')" aria-label="Notices" id="bellBtn">
+      <svg class="ic"><use href="#i-bell"/></svg>
+      <span class="badge" id="bellBadge" style="display:none">0</span>
+    </button>
+    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg class="ic" id="themeIcon"><use href="#i-sun"/></svg>
+    </button>
+    <button class="avatar-btn" id="avatarBtn" onclick="onAvatarClick()" aria-label="Account">
+      <span id="avatarFallback" class="avatar-fallback">?</span>
+      <img id="authAvatar" class="auth-hidden" alt="Profile photo">
+    </button>
+  </div>
+</header>
+
+<div class="app-shell">
+  <!-- ============ SIDEBAR (desktop) ============ -->
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="side-label">Menu</div>
+    <button class="side-link active" data-page="home" onclick="openSection('home')"><svg class="ic"><use href="#i-home"/></svg>Home</button>
+    <button class="side-link" data-page="notes" onclick="openSection('notes')"><svg class="ic"><use href="#i-book"/></svg>Notes</button>
+    <button class="side-link" data-page="search" onclick="openSection('search')"><svg class="ic"><use href="#i-search"/></svg>Topic Search</button>
+    <button class="side-link" data-page="pdfs" onclick="openSection('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Test Papers</button>
+    <button class="side-link" data-page="photos" onclick="openSection('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
+    <button class="side-link" data-page="notices" onclick="openSection('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
+    <button class="side-link" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Class Chat</button>
+    <button class="side-link" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+    <div class="side-label">Account</div>
+    <button class="side-link" data-page="profile" onclick="openSection('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+    <!-- SIGN-IN BAR -->
+    <section class="auth-bar" id="authPanel">
+      <img id="authAvatarBar" class="auth-avatar auth-hidden" alt="">
+      <div class="auth-info">
+        <strong id="authName">Welcome to ClassHub</strong>
+        <small id="authMessage">Sign in to join your class space.</small>
+      </div>
+      <button id="googleSignInBtn" class="google-btn" type="button" onclick="signInWithGoogle()">
+        <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+        Continue with Google
+      </button>
+      <button id="signOutBtn" class="btn ghost auth-hidden" type="button" onclick="signOutStudent()">Sign out</button>
+      <button class="dismiss-btn auth-hidden" id="dismissAuthBar" type="button" onclick="dismissAuthBar()" aria-label="Hide banner">×</button>
+      <div id="authStatus" class="status full" style="width:100%" aria-live="polite"></div>
+    </section>
+
+    <!-- HOME -->
+    <section id="home" class="page active">
+      <div class="hero">
+        <p class="eyebrow">Your classroom, in one place</p>
+        <h1 id="heroTitle">Welcome to ClassHub</h1>
+        <p>Notes, test papers, case studies, notices and class conversations — all together.</p>
+        <button type="button" class="hero-cta" onclick="openSection('search')">Search any topic in your books <svg class="ic ic-sm"><use href="#i-right"/></svg></button>
+      </div>
+      <div class="quick-grid">
+        <button class="quick-card" onclick="openSection('search')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-search"/></svg></span>
+          <span><strong>Topic Search</strong><br><small>Find any topic across all books</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('notes')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-book"/></svg></span>
+          <span><strong>Notes</strong><br><small>Subject-wise PDF library</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('pdfs')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-folder"/></svg></span>
+          <span><strong>Test Papers</strong><br><small>PYQs &amp; current-year papers</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('notices')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-bell"/></svg></span>
+          <span><strong>Notices</strong><br><small>Important class updates</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('chat')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-chat"/></svg></span>
+          <span><strong>Class Chat</strong><br><small>Talk with classmates</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('community')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-users"/></svg></span>
+          <span><strong>Community</strong><br><small>Posts, likes &amp; comments</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('photos')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-image"/></svg></span>
+          <span><strong>Case Studies</strong><br><small>Folder-wise patient case photos</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('accounts')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-users"/></svg></span>
+          <span><strong>Accounts</strong><br><small>Discover classmates' profiles</small></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- TOPIC SEARCH -->
+    <section id="search" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Topic Search</h1>
+        <p class="page-sub">Search a word across every book and test paper. Every match is listed with its page number — tap one to open the book at that exact page.</p>
+      </div>
+      <div class="panel">
+        <div class="search-wrap" style="margin-top:0">
+          <svg class="ic"><use href="#i-search"/></svg>
+          <input id="topicSearchInput" class="field" placeholder="e.g. rasa, tridosha, charaka samhita…" onkeydown="if(event.key==='Enter')runTopicSearch()">
+        </div>
+        <button class="btn full" onclick="runTopicSearch()"><svg class="ic ic-sm"><use href="#i-search"/></svg>Search all books</button>
+        <div id="topicSearchStatus" class="status" aria-live="polite"></div>
+      </div>
+      <div id="topicSearchResults"></div>
+    </section>
+
+    <!-- NOTES -->
+    <section id="notes" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Notes</h1>
+        <p class="page-sub">Choose a subject to browse or upload its PDFs.</p>
+      </div>
+      <div id="notesView"></div>
+      <div id="notesStatus" class="status" aria-live="polite"></div>
+    </section>
+
+    <!-- TEST PAPERS -->
+    <section id="pdfs" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Test Papers</h1>
+        <p class="page-sub">Organise previous-year questions and current-year papers in your own folders.</p>
+      </div>
+      <div id="testPapersView"></div>
+      <div id="pdfStatus" class="status" aria-live="polite"></div>
+    </section>
+
+    <!-- CASE STUDIES -->
+    <section id="photos" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Case Studies</h1>
+        <p class="page-sub">Create a folder for each case study, then post photos inside it.</p>
+      </div>
+      <div id="caseView"></div>
+      <div id="caseStatus" class="status" aria-live="polite"></div>
+    </section>
+
+    <!-- NOTICES -->
+    <section id="notices" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Notices</h1>
+        <p class="page-sub">Important announcements for the class.</p>
+      </div>
+      <div class="panel">
+        <label class="f-label" for="noticeTitle">Title</label>
+        <input id="noticeTitle" class="field" maxlength="150" placeholder="Notice title">
+        <label class="f-label" for="noticeContent">Announcement</label>
+        <textarea id="noticeContent" class="field" maxlength="5000" placeholder="Write your announcement…"></textarea>
+        <button class="btn full" id="addNoticeBtn" onclick="addNotice()"><svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Notice</button>
+        <div id="noticeStatus" class="status" aria-live="polite"></div>
+        <label class="privacy-row">
+          <input id="noticeSoundToggle" type="checkbox" checked onchange="onNoticeSoundToggle(this)">
+          Sound alert + browser notification for new notices
+        </label>
+        <button class="btn secondary full" type="button" onclick="testNoticeAlert()">
+          <svg class="ic ic-sm"><use href="#i-bell"/></svg>Test notification &amp; sound
+        </button>
+      </div>
+      <div id="noticesList" class="panel"><div class="empty">Loading notices…</div></div>
+    </section>
+
+    <!-- COMMUNITY -->
+    <section id="community" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Class Community</h1>
+        <p class="page-sub">Share thoughts, ask questions and interact with classmates.</p>
+      </div>
+      <div class="panel">
+        <h2 class="panel-title">Create a post</h2>
+        <textarea id="postContent" class="field" maxlength="3000" placeholder="What's on your mind?"></textarea>
+        <label class="privacy-row">
+          <input id="anonymousPost" type="checkbox">
+          Post anonymously — your name stays hidden from classmates
+        </label>
+        <button class="btn full" id="publishPostBtn" type="button" onclick="publishCommunityPost()">
+          <svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Post
+        </button>
+        <div id="communityStatus" class="status" aria-live="polite"></div>
+      </div>
+      <div id="communityPosts"><div class="panel empty">Community posts will appear here.</div></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-sub">Personalise your ClassHub identity.</p>
+      </div>
+      <div class="panel">
+        <div class="profile-hero">
+          <span id="profileAvatarFb" class="profile-avatar-fb">?</span>
+          <img id="profileAvatar" class="profile-avatar auth-hidden" alt="Student profile photo">
+          <div>
+            <h2 class="panel-title" style="margin:0" id="profileHeading">Your profile</h2>
+            <p id="profileEmail" class="muted" style="margin:4px 0 0">Sign in with Google to edit your profile.</p>
+          </div>
+        </div>
+        <label class="f-label" for="profileDisplayName">Display name</label>
+        <input id="profileDisplayName" class="field" maxlength="80" placeholder="Your name">
+        <label class="f-label" for="profileBio">Bio</label>
+        <textarea id="profileBio" class="field" maxlength="300" placeholder="A little about yourself…"></textarea>
+        <label class="f-label" for="profileStatus">Status</label>
+        <input id="profileStatus" class="field" maxlength="120" placeholder="What's your current status?">
+        <button class="btn full" id="saveProfileBtn" type="button" onclick="saveStudentProfile()">
+          <svg class="ic ic-sm"><use href="#i-check"/></svg>Save Profile
+        </button>
+        <div id="profileStatusMessage" class="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTS DIRECTORY -->
+    <section id="accounts" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Accounts</h1>
+        <p class="page-sub">Discover your classmates and view the profile picture, status and bio they've shared with ClassHub members.</p>
+      </div>
+      <div class="accounts-toolbar">
+        <input id="accountSearch" class="field" type="search" placeholder="Search classmates by name, status or bio…" autocomplete="off" oninput="renderAccountsDirectory()" aria-label="Search accounts">
+        <button class="btn secondary" type="button" onclick="loadAccountsDirectory()" aria-label="Refresh accounts">Refresh</button>
+      </div>
+      <div id="accountsStatus" class="status" aria-live="polite"></div>
+      <div id="accountsGrid" class="account-grid"><div class="panel empty account-empty">Sign in to browse ClassHub accounts.</div></div>
+    </section>
+
+    <!-- CHAT -->
+    <section id="chat" class="page">
+      <input id="chatName" type="hidden">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Class Chat</h1>
+        <p class="page-sub">Keep messages respectful and class-related.</p>
+      </div>
+      <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
+      <form id="chatForm" class="chat-compose">
+        <input id="chatInput" class="field" maxlength="2000" placeholder="Write a message…" autocomplete="off" required>
+        <button class="btn send-btn" type="submit" id="sendChatBtn" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button>
+      </form>
+      <div id="chatStatus" class="status" aria-live="polite"></div>
+    </section>
+  </main>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button class="nav-btn active" data-page="home" onclick="openSection('home')"><svg class="ic"><use href="#i-home"/></svg>Home</button>
+  <button class="nav-btn" data-page="notes" onclick="openSection('notes')"><svg class="ic"><use href="#i-book"/></svg>Notes</button>
+  <button class="nav-btn" data-page="search" onclick="openSection('search')"><svg class="ic"><use href="#i-search"/></svg>Search</button>
+  <button class="nav-btn" data-page="pdfs" onclick="openSection('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Papers</button>
+  <button class="nav-btn" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Chat</button>
+  <button class="nav-btn" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+  <button class="nav-btn" data-page="accounts" onclick="openSection('accounts')"><svg class="ic"><use href="#i-user"/></svg>Accounts</button>
+</nav>
+
+<!-- IN-APP PDF VIEWER (opens at the exact page of a search match) -->
+<div id="pdfViewer" role="dialog" aria-modal="true" aria-label="PDF viewer">
+  <div class="pv-head">
+    <button class="pv-btn" type="button" onclick="closePdfViewer()" aria-label="Back to results"><svg class="ic ic-sm"><use href="#i-back"/></svg>Results</button>
+    <div class="pv-title" id="pvTitle">PDF</div>
+    <a class="pv-btn" id="pvExternal" href="#" target="_blank" rel="noopener noreferrer" aria-label="Open original PDF" style="text-decoration:none;color:inherit"><svg class="ic ic-sm"><use href="#i-external"/></svg></a>
+  </div>
+  <div class="pv-body" id="pvBody"><div class="pv-msg">Loading…</div></div>
+  <div class="pv-foot">
+    <button class="pv-btn" type="button" id="pvPrevHit" onclick="viewerJumpHit(-1)" title="Previous page with a match">◀ Match</button>
+    <button class="pv-btn" type="button" onclick="viewerGo(-1)" aria-label="Previous page"><svg class="ic ic-sm"><use href="#i-left"/></svg></button>
+    <input class="pv-page-input" id="pvPageInput" type="number" min="1" inputmode="numeric" onchange="viewerGoTo(this.value)">
+    <span class="pv-total" id="pvTotal">/ –</span>
+    <button class="pv-btn" type="button" onclick="viewerGo(1)" aria-label="Next page"><svg class="ic ic-sm"><use href="#i-right"/></svg></button>
+    <button class="pv-btn" type="button" id="pvNextHit" onclick="viewerJumpHit(1)" title="Next page with a match">Match ▶</button>
+    <button class="pv-btn" type="button" onclick="viewerZoom(-0.25)" aria-label="Zoom out">−</button>
+    <button class="pv-btn" type="button" onclick="viewerZoom(0.25)" aria-label="Zoom in">+</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<div id="noticeToast" role="status">
+  <div class="nt-head"><svg class="ic ic-sm"><use href="#i-bell"/></svg><span id="noticeToastTitle">New notice</span></div>
+  <p id="noticeToastContent"></p>
+  <button class="btn secondary" style="float:right" onclick="hideNoticeToast()">Dismiss</button>
+  <div style="clear:both"></div>
+</div>
+
+<script>
+function safeUrl(u){
+  try{
+    const x = new URL(u, location.href);
+    return (x.protocol === "https:" || x.protocol === "http:") ? x.href : "#";
+  }catch(e){ return "#"; }
+}
+
+/* ================= CONFIG ================= */
+const SUPABASE_URL = "https://oekunhqzhwwjfrcaiuit.supabase.co";
+const SUPABASE_KEY = "sb_publishable_EyHZW0-TGp2-LfsS3KHB5w_0mmjSCsY";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const MAX_PDF_SIZE = 50 * 1024 * 1024;
+const CR_USER_ID = "953bb1d4-b22e-4458-b618-d8d0d8681231";
+
+let currentUser = null;
+let currentPage = "home";
+let accountDirectory = [];
+let accountsRequestVersion = 0;
+let selectedNoteSubject = null;
+let selectedNoteSubcategory = null;
+let selectedTestCategory = null;
+let selectedTestFolder = null;
+let lastNoticeId = null;
+let noticeSoundContext = null;
+let realtimeChannels = [];
+let unreadNotices = 0;
+let likesEnabled = true, commentsEnabled = true;
+let likesErrorMessage = "";
+
+/* caches for client-side search */
+let lastNotePDFs = [], lastFolderPDFs = [], lastPhotosData = [];
+
+const noteSubjects = [
+  {name:"Sanskrit", subs:[]},
+  {name:"Padarth Vijnana", subs:[]},
+  {name:"Samhita Adhyayan-1", subs:["AstangaHrudai","Charak Samhita"]},
+  {name:"Rachana Sharira", subs:["Modern","Ayurveda"]},
+  {name:"Kriya Sharira", subs:["Modern","Ayurveda"]}
+];
+
+/* ================= THEME ================= */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  document.getElementById("themeIcon").innerHTML = `<use href="#i-${t==="dark"?"sun":"moon"}"/>`;
+  localStorage.setItem("classhub_theme", t);
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+}
+applyTheme(localStorage.getItem("classhub_theme") || "dark");
+
+/* ================= HELPERS ================= */
+function setStatus(id, message, type=""){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = message || "";
+  el.className = "status" + (type ? " " + type : "");
+}
+function formatDate(value){
+  if(!value) return "";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString([], {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+function showToast(message){
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.style.display = "block";
+  requestAnimationFrame(()=>toast.classList.add("show"));
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(()=>{toast.classList.remove("show");setTimeout(()=>toast.style.display="none",220)},2600);
+}
+function makeEmptyState(message, icon="i-file"){
+  const div = document.createElement("div");
+  div.className = "empty";
+  div.innerHTML = `<svg class="ic"><use href="#${icon}"/></svg><br>`;
+  div.appendChild(document.createTextNode(message));
+  return div;
+}
+function makeElement(tag, className, text){
+  const el = document.createElement(tag);
+  if(className) el.className = className;
+  if(text !== undefined) el.textContent = text;
+  return el;
+}
+function makeButton(label, callback, className="btn secondary"){
+  const b = makeElement("button", className, label);
+  b.type = "button";
+  b.addEventListener("click", callback);
+  return b;
+}
+function skeletonList(target, rows=3){
+  target.replaceChildren();
+  for(let i=0;i<rows;i++){
+    const sk = makeElement("div","sk-item");
+    sk.appendChild(makeElement("div","skeleton sk-icon"));
+    const body = makeElement("div");
+    body.style.flex = "1";
+    body.appendChild(makeElement("div","skeleton sk-line w60"));
+    body.appendChild(makeElement("div","skeleton sk-line w40"));
+    sk.appendChild(body);
+    target.appendChild(sk);
+  }
+}
+function initials(name){
+  if(!name) return "?";
+  return name.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join("");
+}
+function setAvatar(imgId, fbId, url, name){
+  const img = document.getElementById(imgId);
+  const fb = document.getElementById(fbId);
+  if(url){ img.src = url; img.classList.remove("auth-hidden"); if(fb) fb.style.display="none"; }
+  else { img.classList.add("auth-hidden"); img.removeAttribute("src"); if(fb){ fb.style.display="grid"; fb.textContent = initials(name); } }
+}
+
+/* ================= NAVIGATION ================= */
+function openSection(pageId){
+  const page = document.getElementById(pageId);
+  if(!page) return;
+  currentPage = pageId;
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  page.classList.add("active");
+  document.querySelectorAll("[data-page]").forEach(b=>{
+    b.classList.toggle("active", b.dataset.page === pageId);
+  });
+  if(pageId==="notices"){ unreadNotices=0; updateBellBadge(); localStorage.setItem("classhub_last_seen_notice", Date.now()); }
+  if(pageId==="notes") renderNotesView();
+  if(pageId==="pdfs") renderTestPapersView();
+  if(pageId==="photos") renderCaseStudiesView();
+  if(pageId==="notices") loadNotices();
+  if(pageId==="chat") loadChatMessages();
+  if(pageId==="profile") loadStudentProfile();
+  if(pageId==="accounts") loadAccountsDirectory();
+  if(pageId==="community") window.loadCommunityPosts();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function updateBellBadge(){
+  const badge = document.getElementById("bellBadge");
+  if(unreadNotices>0){ badge.textContent = unreadNotices>9?"9+":unreadNotices; badge.style.display="grid"; }
+  else badge.style.display="none";
+}
+function onAvatarClick(){
+  if(currentUser) openSection("profile");
+  else signInWithGoogle();
+}
+
+/* ================= GOOGLE AUTH ================= */
+async function signInWithGoogle(){
+  const button = document.getElementById("googleSignInBtn");
+  button.disabled = true;
+  setStatus("authStatus","Opening Google sign-in…");
+  try{
+    const { error } = await db.auth.signInWithOAuth({provider:"google", options:{redirectTo:window.location.href}});
+    if(error) throw error;
+  }catch(error){
+    setStatus("authStatus","Sign-in failed: "+error.message,"error");
+    button.disabled = false;
+  }
+}
+async function signOutStudent(){
+  const { error } = await db.auth.signOut();
+  if(error){ setStatus("authStatus","Sign-out failed: "+error.message,"error"); return; }
+  showToast("Signed out");
+}
+let authSyncedUserId = undefined;
+let authUiVersion = 0;
+
+async function syncAuth(user){
+  const id = user ? user.id : null;
+  if(id === authSyncedUserId) return;   /* ignore duplicate auth events */
+  authSyncedUserId = id;
+  try{
+    await updateAuthUI(user || null);
+  }catch(e){
+    authSyncedUserId = undefined;       /* allow a retry */
+    console.error("Auth UI update failed:", e);
+  }
+}
+
+async function updateAuthUI(user){
+  const version = ++authUiVersion;
+  currentUser = user || null;
+  const name = document.getElementById("authName");
+  const message = document.getElementById("authMessage");
+  const loginButton = document.getElementById("googleSignInBtn");
+  const logoutButton = document.getElementById("signOutBtn");
+  const avatarBar = document.getElementById("authAvatarBar");
+
+  loginButton.disabled = false;
+  loginButton.classList.toggle("auth-hidden", !!user);
+  logoutButton.classList.toggle("auth-hidden", !user);
+  avatarBar.classList.toggle("auth-hidden", !user);
+  const authPanel = document.getElementById("authPanel");
+  document.getElementById("dismissAuthBar").classList.toggle("auth-hidden", !user);
+  if(user){
+    authPanel.classList.add("compact");
+    authPanel.classList.toggle("auth-hidden", localStorage.getItem("classhub_hide_authbar")==="1");
+  }else{
+    authPanel.classList.remove("compact","auth-hidden");
+  }
+
+  const chatInputName = document.getElementById("chatName");
+
+  if(!user){
+    name.textContent = "Welcome to ClassHub";
+    message.textContent = "Sign in to join your class space.";
+    avatarBar.removeAttribute("src");
+    setAvatar("authAvatar","avatarFallback","","");
+    document.getElementById("avatarFallback").textContent = "?";
+    document.getElementById("heroTitle").textContent = "Welcome to ClassHub";
+    if(chatInputName) chatInputName.value = "";
+    setStatus("authStatus","");
+    /* clear everything that belonged to the previous user */
+    try{ loadStudentProfile(); }catch(e){ console.error(e); }
+    try{ if(typeof loadAccountsDirectory==="function") loadAccountsDirectory(); }catch(e){ console.error(e); }
+    try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+    return;
+  }
+
+  const metadata = user.user_metadata || {};
+  const displayName = metadata.full_name || metadata.name || user.email || "Student";
+  const photo = metadata.avatar_url || metadata.picture || "";
+
+  name.textContent = displayName;
+  message.textContent = user.email || "Signed in with Google";
+  document.getElementById("heroTitle").textContent = `Welcome back, ${displayName.split(" ")[0]}`;
+  if(photo) avatarBar.src = photo;
+  setAvatar("authAvatar","avatarFallback", photo, displayName);
+  if(chatInputName) chatInputName.value = displayName;
+
+  setStatus("authStatus","Signed in successfully.","success");
+  setTimeout(()=>{ if(currentUser) setStatus("authStatus",""); }, 2500);
+
+  /* create the profile row BEFORE loading anything that depends on it */
+  try{
+    const { error } = await db.from("profiles").upsert({
+      id:user.id, display_name:displayName, avatar_url:photo||null
+    }, {onConflict:"id", ignoreDuplicates:true});
+    if(error) console.error("Profile setup:", error.message);
+  }catch(e){ console.error("Profile setup:", e); }
+
+  if(version !== authUiVersion) return;   /* another auth change happened meanwhile */
+  try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+  if(currentPage==="profile") loadStudentProfile();
+  if(currentPage==="accounts" && typeof loadAccountsDirectory==="function") loadAccountsDirectory();
+}
+function dismissAuthBar(){
+  localStorage.setItem("classhub_hide_authbar","1");
+  document.getElementById("authPanel").classList.add("auth-hidden");
+  showToast("Banner hidden — use the profile icon (top right) anytime");
+}
+async function initialiseGoogleAuth(){
+  /* register the listener FIRST so the OAuth sign-in event is never missed */
+  db.auth.onAuthStateChange((event, session)=>{
+    setTimeout(()=>syncAuth(session?.user || null), 0);
+  });
+  const { data, error } = await db.auth.getSession();
+  if(error){ setStatus("authStatus","Could not check login: "+error.message,"error"); return; }
+  await syncAuth(data.session?.user || null);
+}
+/* coming back with the Back button must not leave the Google button disabled */
+window.addEventListener("pageshow", ()=>{
+  const b = document.getElementById("googleSignInBtn");
+  if(b && !currentUser) b.disabled = false;
+});
+initialiseGoogleAuth();
+
+/* ================= STUDENT PROFILE ================= */
+async function loadStudentProfile(){
+  const saveButton = document.getElementById("saveProfileBtn");
+  if(!currentUser){
+    document.getElementById("profileHeading").textContent = "Your profile";
+    document.getElementById("profileEmail").textContent = "Sign in with Google to edit your profile.";
+    ["profileDisplayName","profileBio","profileStatus"].forEach(id=>document.getElementById(id).value="");
+    setAvatar("profileAvatar","profileAvatarFb","", "");
+    saveButton.disabled = true;
+    setStatus("profileStatusMessage","Please sign in first.");
+    return;
+  }
+  saveButton.disabled = false;
+  setStatus("profileStatusMessage","Loading profile…");
+  try{
+    const { data, error } = await db.from("profiles")
+      .select("display_name, avatar_url, bio, status")
+      .eq("id", currentUser.id).maybeSingle();
+    if(error) throw error;
+
+    const metadata = currentUser.user_metadata || {};
+    const fallbackName = metadata.full_name || metadata.name || currentUser.email || "Student";
+    const fallbackPhoto = metadata.avatar_url || metadata.picture || "";
+
+    document.getElementById("profileHeading").textContent = data?.display_name || fallbackName;
+    document.getElementById("profileEmail").textContent = currentUser.email || "Signed in with Google";
+    document.getElementById("profileDisplayName").value = data?.display_name || fallbackName;
+    document.getElementById("profileBio").value = data?.bio || "";
+    document.getElementById("profileStatus").value = data?.status || "";
+    setAvatar("profileAvatar","profileAvatarFb", data?.avatar_url || fallbackPhoto, data?.display_name || fallbackName);
+    setStatus("profileStatusMessage","");
+  }catch(error){
+    setStatus("profileStatusMessage","Could not load profile: "+error.message,"error");
+  }
+}
+async function saveStudentProfile(){
+  if(!currentUser){ setStatus("profileStatusMessage","Please sign in with Google first.","error"); return; }
+  const display_name = document.getElementById("profileDisplayName").value.trim();
+  const bio = document.getElementById("profileBio").value.trim();
+  const status = document.getElementById("profileStatus").value.trim();
+  const button = document.getElementById("saveProfileBtn");
+  if(!display_name){ setStatus("profileStatusMessage","Enter your display name.","error"); return; }
+  button.disabled = true;
+  setStatus("profileStatusMessage","Saving profile…");
+  try{
+    const { error } = await db.from("profiles").upsert(
+      {id:currentUser.id, display_name, bio, status}, {onConflict:"id"});
+    if(error) throw error;
+    document.getElementById("profileHeading").textContent = display_name;
+    document.getElementById("authName").textContent = display_name;
+    setStatus("profileStatusMessage","Profile saved successfully!","success");
+    showToast("Profile saved");
+  }catch(error){
+    setStatus("profileStatusMessage","Could not save profile: "+error.message,"error");
+  }finally{ button.disabled = false; }
+}
+
+/* ================= NOTES ================= */
+function renderNotesView(){
+  const root = document.getElementById("notesView");
+  root.replaceChildren();
+
+  if(!selectedNoteSubject){
+    root.appendChild(makeElement("h2","panel-title","Choose a subject"));
+    const grid = makeElement("div","option-grid");
+    noteSubjects.forEach(subject=>{
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      btn.appendChild(makeElement("strong","",subject.name));
+      btn.appendChild(makeElement("small","",subject.subs.length?`${subject.subs.length} categories`:"Open PDF library"));
+      btn.addEventListener("click",()=>{ selectedNoteSubject=subject.name; selectedNoteSubcategory=null; renderNotesView(); });
+      grid.appendChild(btn);
+    });
+    root.appendChild(grid);
+    setStatus("notesStatus","");
+    return;
+  }
+
+  const subjectInfo = noteSubjects.find(s=>s.name===selectedNoteSubject);
+  root.appendChild(makeButton("← All subjects",()=>{ selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView(); },"back-btn"));
+
+  if(subjectInfo && subjectInfo.subs.length && !selectedNoteSubcategory){
+    root.appendChild(makeElement("h2","panel-title",selectedNoteSubject));
+    root.appendChild(makeElement("p","muted","Choose a category."));
+    const grid = makeElement("div","option-grid");
+    subjectInfo.subs.forEach(sub=>{
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      btn.appendChild(makeElement("strong","",sub));
+      btn.appendChild(makeElement("small","","Open PDF library"));
+      btn.addEventListener("click",()=>{ selectedNoteSubcategory=sub; renderNotesView(); });
+      grid.appendChild(btn);
+    });
+    root.appendChild(grid);
+    setStatus("notesStatus","");
+    return;
+  }
+
+  if(selectedNoteSubcategory){
+    root.appendChild(makeButton("← "+selectedNoteSubject,()=>{ selectedNoteSubcategory=null; renderNotesView(); },"back-btn"));
+  }
+
+  const categoryLabel = selectedNoteSubject + (selectedNoteSubcategory ? " · "+selectedNoteSubcategory : "");
+  root.appendChild(makeElement("h2","panel-title",categoryLabel));
+  root.appendChild(makeElement("p","muted","Upload PDF files and access shared class notes."));
+
+  const panel = makeElement("div","panel");
+  const fileLabel = makeElement("label","file-label","Select one PDF (maximum 50 MB)");
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = ".pdf,application/pdf"; input.id = "notePdfFile";
+  fileLabel.appendChild(input);
+  const uploadBtn = makeButton("Upload PDF",()=>uploadNotePDF(input,uploadBtn),"btn full");
+  panel.append(fileLabel,uploadBtn);
+  root.appendChild(panel);
+
+  const searchWrap = makeElement("div","search-wrap");
+  searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
+  const searchInput = document.createElement("input");
+  searchInput.className = "field"; searchInput.placeholder = "Search PDFs…";
+  searchInput.addEventListener("input",()=>renderNotePDFList(searchInput.value.trim().toLowerCase()));
+  searchWrap.appendChild(searchInput);
+  root.appendChild(searchWrap);
+
+  root.appendChild(makeElement("h2","panel-title","Available PDFs"));
+  const list = makeElement("div","panel");
+  list.id = "notePDFList";
+  skeletonList(list);
+  root.appendChild(list);
+  loadCategorizedNotePDFs();
+}
+function renderNotePDFList(filter=""){
+  const list = document.getElementById("notePDFList");
+  if(!list) return;
+  const data = lastNotePDFs.filter(f=>!filter || (f.file_name||"").toLowerCase().includes(filter));
+  list.replaceChildren();
+  if(!data.length){
+    list.appendChild(makeEmptyState(filter?"No PDFs match your search.":"No PDFs here yet. Upload the first one."));
+    return;
+  }
+  data.forEach(file=>list.appendChild(pdfItem(file)));
+}
+let rescanBusy = false;
+async function rescanPdf(file, button){
+  if(rescanBusy){ showToast("Another re-scan is running"); return; }
+  if(!file || !file.file_url || !file.id){ showToast("Cannot re-scan this file"); return; }
+  if(!confirm("Re-scan \"" + (file.file_name || "this book") + "\" with the improved text reader?\n\nThis downloads the book and can take several minutes. Keep this screen open.")) return;
+  rescanBusy = true;
+  uploadsInFlight++;
+  const label = button.textContent;
+  button.disabled = true;
+  try{
+    button.textContent = "Downloading…";
+    const res = await fetch(file.file_url);
+    if(!res.ok) throw new Error("download failed (" + res.status + ")");
+    const blob = await res.blob();
+    const text = await extractPdfText(blob, msg=>{
+      const m = String(msg).match(/(\d+) of (\d+)/);
+      button.textContent = m ? (m[1] + "/" + m[2]) : "Reading…";
+    });
+    if(!hasSearchableText(text)) throw new Error("no readable text found, so the old text was kept");
+    button.textContent = "Saving…";
+    const {data, error} = await db.from("pdfs").update({content_text:text}).eq("id", file.id).select("id");
+    if(error) throw error;
+    if(!data || !data.length) throw new Error("you do not have permission to update this book");
+    showToast("Re-scan finished");
+  }catch(e){
+    console.error("Re-scan failed:", e);
+    showToast("Re-scan failed: " + (e && e.message ? e.message : "unknown error"));
+  }finally{
+    rescanBusy = false;
+    uploadsInFlight--;
+    button.disabled = false;
+    button.textContent = label;
+  }
+}
+function pdfItem(file){
+  const item = makeElement("div","item");
+  const icon = makeElement("div","item-icon");
+  icon.innerHTML = `<svg class="ic"><use href="#i-file"/></svg>`;
+  item.appendChild(icon);
+  const info = makeElement("div","item-info");
+  info.appendChild(makeElement("strong","",file.file_name||"PDF document"));
+  info.appendChild(makeElement("small","",formatDate(file.created_at)));
+  const actions = makeElement("div","item-actions");
+  if(file.file_url){
+    const link = makeElement("a","link-btn","Open");
+    link.href = safeUrl(file.file_url); link.target = "_blank"; link.rel = "noopener noreferrer";
+    actions.appendChild(link);
+  }
+  if(file.id && file.file_url){
+    const rescan = makeElement("button","link-btn","Re-scan");
+    rescan.type = "button";
+    rescan.style.cursor = "pointer";
+    rescan.title = "Read this book again with the improved text reader";
+    rescan.addEventListener("click", ()=>rescanPdf(file, rescan));
+    actions.appendChild(rescan);
+  }
+  item.append(info,actions);
+  return item;
+}
+async function loadCategorizedNotePDFs(){
+  const list = document.getElementById("notePDFList");
+  if(!list || !selectedNoteSubject) return;
+  skeletonList(list);
+  try{
+    let query = db.from("pdfs").select("*").eq("subject",selectedNoteSubject)
+      .order("created_at",{ascending:false});
+    if(selectedNoteSubcategory) query = query.eq("subcategory",selectedNoteSubcategory);
+    else query = query.is("subcategory",null);
+    const {data,error} = await query;
+    if(error) throw error;
+    lastNotePDFs = data || [];
+    renderNotePDFList();
+  }catch(error){
+    list.replaceChildren(makeEmptyState("Could not load PDFs: "+error.message));
+  }
+}
+function validatePDF(file,statusId){
+  if(!file){ setStatus(statusId,"Please select a PDF file.","error"); return false; }
+  const isPDF = file.type==="application/pdf" || /\.pdf$/i.test(file.name);
+  if(!isPDF){ setStatus(statusId,"Please select a PDF file.","error"); return false; }
+  if(file.size>MAX_PDF_SIZE){ setStatus(statusId,"This file is over 50 MB. Please choose a smaller PDF.","error"); return false; }
+  return true;
+}
+let uploadsInFlight = 0;
+window.addEventListener("beforeunload", e=>{
+  if(uploadsInFlight > 0){ e.preventDefault(); e.returnValue = ""; }
+});
+
+/* true when the extracted text has real content (not just page markers) */
+function hasSearchableText(t){
+  const body = (t || "").replace(/\[\[PAGE \d+\]\]/g, "").replace(/\s+/g, "");
+  return body.length >= 50;
+}
+
+async function uploadNotePDF(input,button){
+  const file = input.files && input.files[0];
+  if(!validatePDF(file,"notesStatus")) return;
+  /* remember where this book belongs BEFORE any waiting happens */
+  const subject = selectedNoteSubject;
+  const subcategory = selectedNoteSubcategory;
+  if(!subject){ setStatus("notesStatus","Choose a subject first.","error"); return; }
+  button.disabled = true;
+  uploadsInFlight++;
+  setStatus("notesStatus","Uploading PDF…");
+  let path = null, saved = false;
+  try{
+    path = `notes/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
+    const {error:uploadError} = await db.storage.from("pdfs").upload(path,file,{cacheControl:"3600",upsert:false,contentType:"application/pdf"});
+    if(uploadError){ path = null; throw uploadError; }
+    const {data:urlData} = db.storage.from("pdfs").getPublicUrl(path);
+    setStatus("notesStatus","Reading the whole book for topic search… (large books can take a minute)");
+    const content_text = await extractPdfText(file, msg=>setStatus("notesStatus",msg));
+    const {error:insertError} = await db.from("pdfs").insert({
+      file_name:file.name, file_url:urlData.publicUrl,
+      subject:subject, subcategory:subcategory,
+      collection_type:null, folder_id:null,
+      content_text: content_text || null
+    });
+    if(insertError) throw insertError;
+    saved = true;
+    input.value = "";
+    if(hasSearchableText(content_text)){
+      setStatus("notesStatus","PDF uploaded successfully.","success");
+      showToast("Notes PDF uploaded");
+    }else{
+      setStatus("notesStatus","PDF uploaded, but no readable text was found, so topic search cannot find anything in it. Try a clearer scan.","error");
+      showToast("Uploaded, but not searchable");
+    }
+    if(selectedNoteSubject === subject && selectedNoteSubcategory === subcategory){
+      await loadCategorizedNotePDFs();
+    }
+  }catch(error){
+    if(path && !saved){
+      /* do not leave an orphan file in storage */
+      try{ await db.storage.from("pdfs").remove([path]); }catch(e){ console.error("Cleanup failed:", e); }
+    }
+    setStatus("notesStatus","Upload failed: "+error.message,"error");
+  }finally{
+    uploadsInFlight--;
+    button.disabled = false;
+  }
+}
+
+/* ================= TEST PAPERS ================= */
+function renderTestPapersView(){
+  const root = document.getElementById("testPapersView");
+  root.replaceChildren();
+
+  if(!selectedTestCategory){
+    root.appendChild(makeElement("h2","panel-title","Choose a collection"));
+    const grid = makeElement("div","option-grid");
+    [
+      {id:"pyqs", name:"PYQs", desc:"Previous-year question papers"},
+      {id:"current_year", name:"Current Year", desc:"Papers from the current year"}
+    ].forEach(option=>{
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      btn.appendChild(makeElement("strong","",option.name));
+      btn.appendChild(makeElement("small","",option.desc));
+      btn.addEventListener("click",()=>{ selectedTestCategory=option.id; selectedTestFolder=null; renderTestPapersView(); });
+      grid.appendChild(btn);
+    });
+    root.appendChild(grid);
+    setStatus("pdfStatus","");
+    return;
+  }
+
+  const categoryName = selectedTestCategory==="pyqs" ? "PYQs" : "Current Year";
+  root.appendChild(makeButton("← Test Papers",()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); },"back-btn"));
+
+  if(!selectedTestFolder){
+    root.appendChild(makeElement("h2","panel-title",categoryName+" · Folders"));
+    root.appendChild(makeElement("p","muted","Create a folder and add PDFs inside it."));
+    const panel = makeElement("div","panel");
+    const input = document.createElement("input");
+    input.className = "field"; input.id = "newFolderName"; input.maxLength = 100;
+    input.placeholder = "New folder name"; input.autocomplete = "off";
+    const button = makeButton("Create Folder",()=>createTestFolder(input,button),"btn full");
+    panel.append(input,button);
+    root.appendChild(panel);
+    root.appendChild(makeElement("h2","panel-title","Your folders"));
+    const folders = makeElement("div","option-grid");
+    folders.id = "testFolderList";
+    skeletonList(folders,2);
+    root.appendChild(folders);
+    loadTestFolders();
+    return;
+  }
+
+  root.appendChild(makeButton("← "+categoryName+" folders",()=>{ selectedTestFolder=null; renderTestPapersView(); },"back-btn"));
+  root.appendChild(makeElement("h2","panel-title",selectedTestFolder.folder_name));
+  root.appendChild(makeElement("p","muted","Upload PDFs into this folder."));
+
+  const panel = makeElement("div","panel");
+  const label = makeElement("label","file-label","Select one PDF (maximum 50 MB)");
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = ".pdf,application/pdf"; input.id = "testPdfFile";
+  label.appendChild(input);
+  const upload = makeButton("Upload PDF",()=>uploadTestPDF(input,upload),"btn full");
+  panel.append(label,upload);
+  root.appendChild(panel);
+
+  const searchWrap = makeElement("div","search-wrap");
+  searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
+  const searchInput = document.createElement("input");
+  searchInput.className = "field"; searchInput.placeholder = "Search PDFs in this folder…";
+  searchInput.addEventListener("input",()=>renderFolderPDFList(searchInput.value.trim().toLowerCase()));
+  searchWrap.appendChild(searchInput);
+  root.appendChild(searchWrap);
+
+  root.appendChild(makeElement("h2","panel-title","PDFs in this folder"));
+  const list = makeElement("div","panel");
+  list.id = "testFolderPDFList";
+  skeletonList(list);
+  root.appendChild(list);
+  loadTestFolderPDFs();
+}
+function renderFolderPDFList(filter=""){
+  const list = document.getElementById("testFolderPDFList");
+  if(!list) return;
+  const data = lastFolderPDFs.filter(f=>!filter || (f.file_name||"").toLowerCase().includes(filter));
+  list.replaceChildren();
+  if(!data.length){
+    list.appendChild(makeEmptyState(filter?"No PDFs match your search.":"This folder is empty. Upload a PDF above."));
+    return;
+  }
+  data.forEach(file=>list.appendChild(pdfItem(file)));
+}
+async function loadTestFolders(){
+  const list = document.getElementById("testFolderList");
+  if(!list || !selectedTestCategory || selectedTestFolder) return;
+  skeletonList(list,2);
+  try{
+    const {data,error} = await db.from("test_paper_folders").select("*")
+      .eq("category",selectedTestCategory).order("created_at",{ascending:false});
+    if(error) throw error;
+    list.replaceChildren();
+    if(!data || !data.length){ list.appendChild(makeEmptyState("No folders yet. Create one above.","i-folder")); return; }
+    data.forEach(folder=>{
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      const strong = makeElement("strong");
+      strong.innerHTML = `<svg class="ic ic-sm" style="vertical-align:-3px"><use href="#i-folder"/></svg> `;
+      strong.appendChild(document.createTextNode(folder.folder_name));
+      btn.appendChild(strong);
+      btn.appendChild(makeElement("small","","Open folder"));
+      btn.addEventListener("click",()=>{ selectedTestFolder=folder; renderTestPapersView(); });
+      list.appendChild(btn);
+    });
+  }catch(error){
+    list.replaceChildren(makeEmptyState("Could not load folders: "+error.message));
+  }
+}
+async function createTestFolder(input,button){
+  const folderName = input.value.trim();
+  if(!folderName){ setStatus("pdfStatus","Enter a folder name first.","error"); return; }
+  button.disabled = true;
+  setStatus("pdfStatus","Creating folder…");
+  try{
+    const {error} = await db.from("test_paper_folders").insert({category:selectedTestCategory, folder_name:folderName});
+    if(error) throw error;
+    input.value = "";
+    setStatus("pdfStatus","Folder created.","success");
+    showToast("Folder created");
+    await loadTestFolders();
+  }catch(error){
+    setStatus("pdfStatus","Could not create folder: "+error.message,"error");
+  }finally{ button.disabled = false; }
+}
+async function uploadTestPDF(input,button){
+  const file = input.files && input.files[0];
+  if(!validatePDF(file,"pdfStatus")) return;
+  if(!selectedTestFolder || !selectedTestCategory) return;
+  /* remember where this file belongs BEFORE any waiting happens */
+  const category = selectedTestCategory;
+  const folder = selectedTestFolder;
+  button.disabled = true;
+  uploadsInFlight++;
+  setStatus("pdfStatus","Uploading PDF…");
+  let path = null, saved = false;
+  try{
+    path = `test-papers/${category}/${folder.id}/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
+    const {error:uploadError} = await db.storage.from("pdfs").upload(path,file,{cacheControl:"3600",upsert:false,contentType:"application/pdf"});
+    if(uploadError){ path = null; throw uploadError; }
+    const {data:urlData} = db.storage.from("pdfs").getPublicUrl(path);
+    setStatus("pdfStatus","Reading the whole book for topic search… (large books can take a minute)");
+    const content_text = await extractPdfText(file, msg=>setStatus("pdfStatus",msg));
+    const {error:insertError} = await db.from("pdfs").insert({
+      file_name:file.name, file_url:urlData.publicUrl,
+      subject:null, subcategory:null,
+      collection_type:category, folder_id:folder.id,
+      content_text: content_text || null
+    });
+    if(insertError) throw insertError;
+    saved = true;
+    input.value = "";
+    if(hasSearchableText(content_text)){
+      setStatus("pdfStatus","PDF uploaded successfully.","success");
+      showToast("Test paper uploaded");
+    }else{
+      setStatus("pdfStatus","PDF uploaded, but no readable text was found, so topic search cannot find anything in it. Try a clearer scan.","error");
+      showToast("Uploaded, but not searchable");
+    }
+    if(selectedTestFolder && selectedTestFolder.id === folder.id){
+      await loadTestFolderPDFs();
+    }
+  }catch(error){
+    if(path && !saved){
+      try{ await db.storage.from("pdfs").remove([path]); }catch(e){ console.error("Cleanup failed:", e); }
+    }
+    setStatus("pdfStatus","Upload failed: "+error.message,"error");
+  }finally{
+    uploadsInFlight--;
+    button.disabled = false;
+  }
+}
+async function loadTestFolderPDFs(){
+  const list = document.getElementById("testFolderPDFList");
+  if(!list || !selectedTestFolder) return;
+  skeletonList(list);
+  try{
+    const {data,error} = await db.from("pdfs").select("*")
+      .eq("folder_id",selectedTestFolder.id).order("created_at",{ascending:false});
+    if(error) throw error;
+    lastFolderPDFs = data || [];
+    renderFolderPDFList();
+  }catch(error){
+    list.replaceChildren(makeEmptyState("Could not load PDFs: "+error.message));
+  }
+}
+
+
+/* ================= TOPIC SEARCH (every match in every book, with page numbers) ================= */
+const PDF_TEXT_MAX_PAGES = 2000;        /* whole books: up to 2000 pages */
+const PDF_TEXT_MAX_CHARS = 9000000;     /* ~9 million characters per book */
+const HITS_FIRST_BATCH = 30;
+const HITS_NEXT_BATCH = 60;
+const HITS_MAX_PER_BOOK = 1500;
+
+/* Reads every page of a PDF and stores "[[PAGE n]]" markers so we can later tell which page a match is on */
+async function extractPdfText_old(file, onProgress){
+  if(!window.pdfjsLib) return null;
+  try{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const buffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buffer}).promise;
+    const total = Math.min(pdf.numPages, PDF_TEXT_MAX_PAGES);
+    const parts = [];
+    let length = 0;
+    for(let i=1;i<=total;i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items.map(it=>it.str).join(" ").replace(/\s+/g," ").trim();
+      const chunk = `\n[[PAGE ${i}]]\n${text}\n`;
+      parts.push(chunk);
+      length += chunk.length;
+      if(onProgress && (i % 10 === 0 || i === total)) onProgress(`Reading book… page ${i} of ${total}`);
+      if(length >= PDF_TEXT_MAX_CHARS) break;
+    }
+    return parts.join("").slice(0, PDF_TEXT_MAX_CHARS);
+  }catch(e){
+    console.error("Text extraction failed:", e.message);
+    return null;
+  }
+}
+
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+/* Builds a matcher: the exact phrase if the book has it, otherwise any of the typed words */
+function stripMarks(t){ return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+const ACCENT_CLASSES = {
+  a:"aàáâãäåāăą", c:"cçćč", d:"dḍďđ", e:"eèéêëēĕėęě", g:"gĝğġ", h:"hḥ",
+  i:"iìíîïīĭįı", l:"lḷłĺ", m:"mṃṁ", n:"nñṇṅńň", o:"oòóôõöōŏő",
+  r:"rṛŕř", t:"tṭţť", u:"uùúûüūŭůűų", z:"zźżž"
+};
+
+/* one word -> regex text that ignores accents, and treats s / sh / ṣ / ś as the same */
+function fuzzyWord(word){
+  const w = stripMarks(word).toLowerCase();
+  let out = "";
+  for(let i=0;i<w.length;i++){
+    const ch = w[i];
+    if(ch === "s"){
+      out += "[sṣśšş][\\u0300-\\u036f]*h?";
+      if(w[i+1] === "h") i++;
+    }else if(ACCENT_CLASSES[ch]){
+      out += "[" + ACCENT_CLASSES[ch] + "][\\u0300-\\u036f]*";
+    }else{
+      out += escapeRegExp(ch);
+    }
+  }
+  return out;
+}
+
+function buildMatcher(text, query){
+  const allWords = query.trim().split(/\s+/).filter(Boolean);
+  if(!allWords.length) return null;
+  const phrase = allWords.map(fuzzyWord).join("\\s+");
+  if(new RegExp(phrase, "i").test(text)) return new RegExp(phrase, "gi");
+  const words = allWords.filter(w=>w.length>=2).map(fuzzyWord);
+  if(words.length > 1) return new RegExp(words.join("|"), "gi");
+  return null;
+}
+
+/* spelling variants for the server-side search (the server cannot ignore accents itself) */
+function searchVariants(query){
+  const base = stripMarks(query).toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
+  if(base.length < 3) return [];
+  const set = new Set([base]);
+  if(/sh/.test(base)) set.add(base.replace(/sh/g, "s"));
+  if(/s(?!h)/.test(base)) set.add(base.replace(/s(?!h)/g, "sh"));
+  if(base.length >= 4 && /s/.test(base)) set.add(base.replace(/sh?/g, "_"));
+  return [...set].slice(0, 4);
+}
+
+/* Removes OCR garbage (stray Q / O / 0 / | marks from bullets, lines and icons) from a snippet.
+   Words that match the search are always kept. This only changes what is SHOWN in search results;
+   the stored text and the PDF itself are untouched. */
+function cleanOcrSnippet(snippet, matcher){
+  const keepRe = matcher ? new RegExp(matcher.source, "i") : null;
+  const out = snippet.split(/\s+/).filter(tok=>{
+    if(!tok) return false;
+    if(tok === "…") return true;
+    if(keepRe && keepRe.test(tok)) return true;
+    const core = tok.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+    if(/^(mg|ml|kg|gm|cm|mm|dr|ph|iu|mcg|icmr|who|ecg|eeg|ct|mri|hiv|dna|rna|tsh|t3|t4|bp|hb|bmi)$/i.test(core)) return true;   /* medical terms */
+    if(core === "0") return false;   /* contents-page dots read as 0 */
+    if(!core) return tok.length > 1 && /[(\[]/.test(tok) ? true : false;   /* pure symbols like | – • ~ */
+    if(/^[QOoIl0|]{1,3}$/.test(core) && !/^(I|a|A|0)$/.test(core)) return false;   /* QO, OQ, O, Q, 0O ... */
+    if(core.length === 1 && !/[aAI0-9]/.test(core)) return false;                 /* lone letters like i, f, b */
+    if(/^[a-z]{1,2}$/.test(core) && !/^(a|an|as|at|be|by|do|go|he|if|in|is|it|me|my|no|of|on|or|so|to|up|us|we|am|ca|th|st)$/i.test(core)) return false; /* random 2-letter junk */
+    if(core.length <= 3 && /^[A-Za-z]+$/.test(core) && !/[aeiouAEIOU]/.test(core) && !/^(my|by|why|try|dry|sky|fly|thy|hymn|nth)$/i.test(core)) return false; /* no vowels: rs, td, QO */
+    if(/^(.)\1+$/.test(core)) return false;                                    /* ooo, lll, ... */
+    if(/^[A-Za-z]\d|^\d[A-Za-z]$/.test(core)) return false;                    /* a1, 0O */
+    if(core.length >= 4 && core === core.toUpperCase() && /^[A-Z]+$/.test(core) && !/[AEIOU].*[AEIOU]|^[A-Z]*(TH|ST|ND)[A-Z]*$/.test(core)) return false;
+    return true;
+  }).join(" ");
+  return out.replace(/\s+([,.;:!?])/g, "$1");
+}
+
+/* Splits stored text into pages and lists every occurrence with its page number + a snippet */
+function findAllHits(text, query){
+  const matcher = buildMatcher(text, query);
+  if(!matcher) return {hits:[], matcher:null};
+  const parts = text.split(/\[\[PAGE (\d+)\]\]/);
+  const pages = [];
+  if(parts.length === 1){
+    pages.push({page:1, body:text.replace(/\s+/g," ").trim()});
+  }else{
+    for(let i=1;i<parts.length;i+=2){
+      pages.push({page:parseInt(parts[i],10), body:(parts[i+1]||"").replace(/\s+/g," ").trim()});
+    }
+  }
+  const hits = [];
+  outer:
+  for(const p of pages){
+    if(!p.body) continue;
+    const re = new RegExp(matcher.source, "gi");
+    let m;
+    while((m = re.exec(p.body)) !== null){
+      if(m[0].length === 0){ re.lastIndex++; continue; }
+      const start = Math.max(0, m.index - 40);
+      const end = Math.min(p.body.length, m.index + m[0].length + 80);
+      let snippet = p.body.slice(start, end);
+      if(start > 0) snippet = "…" + snippet;
+      if(end < p.body.length) snippet = snippet + "…";
+      snippet = cleanOcrSnippet(snippet, matcher);
+      hits.push({page:p.page, snippet});
+      re.lastIndex = Math.max(re.lastIndex, end);
+      if(hits.length >= HITS_MAX_PER_BOOK) break outer;
+    }
+  }
+  return {hits, matcher};
+}
+
+/* Writes a snippet into an element with the searched word highlighted */
+function fillHighlighted(el, snippet, matcher){
+  const re = new RegExp(matcher.source, "gi");
+  let last = 0, m;
+  while((m = re.exec(snippet)) !== null){
+    if(m[0].length === 0){ re.lastIndex++; continue; }
+    if(m.index > last) el.appendChild(document.createTextNode(snippet.slice(last, m.index)));
+    el.appendChild(makeElement("mark","hl-text",m[0]));
+    last = m.index + m[0].length;
+  }
+  if(last < snippet.length) el.appendChild(document.createTextNode(snippet.slice(last)));
+}
+
+function locationLabel(row){
+  if(row.subject) return `Notes · ${row.subject}${row.subcategory ? " · "+row.subcategory : ""}`;
+  return row.collection_type === "pyqs" ? "Test Papers · PYQs" : "Test Papers · Current Year";
+}
+
+async function runTopicSearch(){
+  const input = document.getElementById("topicSearchInput");
+  const query = (input.value || "").trim();
+  const resultsBox = document.getElementById("topicSearchResults");
+  if(query.length < 2){ setStatus("topicSearchStatus","Type at least 2 characters.","error"); return; }
+  setStatus("topicSearchStatus","Searching every page of every book…");
+  resultsBox.replaceChildren();
+  skeletonList(resultsBox, 3);
+
+  const cols = "id,file_name,file_url,subject,subcategory,collection_type,content_text";
+  const found = new Map();
+  let anyOk = false, lastError = null;
+
+  /* 1) literal (substring) match — finds "think" inside "thinking", partial words, Sanskrit terms etc. */
+  try{
+    const likeValue = "%" + query.replace(/[\\%_]/g, m=>"\\"+m) + "%";
+    const {data, error} = await db.from("pdfs").select(cols)
+      .not("content_text","is",null).ilike("content_text", likeValue);
+    if(error) throw error;
+    anyOk = true;
+    (data||[]).forEach(r=>found.set(r.id, r));
+  }catch(e){ lastError = e; }
+
+  /* 1b) forgiving match: spelling / accent variants (dosa, dosha, doṣa) */
+  try{
+    const variants = searchVariants(query).filter(v=>v !== query.toLowerCase());
+    if(variants.length){
+      const orFilter = variants.map(v=>`content_text.ilike."%${v}%"`).join(",");
+      let q2 = db.from("pdfs").select(cols).not("content_text","is",null).or(orFilter);
+      if(found.size) q2 = q2.not("id","in","("+[...found.keys()].join(",")+")");
+      const {data, error} = await q2;
+      if(error) throw error;
+      anyOk = true;
+      (data||[]).forEach(r=>{ if(!found.has(r.id)) found.set(r.id, r); });
+    }
+  }catch(e){ if(!anyOk) lastError = e; }
+
+  /* 2) full-text match — catches multi-word queries whose words are not side by side */
+  if(query.split(/\s+/).length > 1){
+    try{
+      const {data, error} = await db.from("pdfs").select(cols)
+        .not("content_text","is",null)
+        .textSearch("search_vector", query, {config:"english", type:"websearch"});
+      if(error) throw error;
+      anyOk = true;
+      (data||[]).forEach(r=>{ if(!found.has(r.id)) found.set(r.id, r); });
+    }catch(e){ if(!anyOk) lastError = e; }
+  }
+
+  /* 3) last resort: download and scan on the device */
+  if(!anyOk){
+    try{
+      const {data, error} = await db.from("pdfs").select(cols)
+        .not("content_text","is",null).limit(200);
+      if(error) throw error;
+      anyOk = true;
+      const q = query.toLowerCase();
+      (data||[]).filter(r=>(r.content_text||"").toLowerCase().includes(q)).forEach(r=>found.set(r.id, r));
+    }catch(e){ lastError = e; }
+  }
+
+  resultsBox.replaceChildren();
+  if(!anyOk){
+    setStatus("topicSearchStatus","Search failed: "+(lastError ? lastError.message : "unknown error"),"error");
+    return;
+  }
+
+  /* work out every hit in every book */
+  const books = [];
+  let totalHits = 0;
+  found.forEach(row=>{
+    const {hits, matcher} = findAllHits(row.content_text || "", query);
+    if(hits.length){ books.push({row, hits, matcher}); totalHits += hits.length; }
+  });
+  books.sort((a,b)=>b.hits.length - a.hits.length);
+
+  if(!books.length){
+    setStatus("topicSearchStatus","");
+    resultsBox.appendChild(makeEmptyState("No matches found. Books uploaded before this update may need to be uploaded again so every page can be searched.","i-search"));
+    return;
+  }
+
+  setStatus("topicSearchStatus",
+    `${totalHits} match${totalHits===1?"":"es"} for “${query}” in ${books.length} book${books.length===1?"":"s"}. Tap a result to open that page.`,
+    "success");
+
+  books.forEach(book=>resultsBox.appendChild(buildBookResultCard(book, query)));
+}
+
+function buildBookResultCard(book, query){
+  const {row, hits, matcher} = book;
+  const card = makeElement("div","panel");
+
+  const head = makeElement("div","book-head");
+  const icon = makeElement("div","item-icon");
+  icon.innerHTML = `<svg class="ic"><use href="#i-file"/></svg>`;
+  head.appendChild(icon);
+  const titleBox = makeElement("div");
+  titleBox.style.minWidth = "0";
+  titleBox.appendChild(makeElement("h2","book-title", row.file_name || "PDF document"));
+  const pageSet = [...new Set(hits.map(h=>h.page))].sort((a,b)=>a-b);
+  titleBox.appendChild(makeElement("div","book-meta",
+    `${locationLabel(row)} · ${hits.length} match${hits.length===1?"":"es"} on ${pageSet.length} page${pageSet.length===1?"":"s"}`));
+  head.appendChild(titleBox);
+  card.appendChild(head);
+
+  const list = makeElement("div","hit-list");
+  card.appendChild(list);
+  let shown = 0;
+  const moreWrap = makeElement("div","more-hits");
+  card.appendChild(moreWrap);
+
+  function showMore(count){
+    const slice = hits.slice(shown, shown + count);
+    slice.forEach(hit=>{
+      const rowBtn = makeElement("button","hit-row");
+      rowBtn.type = "button";
+      const snip = makeElement("div","hit-snippet");
+      fillHighlighted(snip, hit.snippet, matcher);
+      const pg = makeElement("div","hit-page");
+      pg.appendChild(makeElement("small","","Page"));
+      pg.appendChild(makeElement("b","",String(hit.page)));
+      rowBtn.append(snip, pg);
+      rowBtn.addEventListener("click", ()=>openPdfViewer({
+        url:row.file_url, page:hit.page, matcher, title:row.file_name || "PDF document", hitPages:pageSet
+      }));
+      list.appendChild(rowBtn);
+    });
+    shown += slice.length;
+    moreWrap.replaceChildren();
+    if(shown < hits.length){
+      const remaining = hits.length - shown;
+      moreWrap.appendChild(makeButton(`Show more (${remaining} left)`, ()=>showMore(HITS_NEXT_BATCH), "btn secondary full"));
+    }
+  }
+  showMore(HITS_FIRST_BATCH);
+  return card;
+}
+
+/* ================= IN-APP PDF VIEWER ================= */
+const viewer = {
+  url:null, pdf:null, page:1, total:0, zoom:1,
+  matcher:null, hitPages:[], title:"", renderId:0, renderTask:null
+};
+
+function lockBodyScroll(on){ document.body.style.overflow = on ? "hidden" : ""; }
+
+async function openPdfViewer({url, page, matcher, title, hitPages}){
+  if(!url){ showToast("This book has no file link"); return; }
+  const el = document.getElementById("pdfViewer");
+  el.classList.add("open");
+  lockBodyScroll(true);
+  viewer.matcher = matcher || null;
+  viewer.hitPages = hitPages || [];
+  viewer.title = title || "PDF";
+  document.getElementById("pvTitle").textContent = viewer.title;
+  document.getElementById("pvExternal").href = `${url}#page=${page}`;
+  const body = document.getElementById("pvBody");
+  const hasHits = viewer.hitPages.length > 0;
+  document.getElementById("pvPrevHit").style.display = hasHits ? "" : "none";
+  document.getElementById("pvNextHit").style.display = hasHits ? "" : "none";
+
+  try{
+    if(viewer.url !== url || !viewer.pdf){
+      body.replaceChildren(makeElement("div","pv-msg","Opening book…"));
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      viewer.pdf = await pdfjsLib.getDocument({url, disableAutoFetch:true, disableStream:true, rangeChunkSize:262144}).promise;
+      viewer.textCache = new Map();
+      viewer.url = url;
+      viewer.total = viewer.pdf.numPages;
+    }
+    document.getElementById("pvTotal").textContent = "/ " + viewer.total;
+    document.getElementById("pvPageInput").max = viewer.total;
+    viewer.zoom = 1;
+    await viewerShowPage(Math.min(Math.max(1, page || 1), viewer.total));
+  }catch(error){
+    console.error("Viewer error:", error);
+    viewer.url = null; viewer.pdf = null;
+    body.replaceChildren();
+    const msg = makeElement("div","pv-msg",
+      "Could not open this book inside ClassHub ("+(error && error.message ? error.message : "unknown error")+"). You can open it in your browser instead — it should go to page "+page+".");
+    body.appendChild(msg);
+    const link = makeElement("a","link-btn","Open in browser · page "+page);
+    link.href = `${url}#page=${page}`; link.target = "_blank"; link.rel = "noopener noreferrer";
+    body.appendChild(link);
+  }
+}
+
+function closePdfViewer(){
+  document.getElementById("pdfViewer").classList.remove("open");
+  lockBodyScroll(false);
+  if(viewer.renderTask){ try{ viewer.renderTask.cancel(); }catch(e){} }
+}
+
+async function viewerShowPage(n){
+  if(!viewer.pdf) return;
+  n = Math.min(Math.max(1, n), viewer.total);
+  viewer.page = n;
+  const myId = ++viewer.renderId;
+  document.getElementById("pvPageInput").value = n;
+  if(!viewer.textCache) viewer.textCache = new Map();
+
+  const body = document.getElementById("pvBody");
+  try{
+    const pg = await viewer.pdf.getPage(n);
+    if(myId !== viewer.renderId) return;
+
+    const base = pg.getViewport({scale:1});
+    const available = Math.max(200, body.clientWidth - 16);
+    const scale = (available / base.width) * viewer.zoom;
+    const vp = pg.getViewport({scale});
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2, 1500 / vp.width));   /* cap canvas size: scanned pages are heavy */
+
+    const wrap = makeElement("div","pv-page");
+    wrap.style.width = vp.width + "px";
+    wrap.style.height = vp.height + "px";
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.floor(vp.width * dpr);
+    canvas.height = Math.floor(vp.height * dpr);
+    canvas.style.width = vp.width + "px";
+    canvas.style.height = vp.height + "px";
+    wrap.appendChild(canvas);
+
+    /* show the page frame right away, then fill it in */
+    body.replaceChildren(wrap);
+
+    /* start reading the text layer NOW, in parallel with drawing the page */
+    const cacheKey = viewer.url + "#" + n;
+    let textPromise = null;
+    if(viewer.matcher){
+      if(!viewer.textCache.has(cacheKey)) viewer.textCache.set(cacheKey, pg.getTextContent());
+      textPromise = viewer.textCache.get(cacheKey);
+    }
+
+    if(viewer.renderTask){ try{ viewer.renderTask.cancel(); }catch(e){} }
+    const task = pg.render({
+      canvasContext: canvas.getContext("2d", {alpha:false}),
+      viewport: vp,
+      transform: dpr !== 1 ? [dpr,0,0,dpr,0,0] : null
+    });
+    viewer.renderTask = task;
+
+    /* highlights do not wait for the canvas to finish */
+    const highlightJob = (async ()=>{
+      if(!textPromise){ body.scrollTop = 0; return; }
+      try{
+        const tc = await textPromise;
+        if(myId !== viewer.renderId) return;
+        const re = new RegExp(viewer.matcher.source, "gi");
+        const frag = document.createDocumentFragment();
+        let firstTop = null;
+        for(const item of tc.items){
+          const str = item.str;
+          if(!str || !str.trim()) continue;
+          re.lastIndex = 0;
+          if(!re.test(str)) continue;           /* cheap skip for the many items with no match */
+          re.lastIndex = 0;
+          const tx = pdfjsLib.Util.transform(vp.transform, item.transform);
+          const fontH = Math.hypot(tx[2], tx[3]);
+          const perChar = (item.width * vp.scale) / str.length;
+          let m;
+          while((m = re.exec(str)) !== null){
+            if(m[0].length === 0){ re.lastIndex++; continue; }
+            const hl = document.createElement("div");
+            hl.className = "pv-hl";
+            const top = tx[5] - fontH * 0.95;
+            hl.style.cssText = `left:${tx[4] + m.index * perChar}px;top:${top}px;width:${Math.max(4, m[0].length * perChar)}px;height:${fontH * 1.1}px`;
+            frag.appendChild(hl);
+            if(firstTop === null || top < firstTop) firstTop = top;
+          }
+        }
+        wrap.appendChild(frag);
+        if(firstTop !== null){
+          body.scrollTo({top:Math.max(0, wrap.offsetTop + firstTop - body.clientHeight / 3), behavior:"auto"});
+        }else{
+          body.scrollTop = 0;
+        }
+      }catch(e){ console.error("Highlight failed:", e.message); }
+    })();
+
+    await Promise.all([task.promise, highlightJob]);
+  }catch(error){
+    if(error && error.name === "RenderingCancelledException") return;
+    console.error("Page render failed:", error);
+    body.replaceChildren(makeElement("div","pv-msg","Could not show page "+n+": "+(error && error.message ? error.message : "unknown error")));
+  }
+}
+
+function viewerGo(delta){ viewerShowPage(viewer.page + delta); }
+function viewerGoTo(value){
+  const n = parseInt(value, 10);
+  if(Number.isNaN(n)){ document.getElementById("pvPageInput").value = viewer.page; return; }
+  viewerShowPage(n);
+}
+function viewerZoom(delta){
+  viewer.zoom = Math.min(3, Math.max(0.5, +(viewer.zoom + delta).toFixed(2)));
+  viewerShowPage(viewer.page);
+}
+function viewerJumpHit(direction){
+  const pages = viewer.hitPages;
+  if(!pages.length) return;
+  let target = null;
+  if(direction > 0) target = pages.find(p=>p > viewer.page);
+  else for(let i=pages.length-1;i>=0;i--){ if(pages[i] < viewer.page){ target = pages[i]; break; } }
+  if(target == null){ showToast(direction > 0 ? "No more matches ahead" : "No earlier matches"); return; }
+  viewerShowPage(target);
+}
+document.addEventListener("keydown", e=>{
+  const open = document.getElementById("pdfViewer").classList.contains("open");
+  if(!open) return;
+  if(e.target && e.target.id === "pvPageInput") return;
+  if(e.key === "Escape") closePdfViewer();
+  if(e.key === "ArrowRight") viewerGo(1);
+  if(e.key === "ArrowLeft") viewerGo(-1);
+});
+window.addEventListener("resize", ()=>{
+  if(document.getElementById("pdfViewer").classList.contains("open") && viewer.pdf){
+    clearTimeout(viewer.resizeTimer);
+    viewer.resizeTimer = setTimeout(()=>viewerShowPage(viewer.page), 250);
+  }
+});
+/* ================= CASE STUDIES (folder-wise photo library) ================= */
+let selectedCaseFolder = null; /* null = folder list, "unfiled" = pseudo folder, object = open folder */
+let lastCaseFolders = [];
+
+function renderCaseStudiesView(){
+  const root = document.getElementById("caseView");
+  if(!root) return;
+  root.replaceChildren();
+
+  if(!selectedCaseFolder){
+    root.appendChild(makeElement("h2","panel-title","Case study folders"));
+    root.appendChild(makeElement("p","muted","Create a folder per case, then post the photos inside it."));
+    const panel = makeElement("div","panel");
+    const input = document.createElement("input");
+    input.className = "field"; input.id = "newCaseFolderName"; input.maxLength = 100;
+    input.placeholder = "New folder name (e.g. Kustha case – Virechana outcome)";
+    input.autocomplete = "off";
+    const button = makeButton("Create Folder", ()=>createCaseFolder(input, button), "btn full");
+    panel.append(input, button);
+    root.appendChild(panel);
+    const grid = makeElement("div","option-grid");
+    grid.id = "caseFolderGrid";
+    skeletonList(grid, 2);
+    root.appendChild(grid);
+    loadCaseFolders();
+    setStatus("caseStatus","");
+    return;
+  }
+
+  const isUnfiled = selectedCaseFolder === "unfiled";
+  root.appendChild(makeButton("← All folders", ()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }, "back-btn"));
+  root.appendChild(makeElement("h2","panel-title", isUnfiled ? "Unfiled photos" : selectedCaseFolder.folder_name));
+  root.appendChild(makeElement("p","muted","Upload case study photos into this folder."));
+
+  const panel = makeElement("div","panel");
+  const label = makeElement("label","file-label","Choose photos");
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = "image/*"; input.multiple = true; input.id = "casePhotoFiles";
+  label.appendChild(input);
+  const upload = makeButton("Upload Photos", ()=>uploadCasePhotos(input, upload), "btn full");
+  panel.append(label, upload);
+  root.appendChild(panel);
+
+  const searchWrap = makeElement("div","search-wrap");
+  searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
+  const searchInput = document.createElement("input");
+  searchInput.className = "field"; searchInput.placeholder = "Search photos in this folder…";
+  searchInput.addEventListener("input", ()=>renderCasePhotoList(searchInput.value.trim().toLowerCase()));
+  searchWrap.appendChild(searchInput);
+  root.appendChild(searchWrap);
+
+  root.appendChild(makeElement("h2","panel-title","Photos in this folder"));
+  const list = makeElement("div","panel");
+  list.id = "casePhotoList";
+  skeletonList(list);
+  root.appendChild(list);
+  loadCasePhotos();
+}
+
+function renderCasePhotoList(filter=""){
+  const list = document.getElementById("casePhotoList");
+  if(!list) return;
+  const data = lastPhotosData.filter(p=>!filter || (p.file_name||"").toLowerCase().includes(filter));
+  list.replaceChildren();
+  if(!data.length){
+    list.appendChild(makeEmptyState(filter?"No photos match your search.":"No photos here yet. Upload the first one.","i-image"));
+    return;
+  }
+  data.forEach(photo=>{
+    const item = makeElement("div","item");
+    const icon = makeElement("div","item-icon");
+    icon.innerHTML = `<svg class="ic"><use href="#i-image"/></svg>`;
+    item.appendChild(icon);
+    const info = makeElement("div","item-info");
+    info.appendChild(makeElement("strong","",photo.file_name||"Case photo"));
+    info.appendChild(makeElement("small","",formatDate(photo.created_at)));
+    const actions = makeElement("div","item-actions");
+    if(photo.file_url){
+      const link = makeElement("a","link-btn","View");
+      link.href = safeUrl(photo.file_url); link.target="_blank"; link.rel="noopener noreferrer";
+      actions.appendChild(link);
+    }
+    item.append(info,actions);
+    list.appendChild(item);
+  });
+}
+
+async function loadCaseFolders(){
+  const grid = document.getElementById("caseFolderGrid");
+  if(!grid) return;
+  skeletonList(grid, 2);
+  try{
+    const {data, error} = await db.from("case_folders").select("*").order("created_at",{ascending:false});
+    if(error) throw error;
+    lastCaseFolders = data || [];
+    grid.replaceChildren();
+    if(!lastCaseFolders.length){
+      grid.appendChild(makeEmptyState("No folders yet. Create one above.","i-folder"));
+    }
+    lastCaseFolders.forEach(folder=>{
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      const strong = makeElement("strong");
+      strong.innerHTML = `<svg class="ic ic-sm" style="vertical-align:-3px"><use href="#i-folder"/></svg> `;
+      strong.appendChild(document.createTextNode(folder.folder_name));
+      btn.appendChild(strong);
+      btn.appendChild(makeElement("small","",formatDate(folder.created_at)));
+      btn.addEventListener("click", ()=>{ selectedCaseFolder = folder; renderCaseStudiesView(); });
+      grid.appendChild(btn);
+    });
+    const {count} = await db.from("photos").select("id",{count:"exact",head:true}).is("folder_id",null);
+    if(count && count>0){
+      const btn = makeElement("button","option-card");
+      btn.type = "button";
+      const strong = makeElement("strong");
+      strong.innerHTML = `<svg class="ic ic-sm" style="vertical-align:-3px"><use href="#i-image"/></svg> `;
+      strong.appendChild(document.createTextNode("Unfiled photos"));
+      btn.appendChild(strong);
+      btn.appendChild(makeElement("small","",`${count} photo(s) not in any folder`));
+      btn.addEventListener("click", ()=>{ selectedCaseFolder = "unfiled"; renderCaseStudiesView(); });
+      grid.appendChild(btn);
+    }
+  }catch(error){
+    grid.replaceChildren(makeEmptyState("Could not load folders: "+error.message+" — run the one-time Case Studies SQL setup.","i-folder"));
+  }
+}
+
+async function createCaseFolder(input, button){
+  const folderName = input.value.trim();
+  if(!folderName){ setStatus("caseStatus","Enter a folder name first.","error"); return; }
+  button.disabled = true;
+  setStatus("caseStatus","Creating folder…");
+  try{
+    const {error} = await db.from("case_folders").insert({folder_name:folderName});
+    if(error) throw error;
+    input.value = "";
+    setStatus("caseStatus","Folder created.","success");
+    showToast("Folder created");
+    await loadCaseFolders();
+  }catch(error){
+    setStatus("caseStatus","Could not create folder: "+error.message,"error");
+  }finally{ button.disabled = false; }
+}
+
+async function uploadCasePhotos(input, button){
+  const files = Array.from(input.files || []);
+  if(!files.length){ setStatus("caseStatus","Choose at least one photo.","error"); return; }
+  button.disabled = true;
+  let uploaded = 0;
+  setStatus("caseStatus","Uploading photos…");
+  try{
+    for(const file of files){
+      if(!file.type.startsWith("image/")) continue;
+      const folderPart = selectedCaseFolder === "unfiled" ? "unfiled" : selectedCaseFolder.id;
+      const path = `case-studies/${folderPart}/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
+      const {error:uploadError} = await db.storage.from("photos").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+      if(uploadError) throw uploadError;
+      const {data:urlData} = db.storage.from("photos").getPublicUrl(path);
+      const rec = {file_name:file.name, file_url:urlData.publicUrl};
+      if(selectedCaseFolder !== "unfiled") rec.folder_id = selectedCaseFolder.id;
+      const {error:insertError} = await db.from("photos").insert(rec);
+      if(insertError) throw insertError;
+      uploaded++;
+    }
+    input.value = "";
+    setStatus("caseStatus",`${uploaded} photo(s) uploaded.`,"success");
+    showToast("Photos uploaded");
+    await loadCasePhotos();
+  }catch(error){
+    setStatus("caseStatus","Upload failed: "+error.message,"error");
+  }finally{ button.disabled = false; }
+}
+
+async function loadCasePhotos(){
+  const list = document.getElementById("casePhotoList");
+  if(!list || !selectedCaseFolder) return;
+  skeletonList(list);
+  try{
+    let query = db.from("photos").select("*").order("created_at",{ascending:false});
+    if(selectedCaseFolder === "unfiled") query = query.is("folder_id",null);
+    else query = query.eq("folder_id", selectedCaseFolder.id);
+    const {data,error} = await query;
+    if(error) throw error;
+    lastPhotosData = data || [];
+    renderCasePhotoList();
+  }catch(error){
+    list.replaceChildren(makeEmptyState("Could not load photos: "+error.message,"i-image"));
+  }
+}
+
+/* ================= NOTICES ================= */
+async function addNotice(){
+  const title = document.getElementById("noticeTitle").value.trim();
+  const content = document.getElementById("noticeContent").value.trim();
+  if(!title || !content){ setStatus("noticeStatus","Enter both a title and notice.","error"); return; }
+  const button = document.getElementById("addNoticeBtn");
+  button.disabled = true;
+  setStatus("noticeStatus","Publishing notice…");
+  try{
+    const {error} = await db.from("notices").insert({title,content});
+    if(error) throw error;
+    document.getElementById("noticeTitle").value = "";
+    document.getElementById("noticeContent").value = "";
+    setStatus("noticeStatus","Notice published.","success");
+    showToast("Notice published");
+    await loadNotices();
+  }catch(error){
+    setStatus("noticeStatus","Could not publish notice: "+error.message,"error");
+  }finally{ button.disabled = false; }
+}
+async function loadNotices(){
+  const list = document.getElementById("noticesList");
+  if(!list) return;
+  skeletonList(list);
+  try{
+    const {data,error} = await db.from("notices").select("*").order("created_at",{ascending:false});
+    if(error) throw error;
+    list.replaceChildren();
+    if(!data || !data.length){ list.appendChild(makeEmptyState("No notices yet.","i-bell")); return; }
+    const lastSeen = Number(localStorage.getItem("classhub_last_seen_notice") || 0);
+    data.forEach(notice=>{
+      const card = makeElement("div","item");
+      const icon = makeElement("div","item-icon");
+      icon.style.background = "var(--green-soft)";
+      icon.style.color = "var(--green)";
+      icon.innerHTML = `<svg class="ic"><use href="#i-bell"/></svg>`;
+      const info = makeElement("div","item-info");
+      info.appendChild(makeElement("strong","",notice.title||"Class notice"));
+      info.appendChild(makeElement("small","",formatDate(notice.created_at)));
+      const p = makeElement("p","muted",notice.content||"");
+      p.style.margin = "5px 0 0";
+      info.appendChild(p);
+      card.appendChild(icon);
+      if(new Date(notice.created_at).getTime() > lastSeen){
+        const tag = makeElement("span","","NEW");
+        tag.style.cssText = "font-size:9.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:99px;margin-left:7px;vertical-align:2px";
+        info.querySelector("strong").appendChild(tag);
+      }
+      card.appendChild(info);
+      list.appendChild(card);
+    });
+  }catch(error){
+    list.replaceChildren(makeEmptyState("Could not load notices: "+error.message));
+  }
+}
+function onNoticeSoundToggle(cb){
+  localStorage.setItem("classhub_notice_sound", cb.checked ? "1" : "0");
+  if(cb.checked && "Notification" in window && Notification.permission==="default"){
+    Notification.requestPermission();
+  }
+}
+function showNoticeToast(title,content){
+  document.getElementById("noticeToastTitle").textContent = title || "New notice";
+  document.getElementById("noticeToastContent").textContent = content || "";
+  document.getElementById("noticeToast").style.display = "block";
+  playNoticeSound();
+}
+function hideNoticeToast(){ document.getElementById("noticeToast").style.display = "none"; }
+function playNoticeSound(){
+  if(localStorage.getItem("classhub_notice_sound")==="0") return;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    if(!noticeSoundContext) noticeSoundContext = new AC();
+    if(noticeSoundContext.state==="suspended") noticeSoundContext.resume();
+    const osc = noticeSoundContext.createOscillator();
+    const gain = noticeSoundContext.createGain();
+    osc.type = "sine"; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.12, noticeSoundContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, noticeSoundContext.currentTime+0.35);
+    osc.connect(gain); gain.connect(noticeSoundContext.destination);
+    osc.start(); osc.stop(noticeSoundContext.currentTime+0.35);
+  }catch(e){}
+}
+
+function testNoticeAlert(){
+  showNoticeToast("Test notice 🔔","If you saw and heard this, alerts are working. You'll get this for every new notice.");
+  setStatus("noticeStatus","");
+  if(!("Notification" in window)){
+    setStatus("noticeStatus","This browser doesn't support notifications — the popup + sound still work.","error");
+    return;
+  }
+  if(Notification.permission==="granted"){
+    try{ new Notification("ClassHub alerts enabled ✅",{body:"You will now get popups + sound for every new notice."}); }catch(e){}
+  }else if(Notification.permission==="default"){
+    Notification.requestPermission().then(p=>{
+      if(p==="granted"){
+        try{ new Notification("ClassHub alerts enabled ✅",{body:"You will now get popups + sound for every new notice."}); }catch(e){}
+        setStatus("noticeStatus","Browser notifications enabled.","success");
+      }else{
+        setStatus("noticeStatus","Permission denied — click the 🔒 icon in your browser's address bar to allow notifications.","error");
+      }
+    });
+  }else{
+    setStatus("noticeStatus","Notifications are BLOCKED in this browser — click the 🔒/tune icon in the address bar → Site settings → Notifications → Allow, then reload.","error");
+  }
+}
+
+/* ================= CLASS CHAT ================= */
+const chatNameInput = document.getElementById("chatName");
+const savedChatName = localStorage.getItem("classhub_chat_name");
+if(savedChatName) chatNameInput.value = savedChatName;
+chatNameInput.addEventListener("change",()=>{
+  localStorage.setItem("classhub_chat_name", chatNameInput.value.trim());
+});
+let chatLoadVersion = 0;
+
+function chatNearBottom(box){
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+}
+function scrollChatToBottom(){
+  const box = document.getElementById("chatMessages");
+  if(!box) return;
+  box.scrollTop = box.scrollHeight;
+  requestAnimationFrame(()=>{ box.scrollTop = box.scrollHeight; setTimeout(()=>{ box.scrollTop = box.scrollHeight; }, 120); });
+}
+
+function renderChatMessage(message, forceScroll){
+  const box = document.getElementById("chatMessages");
+  if(!box || !message) return;
+  if(message.id != null && box.querySelector('[data-id="' + String(message.id).replace(/"/g,"") + '"]')) return;   /* already shown */
+  const empty = box.querySelector(".empty");
+  if(empty) box.replaceChildren();
+  const myName = chatNameInput.value.trim();
+  const isMine = (currentUser && message.user_id)
+    ? message.user_id === currentUser.id
+    : !!(myName && message.sender_name === myName);
+  const stick = forceScroll === true || isMine || chatNearBottom(box);
+  const wrap = makeElement("div","chat-message"+(isMine?" mine":""));
+  if(message.id != null) wrap.dataset.id = message.id;
+  wrap.appendChild(makeElement("div","chat-name",message.sender_name||"Classmate"));
+  wrap.appendChild(makeElement("div","chat-bubble",message.message||""));
+  wrap.appendChild(makeElement("div","chat-time",formatDate(message.created_at)));
+  box.appendChild(wrap);
+  if(stick) box.scrollTop = box.scrollHeight;
+}
+
+async function loadChatMessages(opts){
+  const silent = !!(opts && opts.silent === true);
+  const box = document.getElementById("chatMessages");
+  if(!box) return;
+  const version = ++chatLoadVersion;
+  if(!silent) box.replaceChildren(makeEmptyState("Loading messages…","i-chat"));
+  try{
+    const {data,error} = await db.from("chat_messages").select("*")
+      .order("created_at",{ascending:false}).limit(100);
+    if(error) throw error;
+    if(version !== chatLoadVersion) return;   /* a newer load started */
+    const messages = (data||[]).reverse();
+    if(!silent) box.replaceChildren();
+    if(!messages.length){
+      if(!box.querySelector(".chat-message")){
+        box.replaceChildren(makeEmptyState("No messages yet. Start the conversation.","i-chat"));
+      }
+      return;
+    }
+    const wasNear = chatNearBottom(box);
+    messages.forEach(m=>renderChatMessage(m, false));
+    if(!silent || wasNear) scrollChatToBottom();
+  }catch(error){
+    if(version !== chatLoadVersion) return;
+    if(!silent || !box.querySelector(".chat-message")){
+      box.replaceChildren(makeEmptyState("Could not load chat: "+error.message));
+    }
+  }
+}
+
+document.getElementById("chatForm").addEventListener("submit", async event=>{
+  event.preventDefault();
+  const sender_name = chatNameInput.value.trim() || (currentUser?.user_metadata?.full_name ?? "");
+  const messageInput = document.getElementById("chatInput");
+  const message = messageInput.value.trim();
+  const button = document.getElementById("sendChatBtn");
+  if(!sender_name){
+    setStatus("chatStatus","Sign in with Google to join the chat.","error");
+    showToast("Sign in to chat");
+    return;
+  }
+  if(!message) return;
+  localStorage.setItem("classhub_chat_name", sender_name);
+  button.disabled = true;
+  setStatus("chatStatus","Sending…");
+  try{
+    const {error} = await db.from("chat_messages").insert({sender_name, message});
+    if(error) throw error;
+    messageInput.value = "";
+    setStatus("chatStatus","");
+    await loadChatMessages();
+  }catch(error){
+    setStatus("chatStatus","Message failed: "+error.message,"error");
+  }finally{
+    button.disabled = false;
+    messageInput.focus();
+  }
+});
+
+/* ================= COMMUNITY ================= */
+window.loadCommunityPosts = async function(){
+  const container = document.getElementById("communityPosts");
+  if(!container) return;
+  if(!currentUser){
+    container.replaceChildren();
+    const gate = makeElement("div","gate");
+    gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-users"/></svg>
+      <h2 class="panel-title" style="justify-content:center">Join the community</h2>
+      <p class="muted" style="margin-bottom:14px">Sign in with Google to view and publish posts.</p>`;
+    const btn = makeButton("Continue with Google",()=>signInWithGoogle(),"btn");
+    gate.appendChild(btn);
+    container.appendChild(gate);
+    return;
+  }
+  skeletonList(container,2);
+  try{
+    // The RPC deliberately returns NULL author_id for anonymous posts.
+    const {data:feed, error} = await db.rpc("community_get_feed");
+    if(error) throw error;
+
+    const posts = (feed || []).map(p => ({
+      id: p.post_id,
+      author_id: p.author_id || null,
+      is_mine: !!p.is_mine,
+      can_delete: !!p.can_delete,
+      content: p.post_content,
+      is_anonymous: !!p.anonymous,
+      created_at: p.post_created_at,
+      media_url: p.media_url,
+      media_type: p.media_type,
+      like_count: Number(p.like_count || 0),
+      liked_by_me: !!p.liked_by_me,
+      comments: Array.isArray(p.comments) ? p.comments : []
+    }));
+
+    const authorNames = {};
+
+    /* CR-only author lookup: identities are returned only to the CR RPC caller. */
+    if(currentUser.id === CR_USER_ID){
+      const {data:authors, error:authorError} = await db.rpc("cr_get_post_authors");
+      if(authorError) console.error("CR author lookup failed:", authorError.message);
+      else (authors||[]).forEach(a=>{ authorNames[a.post_id] = a.author_name; });
+    }
+
+    /* Only non-anonymous post IDs are present in author_id. */
+    const authorIds = [...new Set(posts.filter(p=>!p.is_anonymous && p.author_id).map(p=>p.author_id))];
+    if(authorIds.length){
+      const {data:profiles, error:profileError} = await db.from("profiles")
+        .select("id, display_name").in("id", authorIds);
+      if(!profileError) (profiles||[]).forEach(p=>{ authorNames[p.id] = p.display_name || "Student"; });
+    }
+
+    /* Likes and comments come from the privacy-safe feed RPC. */
+    const likeCounts = {}, myLikes = new Set(), commentMap = {};
+    posts.forEach(post=>{
+      likeCounts[post.id] = post.like_count;
+      if(post.liked_by_me) myLikes.add(post.id);
+      commentMap[post.id] = post.comments;
+    });
+
+    container.replaceChildren();
+    if(!posts.length){
+      container.appendChild(makeEmptyState("No community posts yet. Be the first to share!","i-users"));
+      return;
+    }
+    posts.forEach(post=>container.appendChild(buildPostCard(post, authorNames, likeCounts, myLikes, commentMap)));
+  }catch(error){
+    console.error("Community loading failed:", error);
+    container.replaceChildren(makeEmptyState("Could not load posts: "+error.message));
+  }
+};
+
+function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
+  const card = makeElement("div","post-card");
+  card.dataset.postId = post.id;
+  /* ===== HEADER ===== */
+  const header = makeElement("div","post-header");
+
+  if(post.is_anonymous){
+    const av = makeElement("div","anon-avatar");
+    av.innerHTML = `<svg class="ic"><use href="#i-user"/></svg>`;
+    header.appendChild(av);
+  } else {
+    const av = makeElement("div","post-avatar-fb", initials(authorNames[post.author_id] || "S"));
+    header.appendChild(av);
+  }
+
+  const authorBlock = makeElement("div","post-author");
+  const strong = makeElement("strong");
+
+  if(post.is_anonymous){
+    strong.textContent = (currentUser && currentUser.id === CR_USER_ID)
+      ? (authorNames[post.id] ? "Anonymous · Posted by "+authorNames[post.id] : "Anonymous · Author unavailable")
+      : "Anonymous";
+  } else {
+    strong.textContent = authorNames[post.author_id] || "Student";
+  }
+
+  // YOU badge
+  if(currentUser && post.is_mine){
+    const you = makeElement("span","cr-badge","YOU");
+    strong.appendChild(you);
+  }
+
+  authorBlock.appendChild(strong);
+  authorBlock.appendChild(makeElement("small","", post.created_at ? formatDate(post.created_at) : ""));
+  header.appendChild(authorBlock);
+
+  // Delete button (author or CR only)
+  if(currentUser && post.can_delete){
+    const delBtn = makeElement("button","post-action");
+    delBtn.style.marginLeft = "auto";
+    delBtn.innerHTML = `<svg class="ic ic-sm"><use href="#i-trash"/></svg>`;
+    delBtn.title = "Delete post";
+    delBtn.addEventListener("click", () => deletePost(post.id, card));
+    header.appendChild(delBtn);
+  }
+
+  card.appendChild(header);
+  
+  /* ===== CONTENT ===== */
+  card.appendChild(makeElement("div","post-content", post.content || ""));
+
+  if(post.media_url){
+    if(post.media_type === "image"){
+      const img = document.createElement("img");
+      img.src = safeUrl(post.media_url);
+      img.alt = "Post attachment";
+      img.className = "post-media";
+      img.loading = "lazy";
+      img.onerror = ()=>{ const note = makeElement("div","muted","[Image failed to load]"); img.replaceWith(note); };
+      card.appendChild(img);
+    } else {
+      const link = makeElement("a","link-btn","Open attachment");
+      link.href = safeUrl(post.media_url);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      card.appendChild(link);
+    }
+  }
+
+  /* ===== ACTIONS ===== */
+  const actions = makeElement("div","post-actions");
+  let likeCount = likeCounts[post.id] || 0;
+  let liked = myLikes.has(post.id);
+
+  // Like button (optimistic)
+  if(likesEnabled){
+    const likeBtn = makeElement("button","post-action" + (liked ? " liked" : ""));
+    likeBtn.innerHTML = `<svg class="ic ic-sm" style="${liked ? "fill:currentColor" : ""}"><use href="#i-heart"/></svg> <span class="like-count">${likeCount || "Like"}</span>`;
+    
+    likeBtn.addEventListener("click", async () => {
+      if(!currentUser) return;
+      
+      // Optimistic update
+      const wasLiked = liked;
+      liked = !liked;
+      likeCount += liked ? 1 : -1;
+      
+      likeBtn.classList.toggle("liked", liked);
+      const svg = likeBtn.querySelector("svg");
+      if(svg) svg.style.fill = liked ? "currentColor" : "none";
+      const countSpan = likeBtn.querySelector(".like-count");
+      if(countSpan) countSpan.textContent = likeCount > 0 ? likeCount : "Like";
+
+      try {
+        if(wasLiked){
+          const {error} = await db.from("post_likes")
+            .delete()
+            .eq("post_id", post.id)
+            .eq("user_id", currentUser.id);
+          if(error) throw error;
+        } else {
+          const {error} = await db.from("post_likes")
+            .insert({ post_id: post.id, user_id: currentUser.id });
+          if(error) throw error;
+        }
+      } catch(e) {
+        // Revert on error
+        liked = wasLiked;
+        likeCount += liked ? 1 : -1;
+        likeBtn.classList.toggle("liked", liked);
+        if(svg) svg.style.fill = liked ? "currentColor" : "none";
+        if(countSpan) countSpan.textContent = likeCount > 0 ? likeCount : "Like";
+        showToast("Like failed");
+      }
+    });
+    actions.appendChild(likeBtn);
+  }
+
+  // Comment button
+  if(commentsEnabled){
+    const cCount = (commentMap[post.id] || []).length;
+    const cBtn = makeElement("button","post-action");
+    cBtn.innerHTML = `<svg class="ic ic-sm"><use href="#i-chat"/></svg> <span class="comment-count">${cCount || "Comment"}</span>`;
+    cBtn.addEventListener("click", () => {
+      const list = card.querySelector(".comment-list");
+      if(list) list.style.display = list.style.display === "none" ? "block" : "none";
+    });
+    actions.appendChild(cBtn);
+  }
+
+  card.appendChild(actions);
+  
+  /* ===== COMMENTS ===== */
+  if(commentsEnabled){
+    const cWrap = makeElement("div","comment-list");
+    const list = makeElement("div");
+    list.className = "comment-items";
+
+    const comments = commentMap[post.id] || [];
+    comments.forEach(c => {
+      const item = makeElement("div","comment-item");
+      item.appendChild(makeElement("strong","", "Anonymous"));
+      item.appendChild(document.createTextNode("  " + c.content));
+      item.appendChild(makeElement("span","c-time", formatDate(c.created_at)));
+      list.appendChild(item);
+    });
+    cWrap.appendChild(list);
+
+    const compose = makeElement("div","comment-compose");
+    const input = document.createElement("input");
+    input.className = "field";
+    input.maxLength = 500;
+    input.placeholder = "Write an anonymous comment…";
+
+    const btn = makeButton("Post", async () => {
+      const text = input.value.trim();
+      if(!text || !currentUser) return;
+      btn.disabled = true;
+      try {
+        const {error} = await db.from("post_comments").insert({
+          post_id: post.id,
+          user_id: currentUser.id,
+          content: text
+        });
+        if(error) throw error;
+        input.value = "";
+        await window.loadCommunityPosts();
+      } catch(e) {
+        showToast("Could not post comment");
+      } finally {
+        btn.disabled = false;
+      }
+    }, "btn");
+
+    compose.append(input, btn);
+    cWrap.appendChild(compose);
+    card.appendChild(cWrap);
+  }
+
+  return card;
+}
+
+async function deletePost(postId, cardElement){
+  if(!currentUser) return;
+  if(!confirm("Delete this post permanently?")) return;
+
+  try {
+    // Child likes/comments are removed by the database's ON DELETE CASCADE.
+    const {data:deleted, error} = await db.from("community_posts").delete().eq("id", postId).select("id");
+    if(error) throw error;
+    if(!deleted || !deleted.length){ showToast("You do not have permission to delete this post"); return; }
+
+    // Optimistic removal
+    if(cardElement){
+      cardElement.style.transition = "opacity .25s, transform .25s";
+      cardElement.style.opacity = "0";
+      cardElement.style.transform = "scale(0.96)";
+      setTimeout(() => cardElement.remove(), 260);
+    } else {
+      await window.loadCommunityPosts();
+    }
+    showToast("Post deleted");
+  } catch(e) {
+    showToast("Could not delete post");
+    console.error(e);
+  }
+}
+
+window.publishCommunityPost = async function(){
+  if(!currentUser){ showToast("Please sign in first"); return; }
+  const contentBox = document.getElementById("postContent");
+  const anonymousBox = document.getElementById("anonymousPost");
+  const content = contentBox?.value.trim() || "";
+  const isAnonymous = anonymousBox?.checked || false;
+  if(!content){ setStatus("communityStatus","Please write something first.","error"); return; }
+  const btn = document.getElementById("publishPostBtn");
+  btn.disabled = true;
+  setStatus("communityStatus","Publishing…");
+  try{
+    const {error} = await db.from("community_posts").insert({
+      author_id: currentUser.id, content, is_anonymous: isAnonymous
+    });
+    if(error) throw error;
+    contentBox.value = "";
+    if(anonymousBox) anonymousBox.checked = false;
+    setStatus("communityStatus","Post published.","success");
+    await window.loadCommunityPosts();
+  }catch(error){
+    setStatus("communityStatus","Could not publish post: "+error.message,"error");
+  }finally{ btn.disabled = false; }
+};
+/* ================= REALTIME ================= */
+async function refreshActivePDFViews(){
+  if(currentPage==="notes" && selectedNoteSubject) await loadCategorizedNotePDFs();
+  if(currentPage==="pdfs"){
+    if(selectedTestFolder) await loadTestFolderPDFs();
+    else if(selectedTestCategory) await loadTestFolders();
+  }
+}
+function subscribeToNotices(){
+  const channel = db.channel("classhub-notices")
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"notices"}, payload=>{
+      const notice = payload.new || {};
+      if(notice.id === lastNoticeId) return;
+      lastNoticeId = notice.id;
+      if(currentPage !== "notices" || document.hidden){
+        unreadNotices++;
+        updateBellBadge();
+        showNoticeToast(notice.title, notice.content);
+        if(document.hidden && "Notification" in window && Notification.permission==="granted"){
+          try{ new Notification(notice.title||"New class notice",{body:(notice.content||"").slice(0,140)}); }catch(e){}
+        }
+      }
+      if(currentPage === "notices") loadNotices();
+    })
+    .subscribe(status=>{
+      const conn = document.getElementById("connectionStatus");
+      const dot = document.getElementById("connDot");
+      if(status === "SUBSCRIBED"){ conn.textContent = "Connected"; dot.classList.remove("off"); }
+      else { conn.textContent = "Reconnecting…"; dot.classList.add("off"); }
+    });
+  realtimeChannels.push(channel);
+}
+const contentTimers = {};
+function subscribeToContent(){
+  ["photos","pdfs"].forEach(tableName=>{
+    const channel = db.channel("classhub-"+tableName)
+      .on("postgres_changes",{event:"*",schema:"public",table:tableName},()=>{
+        clearTimeout(contentTimers[tableName]);
+        contentTimers[tableName] = setTimeout(()=>{
+          if(tableName==="photos" && currentPage==="photos") renderCaseStudiesView();
+          if(tableName==="pdfs") refreshActivePDFViews();
+        }, 600);
+      })
+      .subscribe();
+    realtimeChannels.push(channel);
+  });
+}
+
+function subscribeToChat(){
+  const channel = db.channel("classhub-chat")
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_messages"}, payload=>{
+      if(currentPage==="chat" && payload.new){
+        const box = document.getElementById("chatMessages");
+        if(box && !box.querySelector(".empty")) renderChatMessage(payload.new);
+        else loadChatMessages();
+      }
+    })
+    .subscribe();
+  realtimeChannels.push(channel);
+}
+
+let communityReloadTimer = null;
+function scheduleCommunityReload(delay=400){
+  clearTimeout(communityReloadTimer);
+  communityReloadTimer = setTimeout(()=>{ if(currentPage==="community") window.loadCommunityPosts(); }, delay);
+}
+function subscribeToCommunity(){
+  // Real-time likes
+  const likesChannel = db.channel("classhub-likes")
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "post_likes"
+    }, () => {
+      scheduleCommunityReload();
+    })
+    .subscribe();
+
+  // Real-time comments
+  const commentsChannel = db.channel("classhub-comments")
+    .on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "post_comments"
+    }, () => {
+      scheduleCommunityReload();
+    })
+    .subscribe();
+
+  // Do not subscribe to community_posts row payloads here.
+  // Realtime row payloads can include author_id, which must remain private
+  // for anonymous posts. Publishing/deleting still refreshes the current
+  // user's feed directly; likes/comments continue to update in realtime.
+  realtimeChannels.push(likesChannel, commentsChannel);
+}
+
+/* ================= STARTUP ================= */
+async function initialiseClassHub(){
+  document.addEventListener("click", function primeAlerts(){
+    try{
+      if(!noticeSoundContext){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(AC) noticeSoundContext = new AC();
+      }
+      if(noticeSoundContext && noticeSoundContext.state==="suspended") noticeSoundContext.resume();
+    }catch(e){}
+  }, {once:true});
+  try{
+    const {error} = await db.from("notices").select("id").limit(1);
+    const conn = document.getElementById("connectionStatus");
+    if(error){ conn.textContent = "Connection issue"; document.getElementById("connDot").classList.add("off"); }
+    else conn.textContent = "Connected";
+  }catch(error){
+    document.getElementById("connectionStatus").textContent = "Offline";
+    document.getElementById("connDot").classList.add("off");
+  }
+  const sndTgl = document.getElementById("noticeSoundToggle");
+  if(sndTgl) sndTgl.checked = localStorage.getItem("classhub_notice_sound")!=="0";
+  subscribeToNotices();
+  subscribeToContent();
+  subscribeToChat();
+  subscribeToCommunity();
+  renderNotesView();
+  renderTestPapersView();
+  renderCaseStudiesView();
+  loadNotices();
+  loadChatMessages();
+}
+initialiseClassHub();
+
+
+/* ================= ACCOUNTS DIRECTORY ================= */
+async function loadAccountsDirectory(){
+  const grid = document.getElementById("accountsGrid");
+  const status = document.getElementById("accountsStatus");
+  if(!grid || !status) return;
+  if(!currentUser){
+    accountDirectory = [];
+    grid.replaceChildren();
+    const gate = makeElement("div","panel empty account-empty","Sign in with Google to browse profiles shared with ClassHub members.");
+    gate.appendChild(makeButton("Continue with Google",signInWithGoogle,"btn"));
+    grid.appendChild(gate);
+    setStatus("accountsStatus","");
+    return;
+  }
+  const requestVersion = ++accountsRequestVersion;
+  setStatus("accountsStatus","Loading accounts…");
+  grid.replaceChildren();
+  grid.appendChild(makeElement("div","panel empty account-empty","Loading classmates…"));
+  try{
+    const {data,error} = await db.from("profiles")
+      .select("id, display_name, avatar_url, bio, status")
+      .order("display_name",{ascending:true});
+    if(error) throw error;
+    if(requestVersion !== accountsRequestVersion) return;
+
+    // Only the designated CR may retrieve account email addresses.
+    // Emails come from auth.users through a server-side, CR-guarded RPC;
+    // they are never selected from a public profile table.
+    const emailByUserId = {};
+    if(currentUser.id === CR_USER_ID){
+      const {data:emailRows,error:emailError} = await db.rpc("cr_get_account_emails");
+      if(emailError) throw emailError;
+      (emailRows||[]).forEach(row=>{ emailByUserId[row.user_id] = row.email || ""; });
+    }
+
+    accountDirectory = (data||[]).map(p=>({
+      id:p.id,
+      display_name:(p.display_name||"ClassHub student").trim()||"ClassHub student",
+      avatar_url:p.avatar_url||"",
+      bio:p.bio||"",
+      status:p.status||"",
+      email: currentUser.id === CR_USER_ID ? (emailByUserId[p.id] || "") : ""
+    }));
+    setStatus("accountsStatus",`${accountDirectory.length} account${accountDirectory.length===1?"":"s"}`);
+    renderAccountsDirectory();
+  }catch(error){
+    if(requestVersion !== accountsRequestVersion) return;
+    accountDirectory = [];
+    grid.replaceChildren(makeElement("div","panel empty account-empty","Could not load accounts. Check the profiles SELECT policy for authenticated users."));
+    setStatus("accountsStatus",error.message||"Could not load accounts.","error");
+    console.error("Accounts directory:",error);
+  }
+}
+function renderAccountsDirectory(){
+  const grid = document.getElementById("accountsGrid");
+  if(!grid) return;
+  const query = (document.getElementById("accountSearch")?.value||"").trim().toLowerCase();
+  const matches = accountDirectory.filter(p=>[
+    p.display_name,p.status,p.bio,
+    currentUser && currentUser.id === CR_USER_ID ? p.email : ""
+  ].some(value=>(value||"").toLowerCase().includes(query)));
+  grid.replaceChildren();
+  if(!matches.length){
+    grid.appendChild(makeElement("div","panel empty account-empty",query ? "No classmates match your search." : "No ClassHub profiles found yet."));
+    return;
+  }
+  matches.forEach(p=>{
+    const card = makeElement("article","account-card");
+    const head = makeElement("div","account-card-head");
+    const avatarWrap = makeElement("div","account-avatar-wrap");
+    const fallback = makeElement("div","account-avatar-fb",initials(p.display_name));
+    const avatar = document.createElement("img");
+    avatar.className = "account-avatar";
+    avatar.alt = p.display_name + " profile photo";
+    avatar.loading = "lazy";
+    if(p.avatar_url){
+      avatar.src = p.avatar_url;
+      fallback.style.display = "none";
+      avatar.addEventListener("error",()=>{ avatar.style.display="none"; fallback.style.display="grid"; },{once:true});
+    }else{
+      avatar.style.display = "none";
+    }
+    avatarWrap.append(avatar,fallback);
+    const identity = makeElement("div");
+    identity.style.minWidth = "0";
+    identity.appendChild(makeElement("h3","account-name",p.display_name));
+    if(p.status) identity.appendChild(makeElement("div","account-status",p.status));
+    head.append(avatarWrap,identity);
+    card.appendChild(head);
+    if(currentUser && currentUser.id === CR_USER_ID){
+      card.appendChild(makeElement("p","account-email",p.email || "Gmail unavailable"));
+    }
+    if(p.bio) card.appendChild(makeElement("p","account-bio",p.bio));
+    if(currentUser && currentUser.id === p.id){
+      card.appendChild(makeButton("Edit my profile",()=>openSection("profile"),"btn secondary"));
+    }
+    grid.appendChild(card);
+  });
+}
+/* ===== CLASSHUB OCR PATCH ===== */
+
+const OCR_LANGS = "eng";          /* "eng+hin" or "eng+san" for Devanagari books (slower) */
+const OCR_WIDTH = 1800;           /* lower = faster, higher = more accurate */
+const OCR_MIN_TEXT_CHARS = 25;    /* pages with less text than this get OCR */
+
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js";
+    s.onload = res;
+    s.onerror = ()=>rej(new Error("OCR engine failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+const OCR_LANG_PATH = "https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0_best";
+let ocrBestFailed = false;
+
+function cleanOcrText(t){
+  return (t || "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFD]/g, "")
+    .replace(/(\w)-[ \t]*\n[ \t]*(\w)/g, "$1$2")      /* join words split across lines */
+    .replace(/[.\u00B7\u2022_]{4,}/g, " ")             /* dotted leader lines */
+    .replace(/(?:\s[oO\u00B0\u2022\u00B7.:;_-]){3,}/g, " ")  /* leaders read as o o o */
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function ocrPreprocess(canvas){
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = img.data;
+  const hist = new Uint32Array(256);
+  for(let i=0;i<d.length;i+=4){
+    const g = (d[i]*299 + d[i+1]*587 + d[i+2]*114) / 1000 | 0;
+    d[i] = d[i+1] = d[i+2] = g;
+    hist[g]++;
+  }
+  const total = d.length / 4;
+  let acc = 0, lo = 0, hi = 255;
+  for(let v=0; v<256; v++){ acc += hist[v]; if(acc >= total*0.005){ lo = v; break; } }
+  acc = 0;
+  for(let v=255; v>=0; v--){ acc += hist[v]; if(acc >= total*0.25){ hi = v; break; } }
+  if(hi - lo > 40){
+    const lut = new Uint8Array(256);
+    for(let v=0; v<256; v++) lut[v] = Math.max(0, Math.min(255, (v-lo) * 255 / (hi-lo)));
+    for(let i=0;i<d.length;i+=4){ const g = lut[d[i]]; d[i] = d[i+1] = d[i+2] = g; }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+async function makeOcrWorker(){
+  if(!ocrBestFailed){
+    try{
+      return await Tesseract.createWorker(OCR_LANGS, 1, {langPath: OCR_LANG_PATH});
+    }catch(e){
+      ocrBestFailed = true;
+      console.warn("High-accuracy OCR data unavailable, using default:", e && e.message);
+    }
+  }
+  return Tesseract.createWorker(OCR_LANGS, 1);
+}
+
+async function ocrPages(pdf, pages, texts, onProgress){
+  await loadTesseract();
+  const workers = Math.max(2, Math.min(3, (navigator.hardwareConcurrency||4) - 1));
+  const scheduler = Tesseract.createScheduler();
+  try{
+    if(onProgress) onProgress("Starting OCR engine… (first time downloads language data)");
+    for(let k=0;k<workers;k++){
+      scheduler.addWorker(await makeOcrWorker());
+    }
+    const t0 = performance.now();
+    let done = 0, next = 0, failed = 0;
+    async function lane(){
+      while(true){
+        const idx = next++;
+        if(idx >= pages.length) return;
+        const num = pages[idx];
+        let page = null, canvas = null;
+        try{
+          page = await pdf.getPage(num);
+          const base = page.getViewport({scale:1});
+          const vp = page.getViewport({scale: OCR_WIDTH / base.width});
+          canvas = document.createElement("canvas");
+          canvas.width = Math.floor(vp.width);
+          canvas.height = Math.floor(vp.height);
+          const ctx = canvas.getContext("2d", {willReadFrequently:true});
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({canvasContext:ctx, viewport:vp}).promise;
+          ocrPreprocess(canvas);
+          const {data} = await scheduler.addJob("recognize", canvas);
+          texts[num-1] = cleanOcrText(data.text);
+        }catch(e){
+          failed++;
+          console.error("OCR failed on page", num, e && e.message);
+        }finally{
+          if(canvas) canvas.width = canvas.height = 0;
+          if(page) page.cleanup();
+        }
+        done++;
+        if(onProgress){
+          const rate = done / Math.max(1, (performance.now()-t0)/1000);
+          onProgress(`OCR… ${done} of ${pages.length} scanned pages (${rate.toFixed(2)} pages/sec)` + (failed ? `, ${failed} failed` : ""));
+        }
+      }
+    }
+    await Promise.all(Array.from({length: workers+1}, lane));
+  }finally{
+    try{ await scheduler.terminate(); }catch(e){}
+  }
+}
+
+async function extractPdfText(file, onProgress){
+  if(!window.pdfjsLib) return null;
+  let pdf = null;
+  try{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const buffer = await file.arrayBuffer();
+    pdf = await pdfjsLib.getDocument({data:buffer}).promise;
+    const total = Math.min(pdf.numPages, PDF_TEXT_MAX_PAGES);
+    const texts = new Array(total).fill("");
+    const needOcr = [];
+
+    /* pass 1: fast text read; remember pages that have no text */
+    for(let i=1;i<=total;i++){
+      try{
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map(it=>it.str).join(" ").replace(/\s+/g," ").trim();
+        if(text.length >= OCR_MIN_TEXT_CHARS) texts[i-1] = text; else needOcr.push(i);
+        page.cleanup();
+      }catch(e){
+        console.error("Text read failed on page", i, e && e.message);
+        needOcr.push(i);
+      }
+      if(onProgress && (i % 20 === 0 || i === total)) onProgress(`Reading book… page ${i} of ${total}`);
+    }
+
+    /* pass 2: OCR only the scanned pages */
+    if(needOcr.length){
+      try{ await ocrPages(pdf, needOcr, texts, onProgress); }
+      catch(e){ console.error("OCR failed:", e && e.message); }
+    }
+
+    const parts = [];
+    let length = 0;
+    for(let i=0;i<total;i++){
+      const chunk = `\n[[PAGE ${i+1}]]\n${texts[i]}\n`;
+      parts.push(chunk);
+      length += chunk.length;
+      if(length >= PDF_TEXT_MAX_CHARS) break;
+    }
+    return parts.join("").slice(0, PDF_TEXT_MAX_CHARS);
+  }catch(e){
+    console.error("Text extraction failed:", e && e.message);
+    return null;
+  }finally{
+    try{ if(pdf) await pdf.destroy(); }catch(e){}
+  }
+}
+
+/* ===== END OCR PATCH ===== */
+
+</script>
+</body>
+</html>
