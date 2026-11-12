@@ -21,11 +21,12 @@
   --panel-hover:rgba(31,45,76,.75);
   --text:#f2f6ff;
   --muted:#93a5c8;
-  --muted2:#5c6f92;
+  --muted2:#7c8fb5;
   --accent:#7c9aff;
   --accent2:#a78bfa;
   --accent3:#5eead4;
   --grad:linear-gradient(135deg,#6d8dff 0%,#8b7cf6 52%,#c084fc 100%);
+  --grad-strong:linear-gradient(135deg,#4a63e8 0%,#6b4fd8 55%,#7a4fe0 100%);
   --grad-soft:linear-gradient(135deg,rgba(109,141,255,.16),rgba(192,132,252,.12));
   --accent-soft:rgba(124,154,255,.15);
   --green:#5eead4;
@@ -50,13 +51,14 @@
   --panel-hover:rgba(238,243,252,.95);
   --text:#101a30;
   --muted:#52648a;
-  --muted2:#8b9abc;
-  --accent:#4f6df0;
-  --accent2:#8b5cf6;
+  --muted2:#566687;
+  --accent:#3f57d6;
+  --accent2:#6d3fd1;
   --accent3:#0d9488;
-  --grad:linear-gradient(135deg,#4f6df0 0%,#7c5cf0 52%,#a855f7 100%);
-  --grad-soft:linear-gradient(135deg,rgba(79,109,240,.1),rgba(168,85,247,.08));
-  --accent-soft:rgba(79,109,240,.11);
+  --grad:linear-gradient(135deg,#3f57d6 0%,#5b4bd8 52%,#7c3aed 100%);
+  --grad-strong:linear-gradient(135deg,#3f57d6 0%,#5b3fc7 55%,#6d3fd1 100%);
+  --grad-soft:linear-gradient(135deg,rgba(63,87,214,.1),rgba(109,63,209,.08));
+  --accent-soft:rgba(63,87,214,.12);
   --green:#0d9f6e;
   --green-soft:rgba(13,159,110,.1);
   --red:#dc3a5c;
@@ -79,6 +81,8 @@ body{
     var(--bg);
   background-attachment:fixed;
   font-family:Inter,system-ui,-apple-system,sans-serif;
+  font-size:15px;
+  line-height:1.5;
   -webkit-font-smoothing:antialiased;
   transition:background .3s,color .3s;
 }
@@ -126,7 +130,7 @@ h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.025em}
 .brand{display:flex;align-items:center;gap:10px;font-family:"Space Grotesk";font-weight:700;font-size:20px;letter-spacing:-.5px;user-select:none}
 .brand-mark{
   width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
-  background:var(--grad);color:#fff;position:relative;
+  background:var(--grad-strong);color:#fff;position:relative;
   box-shadow:var(--glow), inset 0 1px 0 rgba(255,255,255,.35);
 }
 .brand-mark .ic{width:19px;height:19px;stroke-width:2.2;position:relative;z-index:1}
@@ -142,20 +146,20 @@ h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.025em}
 .status-dot.off{background:var(--red);box-shadow:0 0 10px var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .icon-btn{
-  position:relative;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  position:relative;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
   color:var(--muted);border:1px solid transparent;transition:.18s;
 }
 .icon-btn:hover{background:var(--panel2);color:var(--text);border-color:var(--border);transform:translateY(-1px)}
 .badge{
   position:absolute;top:3px;right:3px;min-width:17px;height:17px;padding:0 4px;
-  border-radius:99px;background:var(--grad);color:#fff;font-size:10px;font-weight:800;
+  border-radius:99px;background:var(--grad-strong);color:#fff;font-size:10px;font-weight:800;
   display:grid;place-items:center;line-height:1;box-shadow:0 3px 10px rgba(124,154,255,.5);
 }
-.avatar-btn{width:37px;height:37px;border-radius:50%;overflow:hidden;border:2px solid transparent;padding:0;transition:.18s;
+.avatar-btn{width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid transparent;padding:0;transition:.18s;
   background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--grad) border-box;}
 .avatar-btn:hover{transform:scale(1.06);box-shadow:var(--glow)}
 .avatar-btn img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar-fallback{width:100%;height:100%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:14px}
+.avatar-fallback{width:100%;height:100%;display:grid;place-items:center;background:var(--grad-strong);color:#fff;font-weight:800;font-size:14px}
 
 /* ---------- SHELL / SIDEBAR ---------- */
 .app-shell{display:flex;min-height:calc(100vh - var(--topbar-h));position:relative;z-index:1}
@@ -169,7 +173,7 @@ h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.025em}
 .side-link{
   display:flex;align-items:center;gap:12px;width:100%;text-align:left;
   padding:10.5px 12px;border-radius:13px;color:var(--muted);
-  font-size:13.5px;font-weight:600;transition:.16s;margin-bottom:3px;position:relative;
+  font-size:14px;font-weight:600;transition:.16s;margin-bottom:3px;position:relative;
 }
 .side-link:hover{background:var(--panel2);color:var(--text);transform:translateX(2px)}
 .side-link.active{
@@ -188,10 +192,10 @@ main{flex:1;min-width:0;max-width:860px;margin:0 auto;padding:20px 16px calc(var
 .page{display:none;animation:appear .3s cubic-bezier(.2,.8,.2,1)}
 .page.active{display:block}
 @keyframes appear{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:none}}
-.eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px;
-  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px;
+  color:var(--accent)}
 .page-title{font-size:clamp(24px,3.6vw,31px);margin:0 0 6px;font-weight:700}
-.page-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;line-height:1.6}
+.page-sub{color:var(--muted);font-size:14.5px;margin:0 0 20px;line-height:1.6}
 .section-head{margin-bottom:24px}
 .back-btn{
   display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;
@@ -210,7 +214,7 @@ main{flex:1;min-width:0;max-width:860px;margin:0 auto;padding:20px 16px calc(var
 }
 .panel:hover{border-color:var(--border-strong)}
 .panel-title{font-size:15.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:700}
-.muted{color:var(--muted);font-size:13px;line-height:1.55}
+.muted{color:var(--muted);font-size:13.5px;line-height:1.55}
 
 /* ---------- HOME ---------- */
 .hero{
@@ -236,8 +240,8 @@ main{flex:1;min-width:0;max-width:860px;margin:0 auto;padding:20px 16px calc(var
 .hero p{margin:0;color:var(--muted);font-size:13.5px;position:relative}
 .hero .hero-cta{
   position:relative;display:inline-flex;align-items:center;gap:8px;margin-top:18px;
-  padding:11px 20px;border-radius:99px;font-weight:700;font-size:13.5px;color:#fff;
-  background:var(--grad);box-shadow:0 10px 26px -8px rgba(124,124,255,.65);
+  padding:11px 20px;border-radius:99px;font-weight:700;font-size:14px;color:#fff;
+  background:var(--grad-strong);box-shadow:0 10px 26px -8px rgba(74,99,232,.55);
   transition:.18s;text-decoration:none;
 }
 .hero .hero-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px -8px rgba(124,124,255,.8)}
@@ -266,12 +270,12 @@ button.hero-cta{border:0;cursor:pointer;font:inherit}
 .quick-card:active{transform:translateY(-1px) scale(.98)}
 .quick-icon{
   width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;
-  background:var(--grad);box-shadow:0 8px 20px -6px rgba(124,124,255,.6), inset 0 1px 0 rgba(255,255,255,.35);
+  background:var(--grad-strong);box-shadow:0 8px 20px -6px rgba(74,99,232,.55), inset 0 1px 0 rgba(255,255,255,.35);
   transition:.2s;
 }
 .quick-card:hover .quick-icon{transform:rotate(-6deg) scale(1.07)}
-.quick-card strong{font-size:14.5px;font-weight:700}
-.quick-card small{color:var(--muted);font-size:12px;line-height:1.45}
+.quick-card strong{font-size:15px;font-weight:700}
+.quick-card small{color:var(--muted);font-size:12.5px;line-height:1.45}
 
 /* ---------- OPTION / SUBJECT CARDS ---------- */
 .option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
@@ -289,7 +293,7 @@ button.hero-cta{border:0;cursor:pointer;font:inherit}
 .field{
   width:100%;background:var(--bg-soft);border:1px solid var(--border);
   border-radius:var(--r-sm);padding:12px 14px;outline:none;margin:5px 0;
-  transition:border-color .18s, box-shadow .18s, background .18s;font-size:14px;
+  transition:border-color .18s, box-shadow .18s, background .18s;font-size:15px;
   backdrop-filter:blur(8px);
 }
 .field::placeholder{color:var(--muted2)}
@@ -299,9 +303,9 @@ textarea.field{resize:vertical;min-height:90px}
 label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:9px 0 2px}
 .btn{
   position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  border-radius:var(--r-sm);background:var(--grad);color:#fff;
+  border-radius:var(--r-sm);background:var(--grad-strong);color:#fff;
   font-weight:700;padding:12px 19px;transition:.18s;font-size:14px;
-  box-shadow:0 10px 24px -8px rgba(124,124,255,.55), inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow:0 10px 24px -8px rgba(74,99,232,.5), inset 0 1px 0 rgba(255,255,255,.25);
 }
 .btn::after{
   content:"";position:absolute;inset:0;
@@ -332,18 +336,18 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 .item:last-child{border-bottom:0}
 .item-icon{
   width:42px;height:42px;border-radius:12px;color:#fff;
-  background:var(--grad);display:grid;place-items:center;flex-shrink:0;
-  box-shadow:0 6px 16px -6px rgba(124,124,255,.6);
+  background:var(--grad-strong);display:grid;place-items:center;flex-shrink:0;
+  box-shadow:0 6px 16px -6px rgba(74,99,232,.55);
 }
 .item-info{min-width:0;flex:1}
-.item-info strong{display:block;overflow-wrap:anywhere;font-size:13.5px}
-.item-info small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.item-info strong{display:block;overflow-wrap:anywhere;font-size:14px}
+.item-info small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
 .link-btn{
   display:inline-flex;align-items:center;gap:5px;text-decoration:none;
   background:var(--grad-soft);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-  padding:8px 14px;border-radius:99px;font-size:12.5px;font-weight:700;transition:.16s;white-space:nowrap;
+  padding:9px 15px;border-radius:99px;font-size:13px;font-weight:700;transition:.16s;white-space:nowrap;
 }
-.link-btn:hover{background:var(--grad);color:#fff;box-shadow:0 8px 18px -6px rgba(124,124,255,.7)}
+.link-btn:hover{background:var(--grad-strong);color:#fff;box-shadow:0 8px 18px -6px rgba(74,99,232,.6)}
 .empty{text-align:center;color:var(--muted);padding:28px 10px;font-size:13px}
 .empty .ic{width:30px;height:30px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
 
@@ -371,14 +375,13 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 .chat-bubble{
   display:inline-block;text-align:left;padding:10.5px 15px;border-radius:16px;
   background:var(--panel2);border:1px solid var(--border);
-  overflow-wrap:anywhere;white-space:pre-wrap;font-size:13.5px;line-height:1.5;
+  overflow-wrap:anywhere;white-space:pre-wrap;font-size:14.5px;line-height:1.5;
 }
 .chat-message.mine .chat-bubble{
-  background:var(--grad);color:#fff;border:0;font-weight:500;
-  box-shadow:0 8px 20px -8px rgba(124,124,255,.7);border-bottom-right-radius:5px;
+  background:var(--grad-strong);color:#fff;border:0;font-weight:500;
+  box-shadow:0 8px 20px -8px rgba(74,99,232,.55);border-bottom-right-radius:5px;
 }
-.chat-name{font-size:11px;font-weight:700;margin-bottom:4px;background:var(--grad);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+.chat-name{font-size:11.5px;font-weight:700;margin-bottom:4px;color:var(--accent)}
 .chat-time{font-size:10px;color:var(--muted2);margin-top:4px}
 .chat-compose{display:flex;gap:8px;align-items:center;position:sticky;bottom:calc(var(--nav-h) + 8px)}
 @media(min-width:960px){.chat-compose{bottom:12px}}
@@ -394,28 +397,28 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 .post-card:hover{border-color:var(--border-strong)}
 .post-header{display:flex;align-items:center;gap:11px;margin-bottom:11px}
 .post-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--panel2);border:1px solid var(--border);flex-shrink:0}
-.post-avatar-fb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:14px;flex-shrink:0;
-  box-shadow:0 6px 14px -5px rgba(124,124,255,.6)}
+.post-avatar-fb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--grad-strong);color:#fff;font-weight:800;font-size:14px;flex-shrink:0;
+  box-shadow:0 6px 14px -5px rgba(74,99,232,.55)}
 .anon-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--bg-soft);color:var(--muted);flex-shrink:0}
 .post-author{flex:1;min-width:0;overflow-wrap:anywhere}
 .post-author strong{display:block;font-size:13.5px}
 .post-author small{display:block;color:var(--muted2);font-size:11px;margin-top:2px}
 .anon-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--amber);background:rgba(252,211,77,.12);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
-.cr-badge{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--grad);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
-.post-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:6px 0;font-size:14px}
+.cr-badge{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--grad-strong);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.post-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;margin:6px 0;font-size:15px}
 .post-media{max-width:100%;border-radius:14px;margin:8px 0;border:1px solid var(--border)}
 .post-actions{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);margin-top:12px}
 .post-action{
   display:inline-flex;align-items:center;gap:6px;
   background:rgba(255,255,255,.03);color:var(--muted);border:1px solid var(--border);
-  border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:700;transition:.16s;
+  border-radius:99px;padding:8px 14px;font-size:13px;font-weight:700;transition:.16s;min-height:40px;
 }
 .post-action:hover{color:var(--text);border-color:var(--border-strong);transform:translateY(-1px)}
 .post-action.liked{color:var(--red);border-color:color-mix(in srgb, var(--red) 45%, transparent);background:var(--red-soft)}
 .comment-list{margin-top:12px;border-top:1px dashed var(--border);padding-top:8px}
 .comment-item{padding:8px 0;font-size:13px;overflow-wrap:anywhere;border-bottom:1px solid var(--border)}
 .comment-item:last-child{border-bottom:0}
-.comment-item strong{font-size:12.5px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.comment-item strong{font-size:12.5px;color:var(--accent)}
 .comment-item .c-time{display:block;font-size:10.5px;color:var(--muted2);margin-top:2px}
 .comment-compose{display:flex;gap:7px;margin-top:10px}
 .comment-compose input{flex:1;min-width:0;margin:0;padding:9px 12px;font-size:13px}
@@ -426,7 +429,7 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 .profile-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--panel2);
   border:3px solid transparent;padding:0;
   background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--grad) border-box;}
-.profile-avatar-fb{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:24px;
+.profile-avatar-fb{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--grad-strong);color:#fff;font-weight:800;font-size:24px;
   border:3px solid transparent;box-shadow:var(--glow)}
 .privacy-row{display:flex;gap:10px;align-items:center;margin:12px 0;color:var(--muted);font-size:13px;cursor:pointer;user-select:none}
 .privacy-row input{width:17px;height:17px;accent-color:var(--accent)}
@@ -478,7 +481,7 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 @media(min-width:960px){.bottom-nav{display:none}}
 .nav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  color:var(--muted);border-radius:13px;font-size:10.5px;font-weight:600;transition:.16s;max-width:86px;
+  color:var(--muted);border-radius:13px;font-size:11px;font-weight:600;transition:.16s;max-width:86px;min-height:48px;
 }
 .nav-btn .ic{width:21px;height:21px}
 .nav-btn.active{color:var(--text);background:var(--grad-soft);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent)}
@@ -487,14 +490,14 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 /* ---------- TOASTS ---------- */
 #toast{
   position:fixed;left:50%;bottom:calc(var(--nav-h) + 22px);transform:translateX(-50%) translateY(10px);
-  background:var(--grad);color:#fff;padding:13px 20px;border-radius:14px;
-  z-index:60;max-width:90%;font-size:13px;font-weight:700;display:none;
-  box-shadow:0 16px 40px -10px rgba(124,124,255,.7);opacity:0;transition:.22s;
+  background:var(--grad-strong);color:#fff;padding:13px 20px;border-radius:14px;
+  z-index:120;max-width:90%;font-size:13px;font-weight:700;display:none;
+  box-shadow:0 16px 40px -10px rgba(74,99,232,.6);opacity:0;transition:.22s;
 }
 @media(min-width:960px){#toast{bottom:26px}}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #noticeToast{
-  position:fixed;left:12px;right:12px;top:calc(var(--topbar-h) + 10px);z-index:55;
+  position:fixed;left:12px;right:12px;top:calc(var(--topbar-h) + 10px);z-index:110;
   background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--r-lg);
   padding:16px;display:none;box-shadow:var(--shadow);animation:slideDown .28s cubic-bezier(.2,.9,.3,1.2);
   max-width:420px;margin:0 auto;backdrop-filter:blur(16px);
@@ -503,7 +506,7 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 #noticeToast .nt-head{display:flex;align-items:center;gap:8px;color:var(--amber);font-weight:800;font-size:13px;margin-bottom:5px}
 #noticeToast p{font-size:13px;margin:0 0 12px;color:var(--muted);white-space:pre-wrap}
 
-.status{font-size:12.5px;min-height:18px;color:var(--muted);margin:7px 0}
+.status{font-size:13px;min-height:18px;color:var(--muted);margin:7px 0}
 .status.error{color:var(--red)}
 .status.success{color:var(--green)}
 .file-label{
@@ -539,8 +542,8 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 .hit-snippet{flex:1;min-width:0;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
 .hit-page{
   flex-shrink:0;min-width:36px;text-align:center;color:#fff;
-  background:var(--grad);border-radius:10px;padding:5px 8px;
-  box-shadow:0 5px 14px -5px rgba(124,124,255,.6);
+  background:var(--grad-strong);border-radius:10px;padding:5px 8px;
+  box-shadow:0 5px 14px -5px rgba(74,99,232,.55);
 }
 .hit-page small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.75);text-transform:uppercase}
 .hit-page b{font-size:15px}
@@ -571,14 +574,14 @@ mark.hl-text{background:rgba(252,211,77,.3);color:var(--amber);border-radius:3px
   border-top:1px solid var(--border);background:var(--panel);backdrop-filter:blur(14px);
 }
 .pv-btn{
-  min-width:40px;height:40px;padding:0 12px;border-radius:12px;
+  min-width:44px;height:44px;padding:0 12px;border-radius:12px;
   border:1px solid var(--border-strong);background:var(--panel2);color:var(--text);
   font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:.15s;
 }
 .pv-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);box-shadow:var(--glow)}
 .pv-page-input{
-  width:56px;height:40px;text-align:center;border-radius:12px;
-  background:var(--bg-soft);border:1px solid var(--border);outline:none;font-size:14px;font-weight:700;
+  width:58px;height:44px;text-align:center;border-radius:12px;
+  background:var(--bg-soft);border:1px solid var(--border);outline:none;font-size:15px;font-weight:700;
 }
 .pv-page-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .pv-total{font-size:13px;color:var(--muted);font-weight:600}
@@ -606,9 +609,9 @@ mark.hl-text{background:rgba(252,211,77,.3);color:var(--amber);border-radius:3px
 .account-card-head{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:12px}
 .account-avatar-wrap{width:54px;height:54px;flex:0 0 54px;position:relative}
 .account-avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid var(--border-strong);background:var(--panel2);display:block}
-.account-avatar-fb{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:18px;border:2px solid transparent;box-shadow:0 8px 18px -6px rgba(124,124,255,.6)}
+.account-avatar-fb{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--grad-strong);color:#fff;font-weight:800;font-size:18px;border:2px solid transparent;box-shadow:0 8px 18px -6px rgba(74,99,232,.55)}
 .account-name{font-size:14px;font-weight:800;overflow-wrap:anywhere;margin:0 0 4px}
-.account-status{font-size:12px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.4;overflow-wrap:anywhere;font-weight:600}
+.account-status{font-size:12px;color:var(--accent);line-height:1.4;overflow-wrap:anywhere;font-weight:600}
 .account-email{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin:0 0 9px}
 .account-bio{font-size:12.5px;line-height:1.55;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
 .account-empty{grid-column:1/-1}
@@ -616,6 +619,72 @@ mark.hl-text{background:rgba(252,211,77,.3);color:var(--amber);border-radius:3px
 /* classhub-fix1 */
 .item-actions{display:flex;gap:8px;flex-shrink:0}
 body.chat-open .bottom-nav{display:none !important}
+
+/* ---------- MORE SHEET (mobile) ---------- */
+.more-sheet{
+  position:fixed;inset:0;z-index:95;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(3,7,18,.62);backdrop-filter:blur(4px);
+}
+.more-sheet.open{display:flex}
+.more-panel{
+  width:100%;max-width:520px;background:var(--panel);border:1px solid var(--border-strong);
+  border-bottom:0;border-radius:24px 24px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:var(--shadow);backdrop-filter:blur(18px);animation:sheetUp .24s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes sheetUp{from{opacity:.5;transform:translateY(22px)}to{opacity:1;transform:none}}
+.more-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.more-title{font-size:16px;font-weight:700;margin:0}
+.more-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.more-item{
+  display:flex;align-items:center;gap:10px;min-height:50px;padding:12px;
+  border:1px solid var(--border);border-radius:14px;background:var(--bg-soft);
+  color:var(--text);font-size:13.5px;font-weight:600;text-align:left;transition:.16s;
+}
+.more-item:hover{border-color:var(--accent);background:var(--panel-hover)}
+.more-item .ic{color:var(--accent);flex-shrink:0}
+body.sheet-open{overflow:hidden}
+@media(min-width:700px){
+  .more-sheet{align-items:center;padding:20px}
+  .more-panel{border:1px solid var(--border-strong);border-radius:24px}
+}
+
+/* ---------- GLOBAL PDF UPLOAD PROGRESS ---------- */
+#uploadProgress{
+  position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + 14px);z-index:115;
+  display:none;max-width:420px;margin:0 auto;padding:12px 14px;
+  background:var(--panel);border:1px solid var(--border-strong);border-radius:16px;
+  box-shadow:var(--shadow);backdrop-filter:blur(16px);
+}
+#uploadProgress.show{display:block}
+.up-head{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;margin-bottom:8px}
+.up-head span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up-cancel{
+  font-size:12px;font-weight:700;color:var(--red);padding:6px 10px;border-radius:8px;
+  border:1px solid color-mix(in srgb,var(--red) 35%,transparent);background:var(--red-soft);white-space:nowrap;
+}
+.up-cancel:hover{color:#fff;background:var(--red)}
+.up-track{height:7px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.up-fill{height:100%;width:0%;background:var(--grad-strong);border-radius:inherit;transition:width .2s}
+.up-meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10.5px;color:var(--muted2)}
+@media(min-width:960px){
+  #uploadProgress{left:auto;right:24px;bottom:22px;width:360px;margin:0}
+}
+
+/* ---------- MOBILE TYPE / TAP TARGETS ---------- */
+@media(max-width:640px){
+  .field,textarea.field,.chat-compose input,.comment-compose input,.pv-page-input{font-size:16px}
+  .post-content{font-size:15px}
+  .post-action{min-height:44px}
+  .comment-compose button{min-height:44px}
+  .nav-btn{font-size:11px}
+}
+
+/* ---------- REDUCED MOTION ---------- */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .aurora i,.hero::after{animation:none}
+}
 </style>
 <base target="_blank">
 </head>
@@ -648,6 +717,7 @@ body.chat-open .bottom-nav{display:none !important}
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/></symbol>
 </svg>
 
 <!-- ============ TOPBAR ============ -->
@@ -684,6 +754,7 @@ body.chat-open .bottom-nav{display:none !important}
     <button class="side-link" data-page="notices" onclick="openSection('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
     <button class="side-link" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Class Chat</button>
     <button class="side-link" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+    <button class="side-link" data-page="accounts" onclick="openSection('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
     <div class="side-label">Account</div>
     <button class="side-link" data-page="profile" onclick="openSection('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
   </aside>
@@ -760,7 +831,7 @@ body.chat-open .bottom-nav{display:none !important}
       <div class="panel">
         <div class="search-wrap" style="margin-top:0">
           <svg class="ic"><use href="#i-search"/></svg>
-          <input id="topicSearchInput" class="field" placeholder="e.g. rasa, tridosha, charaka samhita…" onkeydown="if(event.key==='Enter')runTopicSearch()">
+          <input id="topicSearchInput" class="field" aria-label="Search all books and test papers" placeholder="e.g. rasa, tridosha, charaka samhita…" onkeydown="if(event.key==='Enter')runTopicSearch()">
         </div>
         <button class="btn full" onclick="runTopicSearch()"><svg class="ic ic-sm"><use href="#i-search"/></svg>Search all books</button>
         <div id="topicSearchStatus" class="status" aria-live="polite"></div>
@@ -835,10 +906,10 @@ body.chat-open .bottom-nav{display:none !important}
       </div>
       <div class="panel">
         <h2 class="panel-title">Create a post</h2>
-        <textarea id="postContent" class="field" maxlength="3000" placeholder="What's on your mind?"></textarea>
+        <textarea id="postContent" class="field" maxlength="3000" aria-label="Write a community post" placeholder="What's on your mind?"></textarea>
         <label class="privacy-row">
           <input id="anonymousPost" type="checkbox">
-          Post anonymously — your name stays hidden from classmates
+          Post anonymously — your name stays hidden from classmates (the CR can still see it)
         </label>
         <button class="btn full" id="publishPostBtn" type="button" onclick="publishCommunityPost()">
           <svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Post
@@ -897,7 +968,7 @@ body.chat-open .bottom-nav{display:none !important}
       <input id="chatName" type="hidden">
       <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
       <form id="chatForm" class="chat-compose">
-        <input id="chatInput" class="field" maxlength="2000" placeholder="Write a message…" autocomplete="off" required>
+        <input id="chatInput" class="field" maxlength="2000" aria-label="Chat message" placeholder="Write a message…" autocomplete="off" required>
         <button class="btn send-btn" type="submit" id="sendChatBtn" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button>
       </form>
       <div id="chatStatus" class="status" aria-live="polite"></div>
@@ -910,11 +981,27 @@ body.chat-open .bottom-nav{display:none !important}
   <button class="nav-btn active" data-page="home" onclick="openSection('home')"><svg class="ic"><use href="#i-home"/></svg>Home</button>
   <button class="nav-btn" data-page="notes" onclick="openSection('notes')"><svg class="ic"><use href="#i-book"/></svg>Notes</button>
   <button class="nav-btn" data-page="search" onclick="openSection('search')"><svg class="ic"><use href="#i-search"/></svg>Search</button>
-  <button class="nav-btn" data-page="pdfs" onclick="openSection('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Papers</button>
   <button class="nav-btn" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Chat</button>
-  <button class="nav-btn" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
-  <button class="nav-btn" data-page="accounts" onclick="openSection('accounts')"><svg class="ic"><use href="#i-user"/></svg>Accounts</button>
+  <button class="nav-btn" id="moreBtn" data-page="more" onclick="openMoreSheet()" aria-haspopup="dialog" aria-expanded="false" aria-controls="moreSheet"><svg class="ic"><use href="#i-more"/></svg>More</button>
 </nav>
+
+<!-- MORE SHEET -->
+<div id="moreSheet" class="more-sheet" role="dialog" aria-modal="true" aria-labelledby="moreTitle" aria-hidden="true">
+  <div class="more-panel">
+    <div class="more-head">
+      <h2 class="more-title" id="moreTitle">More</h2>
+      <button class="icon-btn" type="button" onclick="closeMoreSheet()" aria-label="Close menu"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="more-grid">
+      <button class="more-item" type="button" onclick="goFromMore('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Test Papers</button>
+      <button class="more-item" type="button" onclick="goFromMore('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
+      <button class="more-item" type="button" onclick="goFromMore('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
+      <button class="more-item" type="button" onclick="goFromMore('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+      <button class="more-item" type="button" onclick="goFromMore('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
+      <button class="more-item" type="button" onclick="goFromMore('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
+    </div>
+  </div>
+</div>
 
 <!-- IN-APP PDF VIEWER (opens at the exact page of a search match) -->
 <div id="pdfViewer" role="dialog" aria-modal="true" aria-label="PDF viewer">
@@ -927,7 +1014,7 @@ body.chat-open .bottom-nav{display:none !important}
   <div class="pv-foot">
     <button class="pv-btn" type="button" id="pvPrevHit" onclick="viewerJumpHit(-1)" title="Previous page with a match">◀ Match</button>
     <button class="pv-btn" type="button" onclick="viewerGo(-1)" aria-label="Previous page"><svg class="ic ic-sm"><use href="#i-left"/></svg></button>
-    <input class="pv-page-input" id="pvPageInput" type="number" min="1" inputmode="numeric" onchange="viewerGoTo(this.value)">
+    <input class="pv-page-input" id="pvPageInput" type="number" min="1" inputmode="numeric" aria-label="Page number" onchange="viewerGoTo(this.value)">
     <span class="pv-total" id="pvTotal">/ –</span>
     <button class="pv-btn" type="button" onclick="viewerGo(1)" aria-label="Next page"><svg class="ic ic-sm"><use href="#i-right"/></svg></button>
     <button class="pv-btn" type="button" id="pvNextHit" onclick="viewerJumpHit(1)" title="Next page with a match">Match ▶</button>
@@ -936,6 +1023,11 @@ body.chat-open .bottom-nav{display:none !important}
   </div>
 </div>
 
+<div id="uploadProgress" role="status" aria-live="polite">
+  <div class="up-head"><span id="uploadProgressLabel">Uploading…</span><button class="up-cancel" type="button" onclick="cancelPdfJob()">Cancel</button></div>
+  <div class="up-track"><div class="up-fill" id="uploadProgressFill"></div></div>
+  <div class="up-meta"><span id="uploadProgressDetail">Starting…</span><span id="uploadProgressPct">0%</span></div>
+</div>
 <div id="toast" role="status"></div>
 <div id="noticeToast" role="status">
   <div class="nt-head"><svg class="ic ic-sm"><use href="#i-bell"/></svg><span id="noticeToastTitle">New notice</span></div>
@@ -995,7 +1087,9 @@ function applyTheme(t){
 function toggleTheme(){
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 }
-applyTheme(localStorage.getItem("classhub_theme") || "dark");
+const preferredTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+const reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+applyTheme(localStorage.getItem("classhub_theme") || preferredTheme);
 
 /* ================= HELPERS ================= */
 function setStatus(id, message, type=""){
@@ -1003,6 +1097,37 @@ function setStatus(id, message, type=""){
   if(!el) return;
   el.textContent = message || "";
   el.className = "status" + (type ? " " + type : "");
+}
+function friendlyError(error, fallback="Something went wrong. Please try again."){
+  const msg = String(error && error.message ? error.message : error || "");
+  if(/abort|cancell?ed/i.test(msg)) return "Cancelled.";
+  if(/row-level security|permission denied|not authorized|insufficient privilege|42501/i.test(msg)) return "You don't have permission to do that.";
+  if(/jwt|not authenticated|auth session missing|session expired/i.test(msg)) return "Please sign in again.";
+  if(/failed to fetch|networkerror|load failed|network request failed|offline/i.test(msg)) return "Network problem — check your connection and try again.";
+  if(/duplicate key|already exists/i.test(msg)) return "That already exists.";
+  if(/too large|payload|413/i.test(msg)) return "That file is too big.";
+  if(/timeout|timed out/i.test(msg)) return "The server took too long. Please try again.";
+  if(/no readable text/i.test(msg)) return "No readable text was found, so the old text was kept.";
+  return fallback;
+}
+function currentSearchFilter(containerId){
+  const input = document.querySelector(`#${containerId} .search-wrap .field`);
+  return input ? input.value.trim().toLowerCase() : "";
+}
+function isAbortError(error){
+  return !!error && (error.name === "AbortError" || /abort|cancell?ed/i.test(error.message || ""));
+}
+function throwIfAborted(signal){
+  if(signal && signal.aborted) throw new DOMException("Cancelled", "AbortError");
+}
+function trapFocus(event, container){
+  if(!container) return;
+  const nodes = [...container.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.offsetParent !== null || el === document.activeElement);
+  if(!nodes.length) return;
+  const first = nodes[0], last = nodes[nodes.length - 1];
+  if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+  else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
 }
 function formatDate(value){
   if(!value) return "";
@@ -1062,14 +1187,57 @@ function setAvatar(imgId, fbId, url, name){
 }
 
 /* ================= NAVIGATION ================= */
+const MORE_PAGES = new Set(["pdfs","photos","notices","community","accounts","profile"]);
+let moreLastFocus = null;
+
+function openMoreSheet(){
+  const sheet = document.getElementById("moreSheet");
+  if(!sheet) return;
+  moreLastFocus = document.activeElement;
+  sheet.classList.add("open");
+  sheet.setAttribute("aria-hidden","false");
+  document.getElementById("moreBtn")?.setAttribute("aria-expanded","true");
+  document.body.classList.add("sheet-open");
+  setTimeout(()=>sheet.querySelector(".more-item")?.focus(), 0);
+}
+function closeMoreSheet(restoreFocus=true){
+  const sheet = document.getElementById("moreSheet");
+  if(!sheet || !sheet.classList.contains("open")) return;
+  sheet.classList.remove("open");
+  sheet.setAttribute("aria-hidden","true");
+  document.getElementById("moreBtn")?.setAttribute("aria-expanded","false");
+  document.body.classList.remove("sheet-open");
+  if(restoreFocus && moreLastFocus && moreLastFocus.focus) moreLastFocus.focus();
+}
+function goFromMore(pageId){
+  closeMoreSheet(false);
+  openSection(pageId);
+  const heading = document.getElementById(pageId)?.querySelector("h1");
+  if(heading){
+    heading.setAttribute("tabindex","-1");
+    heading.focus({preventScroll:true});
+  }
+}
+document.getElementById("moreSheet")?.addEventListener("click", event=>{
+  if(event.target && event.target.id === "moreSheet") closeMoreSheet();
+});
+document.addEventListener("keydown", event=>{
+  const sheet = document.getElementById("moreSheet");
+  if(!sheet || !sheet.classList.contains("open")) return;
+  if(event.key === "Escape"){ event.preventDefault(); closeMoreSheet(); }
+  if(event.key === "Tab") trapFocus(event, sheet);
+});
+
 function openSection(pageId){
   const page = document.getElementById(pageId);
   if(!page) return;
   currentPage = pageId;
+  if(document.getElementById("moreSheet")?.classList.contains("open")) closeMoreSheet(false);
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   page.classList.add("active");
   document.querySelectorAll("[data-page]").forEach(b=>{
-    b.classList.toggle("active", b.dataset.page === pageId);
+    const active = b.dataset.page === pageId || (b.dataset.page === "more" && MORE_PAGES.has(pageId));
+    b.classList.toggle("active", active);
   });
   document.body.classList.toggle("chat-open", pageId==="chat");
   if(pageId==="notices"){ unreadNotices=0; updateBellBadge(); localStorage.setItem("classhub_last_seen_notice", Date.now()); }
@@ -1081,7 +1249,7 @@ function openSection(pageId){
   if(pageId==="profile") loadStudentProfile();
   if(pageId==="accounts") loadAccountsDirectory();
   if(pageId==="community") window.loadCommunityPosts();
-  window.scrollTo({top:0, behavior:"smooth"});
+  window.scrollTo({top:0, behavior:reduceMotion ? "auto" : "smooth"});
 }
 function updateBellBadge(){
   const badge = document.getElementById("bellBadge");
@@ -1102,13 +1270,14 @@ async function signInWithGoogle(){
     const { error } = await db.auth.signInWithOAuth({provider:"google", options:{redirectTo:window.location.href}});
     if(error) throw error;
   }catch(error){
-    setStatus("authStatus","Sign-in failed: "+error.message,"error");
+    console.error("Sign-in failed:", error);
+    setStatus("authStatus","Sign-in failed: "+friendlyError(error),"error");
     button.disabled = false;
   }
 }
 async function signOutStudent(){
   const { error } = await db.auth.signOut();
-  if(error){ setStatus("authStatus","Sign-out failed: "+error.message,"error"); return; }
+  if(error){ setStatus("authStatus","Sign-out failed: "+friendlyError(error),"error"); return; }
   showToast("Signed out");
 }
 let authSyncedUserId = undefined;
@@ -1149,6 +1318,13 @@ async function updateAuthUI(user){
   }
 
   const chatInputName = document.getElementById("chatName");
+  const chatComposer = document.getElementById("chatInput");
+  const chatSendButton = document.getElementById("sendChatBtn");
+  if(chatComposer){
+    chatComposer.disabled = !user;
+    chatComposer.placeholder = user ? "Write a message…" : "Sign in to join the chat";
+  }
+  if(chatSendButton) chatSendButton.disabled = !user;
 
   if(!user){
     name.textContent = "Welcome to ClassHub";
@@ -1204,7 +1380,7 @@ async function initialiseGoogleAuth(){
     setTimeout(()=>syncAuth(session?.user || null), 0);
   });
   const { data, error } = await db.auth.getSession();
-  if(error){ setStatus("authStatus","Could not check login: "+error.message,"error"); return; }
+  if(error){ setStatus("authStatus","Could not check login: "+friendlyError(error),"error"); return; }
   await syncAuth(data.session?.user || null);
 }
 /* coming back with the Back button must not leave the Google button disabled */
@@ -1246,7 +1422,8 @@ async function loadStudentProfile(){
     setAvatar("profileAvatar","profileAvatarFb", data?.avatar_url || fallbackPhoto, data?.display_name || fallbackName);
     setStatus("profileStatusMessage","");
   }catch(error){
-    setStatus("profileStatusMessage","Could not load profile: "+error.message,"error");
+    console.error("Profile load:", error);
+    setStatus("profileStatusMessage","Could not load profile: "+friendlyError(error),"error");
   }
 }
 async function saveStudentProfile(){
@@ -1267,7 +1444,8 @@ async function saveStudentProfile(){
     setStatus("profileStatusMessage","Profile saved successfully!","success");
     showToast("Profile saved");
   }catch(error){
-    setStatus("profileStatusMessage","Could not save profile: "+error.message,"error");
+    console.error("Profile save:", error);
+    setStatus("profileStatusMessage","Could not save profile: "+friendlyError(error),"error");
   }finally{ button.disabled = false; }
 }
 
@@ -1333,6 +1511,7 @@ function renderNotesView(){
   searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
   const searchInput = document.createElement("input");
   searchInput.className = "field"; searchInput.placeholder = "Search PDFs…";
+  searchInput.setAttribute("aria-label","Search PDFs in this subject");
   searchInput.addEventListener("input",()=>renderNotePDFList(searchInput.value.trim().toLowerCase()));
   searchWrap.appendChild(searchInput);
   root.appendChild(searchWrap);
@@ -1359,36 +1538,45 @@ let rescanBusy = false;
 async function rescanPdf(file, button){
   if(rescanBusy){ showToast("Another re-scan is running"); return; }
   if(!file || !file.file_url || !file.id){ showToast("Cannot re-scan this file"); return; }
-  if(!confirm("Re-scan \"" + (file.file_name || "this book") + "\" with the improved text reader?\n\nThis downloads the book and can take several minutes. Keep this screen open.")) return;
+  if(!confirm("Re-scan \"" + (file.file_name || "this book") + "\" with the improved text reader?\n\nThis downloads the book and can take several minutes. You can cancel it from the progress bar.")) return;
+  const controller = startPdfJob("Re-scanning PDF");
+  if(!controller) return;
   rescanBusy = true;
   uploadsInFlight++;
   const label = button.textContent;
   button.disabled = true;
   try{
     button.textContent = "Downloading…";
-    const res = await fetch(file.file_url);
+    setPdfProgress("Downloading PDF…", 0.03);
+    const res = await fetch(file.file_url, {signal:controller.signal});
     if(!res.ok) throw new Error("download failed (" + res.status + ")");
     const blob = await res.blob();
-    const text = await extractPdfText(blob, msg=>{
+    const text = await extractPdfText(blob, (msg, fraction)=>{
       const m = String(msg).match(/(\d+) of (\d+)/);
       button.textContent = m ? (m[1] + "/" + m[2]) : "Reading…";
-    });
+      setPdfProgress(msg, 0.06 + fraction * 0.88);
+    }, controller.signal);
     if(!hasSearchableText(text)) throw new Error("no readable text found, so the old text was kept");
     button.textContent = "Saving…";
+    setPdfProgress("Saving searchable text…", 0.97);
     const {data, error} = await db.from("pdfs").update({content_text:text, rescanned:true}).eq("id", file.id).select("id");
     if(error) throw error;
     if(!data || !data.length) throw new Error("you do not have permission to update this book");
     file.rescanned = true;
     button.remove();
+    setPdfProgress("Done", 1);
     showToast("Re-scan finished");
   }catch(e){
     console.error("Re-scan failed:", e);
-    showToast("Re-scan failed: " + (e && e.message ? e.message : "unknown error"));
+    if(isAbortError(e)) showToast("Re-scan cancelled");
+    else if(/no readable text/i.test(String(e && e.message || ""))) showToast("No readable text found — old text kept");
+    else showToast(friendlyError(e, "Re-scan failed — please try again."));
   }finally{
     rescanBusy = false;
     uploadsInFlight--;
     button.disabled = false;
     button.textContent = label;
+    finishPdfJob();
   }
 }
 function pdfItem(file){
@@ -1428,9 +1616,10 @@ async function loadCategorizedNotePDFs(){
     const {data,error} = await query;
     if(error) throw error;
     lastNotePDFs = data || [];
-    renderNotePDFList();
+    renderNotePDFList(currentSearchFilter("notesView"));
   }catch(error){
-    list.replaceChildren(makeEmptyState("Could not load PDFs: "+error.message));
+    console.error("Notes list:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load PDFs. Please try again.")));
   }
 }
 function validatePDF(file,statusId){
@@ -1441,6 +1630,43 @@ function validatePDF(file,statusId){
   return true;
 }
 let uploadsInFlight = 0;
+
+/* One heavy PDF task at a time, with a visible progress bar and cancel. */
+let activePdfJob = null;
+function startPdfJob(label){
+  if(activePdfJob){ showToast("Another PDF task is already running"); return null; }
+  const controller = new AbortController();
+  activePdfJob = {controller};
+  const panel = document.getElementById("uploadProgress");
+  if(panel){
+    document.getElementById("uploadProgressLabel").textContent = label;
+    document.getElementById("uploadProgressDetail").textContent = "Starting…";
+    document.getElementById("uploadProgressPct").textContent = "0%";
+    document.getElementById("uploadProgressFill").style.width = "0%";
+    panel.classList.add("show");
+  }
+  return controller;
+}
+function setPdfProgress(message, fraction){
+  if(!activePdfJob) return;
+  const pct = Math.max(0, Math.min(100, Math.round(Number(fraction || 0) * 100)));
+  const detail = document.getElementById("uploadProgressDetail");
+  const pctEl = document.getElementById("uploadProgressPct");
+  const fill = document.getElementById("uploadProgressFill");
+  if(detail) detail.textContent = message || "";
+  if(pctEl) pctEl.textContent = pct + "%";
+  if(fill) fill.style.width = pct + "%";
+}
+function finishPdfJob(){
+  activePdfJob = null;
+  document.getElementById("uploadProgress")?.classList.remove("show");
+}
+function cancelPdfJob(){
+  if(!activePdfJob) return;
+  activePdfJob.controller.abort();
+  setPdfProgress("Cancelling…", 0);
+}
+
 window.addEventListener("beforeunload", e=>{
   if(uploadsInFlight > 0){ e.preventDefault(); e.returnValue = ""; }
 });
@@ -1458,17 +1684,25 @@ async function uploadNotePDF(input,button){
   const subject = selectedNoteSubject;
   const subcategory = selectedNoteSubcategory;
   if(!subject){ setStatus("notesStatus","Choose a subject first.","error"); return; }
+  const controller = startPdfJob("Uploading notes PDF");
+  if(!controller) return;
   button.disabled = true;
   uploadsInFlight++;
   setStatus("notesStatus","Uploading PDF…");
+  setPdfProgress("Uploading PDF…", 0.02);
   let path = null, saved = false;
   try{
     path = `notes/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
     const {error:uploadError} = await db.storage.from("pdfs").upload(path,file,{cacheControl:"3600",upsert:false,contentType:"application/pdf"});
     if(uploadError){ path = null; throw uploadError; }
+    throwIfAborted(controller.signal);
     const {data:urlData} = db.storage.from("pdfs").getPublicUrl(path);
     setStatus("notesStatus","Reading the whole book for topic search… (large books can take a minute)");
-    const content_text = await extractPdfText(file, msg=>setStatus("notesStatus",msg));
+    const content_text = await extractPdfText(file, (msg, fraction)=>{
+      setStatus("notesStatus",msg);
+      setPdfProgress(msg, 0.05 + fraction * 0.9);
+    }, controller.signal);
+    setPdfProgress("Saving to your library…", 0.97);
     const {error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:subject, subcategory:subcategory,
@@ -1478,6 +1712,7 @@ async function uploadNotePDF(input,button){
     if(insertError) throw insertError;
     saved = true;
     input.value = "";
+    setPdfProgress("Done", 1);
     if(hasSearchableText(content_text)){
       setStatus("notesStatus","PDF uploaded successfully.","success");
       showToast("Notes PDF uploaded");
@@ -1493,10 +1728,17 @@ async function uploadNotePDF(input,button){
       /* do not leave an orphan file in storage */
       try{ await db.storage.from("pdfs").remove([path]); }catch(e){ console.error("Cleanup failed:", e); }
     }
-    setStatus("notesStatus","Upload failed: "+error.message,"error");
+    if(isAbortError(error)){
+      setStatus("notesStatus","Upload cancelled.","");
+      showToast("Upload cancelled");
+    }else{
+      console.error("Notes upload failed:", error);
+      setStatus("notesStatus","Upload failed: "+friendlyError(error),"error");
+    }
   }finally{
     uploadsInFlight--;
     button.disabled = false;
+    finishPdfJob();
   }
 }
 
@@ -1534,6 +1776,7 @@ function renderTestPapersView(){
     const input = document.createElement("input");
     input.className = "field"; input.id = "newFolderName"; input.maxLength = 100;
     input.placeholder = "New folder name"; input.autocomplete = "off";
+    input.setAttribute("aria-label","New test paper folder name");
     const button = makeButton("Create Folder",()=>createTestFolder(input,button),"btn full");
     panel.append(input,button);
     root.appendChild(panel);
@@ -1563,6 +1806,7 @@ function renderTestPapersView(){
   searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
   const searchInput = document.createElement("input");
   searchInput.className = "field"; searchInput.placeholder = "Search PDFs in this folder…";
+  searchInput.setAttribute("aria-label","Search PDFs in this folder");
   searchInput.addEventListener("input",()=>renderFolderPDFList(searchInput.value.trim().toLowerCase()));
   searchWrap.appendChild(searchInput);
   root.appendChild(searchWrap);
@@ -1607,7 +1851,8 @@ async function loadTestFolders(){
       list.appendChild(btn);
     });
   }catch(error){
-    list.replaceChildren(makeEmptyState("Could not load folders: "+error.message));
+    console.error("Test folders:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load folders. Please try again.")));
   }
 }
 async function createTestFolder(input,button){
@@ -1623,7 +1868,8 @@ async function createTestFolder(input,button){
     showToast("Folder created");
     await loadTestFolders();
   }catch(error){
-    setStatus("pdfStatus","Could not create folder: "+error.message,"error");
+    console.error("Create folder:", error);
+    setStatus("pdfStatus","Could not create folder: "+friendlyError(error),"error");
   }finally{ button.disabled = false; }
 }
 async function uploadTestPDF(input,button){
@@ -1633,17 +1879,25 @@ async function uploadTestPDF(input,button){
   /* remember where this file belongs BEFORE any waiting happens */
   const category = selectedTestCategory;
   const folder = selectedTestFolder;
+  const controller = startPdfJob("Uploading test paper");
+  if(!controller) return;
   button.disabled = true;
   uploadsInFlight++;
   setStatus("pdfStatus","Uploading PDF…");
+  setPdfProgress("Uploading PDF…", 0.02);
   let path = null, saved = false;
   try{
     path = `test-papers/${category}/${folder.id}/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
     const {error:uploadError} = await db.storage.from("pdfs").upload(path,file,{cacheControl:"3600",upsert:false,contentType:"application/pdf"});
     if(uploadError){ path = null; throw uploadError; }
+    throwIfAborted(controller.signal);
     const {data:urlData} = db.storage.from("pdfs").getPublicUrl(path);
     setStatus("pdfStatus","Reading the whole book for topic search… (large books can take a minute)");
-    const content_text = await extractPdfText(file, msg=>setStatus("pdfStatus",msg));
+    const content_text = await extractPdfText(file, (msg, fraction)=>{
+      setStatus("pdfStatus",msg);
+      setPdfProgress(msg, 0.05 + fraction * 0.9);
+    }, controller.signal);
+    setPdfProgress("Saving to your library…", 0.97);
     const {error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:null, subcategory:null,
@@ -1653,6 +1907,7 @@ async function uploadTestPDF(input,button){
     if(insertError) throw insertError;
     saved = true;
     input.value = "";
+    setPdfProgress("Done", 1);
     if(hasSearchableText(content_text)){
       setStatus("pdfStatus","PDF uploaded successfully.","success");
       showToast("Test paper uploaded");
@@ -1667,10 +1922,17 @@ async function uploadTestPDF(input,button){
     if(path && !saved){
       try{ await db.storage.from("pdfs").remove([path]); }catch(e){ console.error("Cleanup failed:", e); }
     }
-    setStatus("pdfStatus","Upload failed: "+error.message,"error");
+    if(isAbortError(error)){
+      setStatus("pdfStatus","Upload cancelled.","");
+      showToast("Upload cancelled");
+    }else{
+      console.error("Test paper upload failed:", error);
+      setStatus("pdfStatus","Upload failed: "+friendlyError(error),"error");
+    }
   }finally{
     uploadsInFlight--;
     button.disabled = false;
+    finishPdfJob();
   }
 }
 async function loadTestFolderPDFs(){
@@ -1682,9 +1944,10 @@ async function loadTestFolderPDFs(){
       .eq("folder_id",selectedTestFolder.id).order("created_at",{ascending:false});
     if(error) throw error;
     lastFolderPDFs = data || [];
-    renderFolderPDFList();
+    renderFolderPDFList(currentSearchFilter("pdfs"));
   }catch(error){
-    list.replaceChildren(makeEmptyState("Could not load PDFs: "+error.message));
+    console.error("Folder PDFs:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load PDFs. Please try again.")));
   }
 }
 
@@ -1930,7 +2193,7 @@ async function runTopicSearch(){
 
   if(!books.length){
     setStatus("topicSearchStatus","");
-    resultsBox.appendChild(makeEmptyState("No matches found. Books uploaded before this update may need to be uploaded again so every page can be searched.","i-search"));
+    resultsBox.appendChild(makeEmptyState("No matches found for that word. Try a different spelling or a shorter search.","i-search"));
     return;
   }
 
@@ -1999,11 +2262,16 @@ const viewer = {
 
 function lockBodyScroll(on){ document.body.style.overflow = on ? "hidden" : ""; }
 
+let viewerLastFocus = null;
 async function openPdfViewer({url, page, matcher, title, hitPages}){
   if(!url){ showToast("This book has no file link"); return; }
   const el = document.getElementById("pdfViewer");
+  viewerLastFocus = document.activeElement;
   el.classList.add("open");
+  el.setAttribute("aria-hidden","false");
   lockBodyScroll(true);
+  [document.querySelector(".app-shell"), document.querySelector(".topbar"), document.querySelector(".bottom-nav")]
+    .forEach(node=>{ if(node) node.inert = true; });
   viewer.matcher = matcher || null;
   viewer.hitPages = hitPages || [];
   viewer.title = title || "PDF";
@@ -2013,9 +2281,14 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
   const hasHits = viewer.hitPages.length > 0;
   document.getElementById("pvPrevHit").style.display = hasHits ? "" : "none";
   document.getElementById("pvNextHit").style.display = hasHits ? "" : "none";
+  setTimeout(()=>document.querySelector("#pdfViewer .pv-btn")?.focus(), 0);
 
   try{
     if(viewer.url !== url || !viewer.pdf){
+      if(viewer.pdf && viewer.url !== url){
+        try{ await viewer.pdf.destroy(); }catch(e){}
+        viewer.pdf = null;
+      }
       body.replaceChildren(makeElement("div","pv-msg","Opening book…"));
       pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       viewer.pdf = await pdfjsLib.getDocument({url, disableAutoFetch:true, disableStream:true, rangeChunkSize:262144}).promise;
@@ -2032,7 +2305,7 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
     viewer.url = null; viewer.pdf = null;
     body.replaceChildren();
     const msg = makeElement("div","pv-msg",
-      "Could not open this book inside ClassHub ("+(error && error.message ? error.message : "unknown error")+"). You can open it in your browser instead — it should go to page "+page+".");
+      "This book could not be opened here. You can open it in your browser instead — it should go to page "+page+".");
     body.appendChild(msg);
     const link = makeElement("a","link-btn","Open in browser · page "+page);
     link.href = `${url}#page=${page}`; link.target = "_blank"; link.rel = "noopener noreferrer";
@@ -2041,9 +2314,17 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
 }
 
 function closePdfViewer(){
-  document.getElementById("pdfViewer").classList.remove("open");
+  const el = document.getElementById("pdfViewer");
+  el.classList.remove("open");
+  el.setAttribute("aria-hidden","true");
   lockBodyScroll(false);
+  [document.querySelector(".app-shell"), document.querySelector(".topbar"), document.querySelector(".bottom-nav")]
+    .forEach(node=>{ if(node) node.inert = false; });
   if(viewer.renderTask){ try{ viewer.renderTask.cancel(); }catch(e){} }
+  if(viewer.pdf){ try{ viewer.pdf.destroy(); }catch(e){} }
+  viewer.pdf = null; viewer.url = null; viewer.textCache = new Map();
+  if(viewerLastFocus && document.contains(viewerLastFocus) && viewerLastFocus.focus) viewerLastFocus.focus();
+  viewerLastFocus = null;
 }
 
 async function viewerShowPage(n){
@@ -2136,7 +2417,7 @@ async function viewerShowPage(n){
   }catch(error){
     if(error && error.name === "RenderingCancelledException") return;
     console.error("Page render failed:", error);
-    body.replaceChildren(makeElement("div","pv-msg","Could not show page "+n+": "+(error && error.message ? error.message : "unknown error")));
+    body.replaceChildren(makeElement("div","pv-msg","Could not show page "+n+". Try the next page, or open the book in your browser."));
   }
 }
 
@@ -2162,8 +2443,9 @@ function viewerJumpHit(direction){
 document.addEventListener("keydown", e=>{
   const open = document.getElementById("pdfViewer").classList.contains("open");
   if(!open) return;
+  if(e.key === "Escape"){ e.preventDefault(); closePdfViewer(); return; }
+  if(e.key === "Tab"){ trapFocus(e, document.getElementById("pdfViewer")); return; }
   if(e.target && e.target.id === "pvPageInput") return;
-  if(e.key === "Escape") closePdfViewer();
   if(e.key === "ArrowRight") viewerGo(1);
   if(e.key === "ArrowLeft") viewerGo(-1);
 });
@@ -2189,6 +2471,7 @@ function renderCaseStudiesView(){
     const input = document.createElement("input");
     input.className = "field"; input.id = "newCaseFolderName"; input.maxLength = 100;
     input.placeholder = "New folder name (e.g. Kustha case – Virechana outcome)";
+    input.setAttribute("aria-label","New case study folder name");
     input.autocomplete = "off";
     const button = makeButton("Create Folder", ()=>createCaseFolder(input, button), "btn full");
     panel.append(input, button);
@@ -2220,6 +2503,7 @@ function renderCaseStudiesView(){
   searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
   const searchInput = document.createElement("input");
   searchInput.className = "field"; searchInput.placeholder = "Search photos in this folder…";
+  searchInput.setAttribute("aria-label","Search photos in this folder");
   searchInput.addEventListener("input", ()=>renderCasePhotoList(searchInput.value.trim().toLowerCase()));
   searchWrap.appendChild(searchInput);
   root.appendChild(searchWrap);
@@ -2296,7 +2580,8 @@ async function loadCaseFolders(){
       grid.appendChild(btn);
     }
   }catch(error){
-    grid.replaceChildren(makeEmptyState("Could not load folders: "+error.message+" — run the one-time Case Studies SQL setup.","i-folder"));
+    console.error("Case folders:", error);
+    grid.replaceChildren(makeEmptyState(friendlyError(error,"Could not load folders. Please try again."),"i-folder"));
   }
 }
 
@@ -2313,7 +2598,8 @@ async function createCaseFolder(input, button){
     showToast("Folder created");
     await loadCaseFolders();
   }catch(error){
-    setStatus("caseStatus","Could not create folder: "+error.message,"error");
+    console.error("Create case folder:", error);
+    setStatus("caseStatus","Could not create folder: "+friendlyError(error),"error");
   }finally{ button.disabled = false; }
 }
 
@@ -2342,7 +2628,8 @@ async function uploadCasePhotos(input, button){
     showToast("Photos uploaded");
     await loadCasePhotos();
   }catch(error){
-    setStatus("caseStatus","Upload failed: "+error.message,"error");
+    console.error("Photo upload:", error);
+    setStatus("caseStatus","Upload failed: "+friendlyError(error),"error");
   }finally{ button.disabled = false; }
 }
 
@@ -2357,9 +2644,10 @@ async function loadCasePhotos(){
     const {data,error} = await query;
     if(error) throw error;
     lastPhotosData = data || [];
-    renderCasePhotoList();
+    renderCasePhotoList(currentSearchFilter("photos"));
   }catch(error){
-    list.replaceChildren(makeEmptyState("Could not load photos: "+error.message,"i-image"));
+    console.error("Case photos:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load photos. Please try again."),"i-image"));
   }
 }
 
@@ -2380,7 +2668,8 @@ async function addNotice(){
     showToast("Notice published");
     await loadNotices();
   }catch(error){
-    setStatus("noticeStatus","Could not publish notice: "+error.message,"error");
+    console.error("Publish notice:", error);
+    setStatus("noticeStatus","Could not publish notice: "+friendlyError(error),"error");
   }finally{ button.disabled = false; }
 }
 async function loadNotices(){
@@ -2390,9 +2679,13 @@ async function loadNotices(){
   try{
     const {data,error} = await db.from("notices").select("*").order("created_at",{ascending:false});
     if(error) throw error;
+    const lastSeen = Number(localStorage.getItem("classhub_last_seen_notice") || 0);
+    if(currentPage !== "notices"){
+      unreadNotices = (data || []).filter(n=>new Date(n.created_at).getTime() > lastSeen).length;
+      updateBellBadge();
+    }
     list.replaceChildren();
     if(!data || !data.length){ list.appendChild(makeEmptyState("No notices yet.","i-bell")); return; }
-    const lastSeen = Number(localStorage.getItem("classhub_last_seen_notice") || 0);
     data.forEach(notice=>{
       const card = makeElement("div","item");
       const icon = makeElement("div","item-icon");
@@ -2415,7 +2708,8 @@ async function loadNotices(){
       list.appendChild(card);
     });
   }catch(error){
-    list.replaceChildren(makeEmptyState("Could not load notices: "+error.message));
+    console.error("Notices:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load notices. Please try again.")));
   }
 }
 function onNoticeSoundToggle(cb){
@@ -2535,14 +2829,21 @@ async function loadChatMessages(opts){
   }catch(error){
     if(version !== chatLoadVersion) return;
     if(!silent || !box.querySelector(".chat-message")){
-      box.replaceChildren(makeEmptyState("Could not load chat: "+error.message));
+      console.error("Chat:", error);
+      box.replaceChildren(makeEmptyState(friendlyError(error,"Could not load chat. Please try again.")));
     }
   }
 }
 
 document.getElementById("chatForm").addEventListener("submit", async event=>{
   event.preventDefault();
-  const sender_name = chatNameInput.value.trim() || (currentUser?.user_metadata?.full_name ?? "");
+  if(!currentUser){
+    setStatus("chatStatus","Sign in with Google to join the chat.","error");
+    showToast("Sign in to chat");
+    return;
+  }
+  const metadata = currentUser.user_metadata || {};
+  const sender_name = (metadata.full_name || metadata.name || chatNameInput.value.trim() || currentUser.email || "").trim();
   const messageInput = document.getElementById("chatInput");
   const message = messageInput.value.trim();
   const button = document.getElementById("sendChatBtn");
@@ -2562,7 +2863,8 @@ document.getElementById("chatForm").addEventListener("submit", async event=>{
     setStatus("chatStatus","");
     await loadChatMessages();
   }catch(error){
-    setStatus("chatStatus","Message failed: "+error.message,"error");
+    console.error("Chat send:", error);
+    setStatus("chatStatus","Message failed: "+friendlyError(error),"error");
   }finally{
     button.disabled = false;
     messageInput.focus();
@@ -2570,9 +2872,51 @@ document.getElementById("chatForm").addEventListener("submit", async event=>{
 });
 
 /* ================= COMMUNITY ================= */
+function captureCommunityUI(){
+  if(currentPage !== "community") return null;
+  const drafts = new Map();
+  document.querySelectorAll("#communityPosts .post-card").forEach(card=>{
+    const input = card.querySelector(".comment-compose input");
+    const list = card.querySelector(".comment-list");
+    const open = !!list && list.style.display !== "none";
+    if((input && input.value) || open){
+      drafts.set(card.dataset.postId, {
+        text: input ? input.value : "",
+        open,
+        focused: !!input && document.activeElement === input,
+        start: input ? input.selectionStart : null,
+        end: input ? input.selectionEnd : null
+      });
+    }
+  });
+  return {drafts, scrollY: window.scrollY};
+}
+function restoreCommunityUI(state){
+  if(!state) return;
+  const cards = [...document.querySelectorAll("#communityPosts .post-card")];
+  state.drafts.forEach((draft, postId)=>{
+    const card = cards.find(c=>c.dataset.postId === postId);
+    if(!card) return;
+    const list = card.querySelector(".comment-list");
+    if(list && draft.open) list.style.display = "block";
+    const input = card.querySelector(".comment-compose input");
+    if(input && draft.text) input.value = draft.text;
+    if(input && draft.focused){
+      input.focus({preventScroll:true});
+      if(draft.start != null) input.setSelectionRange(draft.start, draft.end);
+    }
+  });
+  if(Number.isFinite(state.scrollY)) window.scrollTo(0, state.scrollY);
+}
+function communityHasDraft(){
+  return [...document.querySelectorAll("#communityPosts .comment-compose input")]
+    .some(input=>input.value.trim() || document.activeElement === input);
+}
+
 window.loadCommunityPosts = async function(){
   const container = document.getElementById("communityPosts");
   if(!container) return;
+  const uiState = captureCommunityUI();
   if(!currentUser){
     container.replaceChildren();
     const gate = makeElement("div","gate");
@@ -2636,9 +2980,10 @@ window.loadCommunityPosts = async function(){
       return;
     }
     posts.forEach(post=>container.appendChild(buildPostCard(post, authorNames, likeCounts, myLikes, commentMap)));
+    restoreCommunityUI(uiState);
   }catch(error){
     console.error("Community loading failed:", error);
-    container.replaceChildren(makeEmptyState("Could not load posts: "+error.message));
+    container.replaceChildren(makeEmptyState(friendlyError(error,"Could not load posts. Please try again.")));
   }
 };
 
@@ -2795,6 +3140,7 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
     input.className = "field";
     input.maxLength = 500;
     input.placeholder = "Write an anonymous comment…";
+    input.setAttribute("aria-label","Write an anonymous comment");
 
     const btn = makeButton("Post", async () => {
       const text = input.value.trim();
@@ -2870,7 +3216,8 @@ window.publishCommunityPost = async function(){
     setStatus("communityStatus","Post published.","success");
     await window.loadCommunityPosts();
   }catch(error){
-    setStatus("communityStatus","Could not publish post: "+error.message,"error");
+    console.error("Publish post:", error);
+    setStatus("communityStatus","Could not publish post: "+friendlyError(error),"error");
   }finally{ btn.disabled = false; }
 };
 /* ================= REALTIME ================= */
@@ -2937,7 +3284,12 @@ function subscribeToChat(){
 let communityReloadTimer = null;
 function scheduleCommunityReload(delay=400){
   clearTimeout(communityReloadTimer);
-  communityReloadTimer = setTimeout(()=>{ if(currentPage==="community") window.loadCommunityPosts(); }, delay);
+  communityReloadTimer = setTimeout(()=>{
+    if(currentPage !== "community") return;
+    /* Never wipe a comment the user is still typing. */
+    if(communityHasDraft()){ scheduleCommunityReload(1500); return; }
+    window.loadCommunityPosts();
+  }, delay);
 }
 function subscribeToCommunity(){
   // Real-time likes
@@ -3052,8 +3404,8 @@ async function loadAccountsDirectory(){
   }catch(error){
     if(requestVersion !== accountsRequestVersion) return;
     accountDirectory = [];
-    grid.replaceChildren(makeElement("div","panel empty account-empty","Could not load accounts. Check the profiles SELECT policy for authenticated users."));
-    setStatus("accountsStatus",error.message||"Could not load accounts.","error");
+    grid.replaceChildren(makeElement("div","panel empty account-empty",friendlyError(error,"Could not load accounts. Please try again.")));
+    setStatus("accountsStatus",friendlyError(error,"Could not load accounts."),"error");
     console.error("Accounts directory:",error);
   }
 }
@@ -3168,19 +3520,23 @@ async function makeOcrWorker(){
   return Tesseract.createWorker(OCR_LANGS, 1);
 }
 
-async function ocrPages(pdf, pages, texts, onProgress){
+async function ocrPages(pdf, pages, texts, onProgress, signal){
   await loadTesseract();
+  throwIfAborted(signal);
   const workers = Math.max(2, Math.min(3, (navigator.hardwareConcurrency||4) - 1));
   const scheduler = Tesseract.createScheduler();
   try{
-    if(onProgress) onProgress("Starting OCR engine… (first time downloads language data)");
+    if(onProgress) onProgress("Starting OCR engine… (first time downloads language data)", 0);
     for(let k=0;k<workers;k++){
       scheduler.addWorker(await makeOcrWorker());
     }
     const t0 = performance.now();
     let done = 0, next = 0, failed = 0;
+    let collected = texts.reduce((n,t)=>n+(t||"").length, 0);
     async function lane(){
       while(true){
+        if(signal && signal.aborted) return;
+        if(collected >= PDF_TEXT_MAX_CHARS) return;
         const idx = next++;
         if(idx >= pages.length) return;
         const num = pages[idx];
@@ -3196,9 +3552,11 @@ async function ocrPages(pdf, pages, texts, onProgress){
           ctx.fillStyle = "#fff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           await page.render({canvasContext:ctx, viewport:vp}).promise;
+          if(signal && signal.aborted) return;
           ocrPreprocess(canvas);
           const {data} = await scheduler.addJob("recognize", canvas);
           texts[num-1] = cleanOcrText(data.text);
+          collected += texts[num-1].length;
         }catch(e){
           failed++;
           console.error("OCR failed on page", num, e && e.message);
@@ -3207,31 +3565,36 @@ async function ocrPages(pdf, pages, texts, onProgress){
           if(page) page.cleanup();
         }
         done++;
-        if(onProgress){
+        if(onProgress && !(signal && signal.aborted)){
           const rate = done / Math.max(1, (performance.now()-t0)/1000);
-          onProgress(`OCR… ${done} of ${pages.length} scanned pages (${rate.toFixed(2)} pages/sec)` + (failed ? `, ${failed} failed` : ""));
+          onProgress(`OCR… ${done} of ${pages.length} scanned pages (${rate.toFixed(2)} pages/sec)` + (failed ? `, ${failed} failed` : ""), done / Math.max(1, pages.length));
         }
       }
     }
     await Promise.all(Array.from({length: workers+1}, lane));
+    throwIfAborted(signal);
   }finally{
     try{ await scheduler.terminate(); }catch(e){}
   }
 }
 
-async function extractPdfText(file, onProgress){
+async function extractPdfText(file, onProgress, signal){
   if(!window.pdfjsLib) return null;
   let pdf = null;
   try{
+    throwIfAborted(signal);
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     const buffer = await file.arrayBuffer();
+    throwIfAborted(signal);
     pdf = await pdfjsLib.getDocument({data:buffer}).promise;
+    throwIfAborted(signal);
     const total = Math.min(pdf.numPages, PDF_TEXT_MAX_PAGES);
     const texts = new Array(total).fill("");
     const needOcr = [];
 
     /* pass 1: fast text read; remember pages that have no text */
     for(let i=1;i<=total;i++){
+      throwIfAborted(signal);
       try{
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
@@ -3239,17 +3602,27 @@ async function extractPdfText(file, onProgress){
         if(text.length >= OCR_MIN_TEXT_CHARS) texts[i-1] = text; else needOcr.push(i);
         page.cleanup();
       }catch(e){
+        if(isAbortError(e)) throw e;
         console.error("Text read failed on page", i, e && e.message);
         needOcr.push(i);
       }
-      if(onProgress && (i % 20 === 0 || i === total)) onProgress(`Reading book… page ${i} of ${total}`);
+      if(onProgress && (i % 20 === 0 || i === total)){
+        onProgress(`Reading book… page ${i} of ${total}`, 0.05 + (i / total) * 0.45);
+      }
     }
 
     /* pass 2: OCR only the scanned pages */
     if(needOcr.length){
-      try{ await ocrPages(pdf, needOcr, texts, onProgress); }
-      catch(e){ console.error("OCR failed:", e && e.message); }
+      try{
+        await ocrPages(pdf, needOcr, texts, (msg, fraction)=>{
+          if(onProgress) onProgress(msg, 0.5 + (fraction || 0) * 0.45);
+        }, signal);
+      }catch(e){
+        if(isAbortError(e)) throw e;
+        console.error("OCR failed:", e && e.message);
+      }
     }
+    throwIfAborted(signal);
 
     const parts = [];
     let length = 0;
@@ -3261,6 +3634,7 @@ async function extractPdfText(file, onProgress){
     }
     return parts.join("").slice(0, PDF_TEXT_MAX_CHARS);
   }catch(e){
+    if(isAbortError(e)) throw e;
     console.error("Text extraction failed:", e && e.message);
     return null;
   }finally{
