@@ -3,8 +3,11 @@ import test from "node:test";
 
 import {
   historyToInteractionInput,
+  isBusyMessage,
+  isRetryableStatus,
   normaliseHistory,
   readInteractionEvent,
+  retryDelayMs,
   SseDecoder,
   titleFromMessage,
   upstreamErrorMessage,
@@ -178,4 +181,33 @@ test("historyToInteractionInput uses Interactions API step shapes", () => {
     { type: "user_input", content: [{ type: "text", text: "Hello" }] },
     { type: "model_output", content: [{ type: "text", text: "Hi" }] },
   ]);
+});
+
+test("isRetryableStatus retries only transient upstream failures", () => {
+  for (const status of [429, 500, 502, 503, 504]) {
+    assert.equal(isRetryableStatus(status), true);
+  }
+  for (const status of [200, 400, 401, 404, 413]) {
+    assert.equal(isRetryableStatus(status), false);
+  }
+});
+
+test("retryDelayMs backs off exponentially, jitters, and stays capped", () => {
+  assert.equal(retryDelayMs(0, 600, 4000, () => 0.5), 600);
+  assert.equal(retryDelayMs(1, 600, 4000, () => 0.5), 1200);
+  assert.equal(retryDelayMs(2, 600, 4000, () => 0.5), 2400);
+  assert.equal(retryDelayMs(10, 600, 4000, () => 0.5), 4000);
+  assert.ok(retryDelayMs(3, 600, 4000, () => 1) <= 4000);
+  assert.ok(retryDelayMs(0, 600, 4000, () => 0) >= 450);
+  assert.ok(retryDelayMs(0, 600, 4000, () => 1) >= 600);
+});
+
+test("isBusyMessage recognises Google overload text", () => {
+  assert.equal(
+    isBusyMessage("gemini-3.8-flash is currently experiencing high demand"),
+    true,
+  );
+  assert.equal(isBusyMessage("The model is overloaded"), true);
+  assert.equal(isBusyMessage("quota exceeded"), true);
+  assert.equal(isBusyMessage("The interaction was not found."), false);
 });

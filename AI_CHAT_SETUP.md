@@ -125,6 +125,7 @@ node --test tests/ai-chat.test.mjs
 | "The AI model is unavailable" | Bad `GEMINI_MODEL` value | Set it to `gemini-3.8-flash` |
 | "Please sign in again" | Expired session or missing bearer token | Sign out and sign in again |
 | "You're sending messages too quickly" | More than 10 messages in a minute | Wait a minute |
+| "The AI is busy right now" | Google returned a transient 429/5xx demand spike | The function retries automatically; if it persists, wait a few seconds and tap **Try again** |
 | Function returns 401 before your code runs | Supabase JWT verification rejected the token | Sign in again; check the project URL/key |
 
 ## Notes and limits
@@ -132,6 +133,8 @@ node --test tests/ai-chat.test.mjs
 - Each question is capped at 4,000 characters; stored replies at 20,000
   characters. Replies are requested with a 4,096-token output cap.
 - The backend allows 10 student messages per minute per account.
+- Transient Gemini overloads (429/500/502/503/504) are retried up to three
+  times with exponential backoff and jitter before the student sees an error.
 - Gemini stores the interaction when `store: true`. If Google expires an
   interaction, the function clears the stored ID and replays the latest stored
   turns; if replay is rejected, it answers from the new message alone. The full

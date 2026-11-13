@@ -7,6 +7,31 @@ export const MAX_MESSAGE_CHARS = 4000;
 export const MAX_HISTORY_MESSAGES = 20;
 export const MAX_STORED_MESSAGE_CHARS = 20000;
 export const DEFAULT_MODEL = "gemini-3.8-flash";
+export const AI_BUSY_MESSAGE =
+  "The AI is busy right now. Please wait a few seconds and try again.";
+
+/** Transient upstream failures worth retrying (demand spikes, quota, gateway). */
+export function isRetryableStatus(status: number): boolean {
+  return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
+/** Exponential backoff with jitter, capped so a retry never stalls the chat. */
+export function retryDelayMs(
+  attempt: number,
+  baseMs = 600,
+  capMs = 4000,
+  random: () => number = Math.random,
+): number {
+  const base = Math.min(capMs, baseMs * 2 ** Math.max(0, attempt));
+  const jitter = 0.75 + Math.min(1, Math.max(0, random())) * 0.5;
+  return Math.min(capMs, Math.round(base * jitter));
+}
+
+/** Google sometimes reports overload inside the streamed events too. */
+export function isBusyMessage(message: string): boolean {
+  return /high demand|overloaded|busy right now|resource_exhausted|quota|temporarily unavailable|rate limit|too many requests/i
+    .test(String(message ?? ""));
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

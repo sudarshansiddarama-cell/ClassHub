@@ -3179,7 +3179,7 @@ function friendlyAiError(error, fallback="Could not reach the AI. Please try aga
   if(/relation .* does not exist|42P01|schema cache/i.test(msg)) return "AI chat isn't set up yet. Please run the AI chat database migration.";
   if(/not deployed|requested function.*not found|function.*not found|failed to fetch|networkerror|load failed|network request failed|offline/i.test(msg)) return "Can't reach the AI service. Check your connection and try again.";
   if(/jwt|not authenticated|session expired|sign in again|401/i.test(msg)) return "Please sign in again.";
-  if(/quota|rate limit|too many requests|429|resource_exhausted/i.test(msg)) return "The AI is busy right now. Please wait a moment and try again.";
+  if(/quota|rate limit|too many requests|429|resource_exhausted|high demand|overloaded|busy right now|service unavailable|503/i.test(msg)) return "The AI is busy right now. Please wait a few seconds and try again.";
   if(/model.*not found|not found.*model|model.*unavailable/i.test(msg)) return "The AI model is unavailable. Please check the GEMINI_MODEL setting.";
   const known = friendlyError(error, null);
   if(known) return known;
