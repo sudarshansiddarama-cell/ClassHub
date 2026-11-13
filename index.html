@@ -523,8 +523,133 @@ label.f-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);
 /* chat: fullscreen, pinned compose bar at bottom */
 #chat.active{display:flex;flex-direction:column;height:calc(100dvh - var(--topbar-h));width:100vw!important;max-width:none!important;margin:0!important;padding:0!important;border:none!important;background:var(--bg)!important;z-index:50}
 @media(min-width:960px){#chat.active{height:calc(100dvh - var(--topbar-h))}}
+.chat-head{display:flex;align-items:center;gap:10px;flex-shrink:0;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--panel)}
+.chat-head .back-btn{margin:0;flex-shrink:0}
+.chat-head .page-title{font-size:16px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #chat.active .chat-box{flex:1;overflow-y:auto;padding:12px;border:none!important;background:var(--bg)!important}
 #chat.active .chat-compose{position:sticky;bottom:0;left:0;right:0;z-index:30;padding:8px 12px;background:var(--bg-soft)}
+
+/* ---------- AI STUDY ASSISTANT ---------- */
+#ai.active{
+  position:fixed;top:var(--topbar-h);left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;height:auto;
+  width:auto!important;max-width:none!important;margin:0!important;padding:0!important;
+  border:none!important;background:var(--bg)!important;z-index:50;overflow:hidden;animation:none;
+}
+.ai-shell{display:flex;flex:1;min-height:0;width:100%;max-width:1180px;margin:0 auto}
+.ai-history{
+  display:none;width:264px;flex-shrink:0;flex-direction:column;min-height:0;
+  border-right:1px solid var(--border);background:var(--panel);
+}
+.ai-history-head{padding:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.ai-history-top{display:flex;align-items:center;gap:8px}
+.ai-history-top .ai-history-title{flex:1;min-width:0;font-size:13px;font-weight:800;margin:0;color:var(--muted)}
+.ai-history-close{display:none}
+.ai-history-list{flex:1;overflow-y:auto;padding:8px;min-height:0}
+.ai-history-empty{color:var(--muted2);font-size:12px;text-align:center;padding:22px 8px}
+.ai-history-item{
+  display:flex;align-items:center;gap:4px;border-radius:12px;margin-bottom:4px;
+  border:1px solid transparent;transition:.15s;
+}
+.ai-history-item:hover{background:var(--panel2);border-color:var(--border)}
+.ai-history-item.active{background:var(--grad-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.ai-history-open{flex:1;min-width:0;text-align:left;padding:9px 10px;border-radius:12px}
+.ai-history-name{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-history-date{display:block;font-size:10px;color:var(--muted2);margin-top:2px}
+.ai-history-delete{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border-radius:9px;color:var(--muted2);transition:.15s}
+.ai-history-delete:hover{background:var(--red-soft);color:var(--red)}
+.ai-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
+.ai-head{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--panel);backdrop-filter:blur(14px)}
+.ai-head .back-btn{margin:0;flex-shrink:0}
+.ai-head-info{flex:1;min-width:0}
+.ai-head h1{font-size:16px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-head small{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-head-actions{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.ai-head .icon-btn{width:38px;height:38px;border-radius:10px}
+.ai-messages{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:16px 12px 26px;display:flex;flex-direction:column;gap:14px;
+  scroll-behavior:smooth;
+}
+.ai-msg{display:flex;align-items:flex-start;gap:9px;max-width:min(780px,94%)}
+.ai-msg-user{margin-left:auto;flex-direction:row-reverse}
+.ai-msg-avatar{
+  width:30px;height:30px;flex:0 0 30px;border-radius:10px;display:grid;place-items:center;
+  background:var(--grad-strong);color:#fff;font-size:12px;font-weight:800;
+  box-shadow:0 6px 14px -7px rgba(74,99,232,.6);
+}
+.ai-msg-assistant .ai-msg-avatar{background:var(--grad-soft);border:1px solid var(--border-strong);color:var(--accent);box-shadow:none}
+.ai-msg-body{min-width:0}
+.ai-bubble{
+  padding:11px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--border);
+  font-size:14px;line-height:1.62;white-space:pre-wrap;overflow-wrap:anywhere;
+  box-shadow:var(--shadow-sm);
+}
+.ai-msg-user .ai-bubble{background:var(--grad-strong);color:#fff;border-color:transparent;border-bottom-right-radius:5px}
+.ai-msg-assistant .ai-bubble{border-bottom-left-radius:5px}
+.ai-msg-time{font-size:10px;color:var(--muted2);margin-top:5px}
+.ai-msg-user .ai-msg-time{text-align:right}
+.ai-typing{display:inline-flex;gap:4px;align-items:center;padding:3px 0}
+.ai-typing i{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:aiBlink 1.1s infinite}
+.ai-typing i:nth-child(2){animation-delay:.18s}
+.ai-typing i:nth-child(3){animation-delay:.36s}
+@keyframes aiBlink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.ai-error-text{color:var(--red)}
+.ai-retry{margin-top:8px}
+.ai-welcome{margin:auto;max-width:580px;text-align:center;padding:20px 10px}
+.ai-orb{
+  width:58px;height:58px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;
+  background:var(--grad-soft);border:1px solid var(--border-strong);color:var(--accent);
+  box-shadow:0 16px 36px -18px rgba(124,154,255,.8);
+}
+.ai-orb .ic{width:28px;height:28px}
+.ai-welcome h2{font-size:clamp(22px,4vw,28px);margin:0 0 8px}
+.ai-welcome p{color:var(--muted);font-size:13.5px;line-height:1.65;margin:0 auto;max-width:460px}
+.ai-suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.ai-suggestion{
+  padding:9px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--panel);color:var(--muted);font-size:12.5px;font-weight:600;text-align:left;
+  transition:.15s;
+}
+.ai-suggestion:hover{border-color:var(--accent);color:var(--text);background:var(--grad-soft);transform:translateY(-1px)}
+.ai-gate{width:100%;max-width:440px;margin:auto}
+.ai-compose-wrap{
+  flex-shrink:0;border-top:1px solid var(--border);background:var(--bg-soft);
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(16px);
+}
+.ai-compose{display:flex;align-items:flex-end;gap:8px;max-width:900px;margin:0 auto}
+.ai-compose textarea{
+  flex:1;min-width:0;min-height:46px;max-height:160px;resize:none;margin:0;
+  padding:12px 14px;border-radius:15px;line-height:1.45;
+}
+.ai-compose .send-btn{width:44px;height:44px;flex:0 0 44px;border-radius:14px}
+.ai-compose .ai-stop{min-height:44px;border-radius:14px;padding:0 12px;font-size:12px;font-weight:700}
+.ai-hint{max-width:900px;margin:6px auto 0;font-size:10.5px;color:var(--muted2);text-align:center;line-height:1.4}
+#aiStatus{max-width:900px;margin:0 auto;font-size:12px;min-height:0}
+#aiStatus:not(:empty){margin-top:4px;margin-bottom:2px}
+.ai-messages .empty{margin:auto}
+@media(min-width:960px){
+  .ai-history{display:flex}
+  .ai-history-close{display:none!important}
+  .ai-head .ai-history-toggle{display:none}
+}
+@media(max-width:959px){
+  #ai.history-open .ai-main{display:none}
+  .ai-history{display:none;width:100%;border-right:0}
+  .ai-history.show{display:flex}
+  .ai-history-close{display:grid}
+  .ai-history-head{padding:12px 12px 10px}
+  .ai-messages{padding:12px 10px 20px}
+  .ai-msg{max-width:96%}
+  .ai-compose textarea{font-size:16px}
+}
+@media(min-width:960px){
+  #ai.history-open .ai-main{display:flex}
+}
+@media(max-width:380px){
+  .ai-suggestions{flex-direction:column}
+  .ai-suggestion{width:100%;text-align:center}
+}
 
 /* ---------- TOPIC SEARCH RESULTS ---------- */
 .book-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
@@ -699,6 +824,8 @@ body.sheet-open{overflow:hidden}
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 4.9L18.7 9.7l-4.9 1.8L12 16.4l-1.8-4.9L5.3 9.7l4.9-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
@@ -753,6 +880,7 @@ body.sheet-open{overflow:hidden}
     <button class="side-link" data-page="photos" onclick="openSection('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
     <button class="side-link" data-page="notices" onclick="openSection('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
     <button class="side-link" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Class Chat</button>
+    <button class="side-link" data-page="ai" onclick="openSection('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
     <button class="side-link" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
     <button class="side-link" data-page="accounts" onclick="openSection('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
     <div class="side-label">Account</div>
@@ -801,6 +929,10 @@ body.sheet-open{overflow:hidden}
         <button class="quick-card" onclick="openSection('notices')">
           <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-bell"/></svg></span>
           <span><strong>Notices</strong><br><small>Important class updates</small></span>
+        </button>
+        <button class="quick-card" onclick="openSection('ai')">
+          <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-spark"/></svg></span>
+          <span><strong>AI Assistant</strong><br><small>Ask, revise and quiz yourself</small></span>
         </button>
         <button class="quick-card" onclick="openSection('chat')">
           <span class="quick-icon"><svg class="ic ic-lg"><use href="#i-chat"/></svg></span>
@@ -880,12 +1012,13 @@ body.sheet-open{overflow:hidden}
         <p class="page-sub">Important announcements for the class.</p>
       </div>
       <div class="panel">
-        <label class="f-label" for="noticeTitle">Title</label>
-        <input id="noticeTitle" class="field" maxlength="150" placeholder="Notice title">
-        <label class="f-label" for="noticeContent">Announcement</label>
-        <textarea id="noticeContent" class="field" maxlength="5000" placeholder="Write your announcement…"></textarea>
-        <button class="btn full" id="addNoticeBtn" onclick="addNotice()"><svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Notice</button>
-        <div id="noticeStatus" class="status" aria-live="polite"></div>
+        <div id="noticeCompose" class="auth-hidden">
+          <label class="f-label" for="noticeTitle">Title</label>
+          <input id="noticeTitle" class="field" maxlength="150" placeholder="Notice title">
+          <label class="f-label" for="noticeContent">Announcement</label>
+          <textarea id="noticeContent" class="field" maxlength="5000" placeholder="Write your announcement…"></textarea>
+          <button class="btn full" id="addNoticeBtn" onclick="addNotice()"><svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Notice</button>
+        </div>
         <label class="privacy-row">
           <input id="noticeSoundToggle" type="checkbox" checked onchange="onNoticeSoundToggle(this)">
           Sound alert + browser notification for new notices
@@ -893,6 +1026,7 @@ body.sheet-open{overflow:hidden}
         <button class="btn secondary full" type="button" onclick="testNoticeAlert()">
           <svg class="ic ic-sm"><use href="#i-bell"/></svg>Test notification &amp; sound
         </button>
+        <div id="noticeStatus" class="status" aria-live="polite"></div>
       </div>
       <div id="noticesList" class="panel"><div class="empty">Loading notices…</div></div>
     </section>
@@ -966,12 +1100,63 @@ body.sheet-open{overflow:hidden}
     <!-- CHAT -->
     <section id="chat" class="page">
       <input id="chatName" type="hidden">
+      <div class="chat-head">
+        <button class="back-btn" type="button" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+        <h1 class="page-title">Class Chat</h1>
+      </div>
       <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
-      <form id="chatForm" class="chat-compose">
+      <form id="chatForm" class="chat-compose auth-hidden">
         <input id="chatInput" class="field" maxlength="2000" aria-label="Chat message" placeholder="Write a message…" autocomplete="off" required>
         <button class="btn send-btn" type="submit" id="sendChatBtn" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button>
       </form>
       <div id="chatStatus" class="status" aria-live="polite"></div>
+    </section>
+
+    <!-- AI STUDY ASSISTANT -->
+    <section id="ai" class="page" aria-labelledby="aiHeading">
+      <div class="ai-shell">
+        <aside class="ai-history" id="aiHistory" aria-label="AI conversation history">
+          <div class="ai-history-head">
+            <div class="ai-history-top">
+              <h2 class="ai-history-title">Your chats</h2>
+              <button class="icon-btn ai-history-close" type="button" onclick="closeAiHistory()" aria-label="Close chat history"><svg class="ic"><use href="#i-close"/></svg></button>
+            </div>
+            <button class="btn secondary full" type="button" onclick="newAiChat()"><svg class="ic ic-sm"><use href="#i-plus"/></svg>New chat</button>
+          </div>
+          <div class="ai-history-list" id="aiConversationList">
+            <div class="ai-history-empty">Sign in to see your chats.</div>
+          </div>
+        </aside>
+        <div class="ai-main">
+          <div class="ai-head">
+            <button class="back-btn" type="button" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+            <div class="ai-head-info">
+              <h1 id="aiHeading">ClassHub AI</h1>
+              <small>Powered by Gemini · Chats saved to your account</small>
+            </div>
+            <div class="ai-head-actions">
+              <button class="icon-btn ai-history-toggle" type="button" onclick="openAiHistory()" aria-label="Open chat history" aria-controls="aiHistory" aria-expanded="false"><svg class="ic"><use href="#i-history"/></svg></button>
+              <button class="icon-btn" type="button" onclick="newAiChat()" aria-label="Start a new chat"><svg class="ic"><use href="#i-plus"/></svg></button>
+            </div>
+          </div>
+          <div id="aiMessages" class="ai-messages" role="log" aria-live="polite" aria-relevant="additions">
+            <div class="ai-welcome">
+              <div class="ai-orb"><svg class="ic"><use href="#i-spark"/></svg></div>
+              <h2>Ask ClassHub AI</h2>
+              <p>Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account.</p>
+            </div>
+          </div>
+          <div class="ai-compose-wrap">
+            <form id="aiForm" class="ai-compose auth-hidden">
+              <textarea id="aiInput" class="field" rows="1" maxlength="4000" placeholder="Ask about a topic, make a study plan…" aria-label="Message the AI assistant" autocomplete="off"></textarea>
+              <button class="btn send-btn" id="aiSendBtn" type="submit" aria-label="Send message"><svg class="ic"><use href="#i-send"/></svg></button>
+              <button class="btn secondary ai-stop auth-hidden" id="aiStopBtn" type="button" onclick="stopAiResponse()">Stop</button>
+            </form>
+            <div class="ai-hint">ClassHub AI can make mistakes. Check important answers, especially for clinical topics.</div>
+            <div id="aiStatus" class="status" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </div>
@@ -996,6 +1181,7 @@ body.sheet-open{overflow:hidden}
       <button class="more-item" type="button" onclick="goFromMore('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Test Papers</button>
       <button class="more-item" type="button" onclick="goFromMore('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
       <button class="more-item" type="button" onclick="goFromMore('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
+      <button class="more-item" type="button" onclick="goFromMore('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
       <button class="more-item" type="button" onclick="goFromMore('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
       <button class="more-item" type="button" onclick="goFromMore('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
       <button class="more-item" type="button" onclick="goFromMore('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
@@ -1056,6 +1242,7 @@ let currentUser = null;
 let currentPage = "home";
 let accountDirectory = [];
 let accountsRequestVersion = 0;
+let topicSearchRequestVersion = 0;
 let selectedNoteSubject = null;
 let selectedNoteSubcategory = null;
 let selectedTestCategory = null;
@@ -1079,17 +1266,25 @@ const noteSubjects = [
 ];
 
 /* ================= THEME ================= */
-function applyTheme(t){
+function applyTheme(t, persist=true){
   document.documentElement.dataset.theme = t;
   document.getElementById("themeIcon").innerHTML = `<use href="#i-${t==="dark"?"sun":"moon"}"/>`;
-  localStorage.setItem("classhub_theme", t);
+  if(persist) localStorage.setItem("classhub_theme", t);
 }
 function toggleTheme(){
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 }
-const preferredTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+const themeMedia = window.matchMedia ? window.matchMedia("(prefers-color-scheme: light)") : null;
+const preferredTheme = themeMedia && themeMedia.matches ? "light" : "dark";
 const reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-applyTheme(localStorage.getItem("classhub_theme") || preferredTheme);
+applyTheme(localStorage.getItem("classhub_theme") || preferredTheme, false);
+if(themeMedia){
+  const followSystemTheme = event=>{
+    if(!localStorage.getItem("classhub_theme")) applyTheme(event.matches ? "light" : "dark", false);
+  };
+  if(themeMedia.addEventListener) themeMedia.addEventListener("change", followSystemTheme);
+  else if(themeMedia.addListener) themeMedia.addListener(followSystemTheme);
+}
 
 /* ================= HELPERS ================= */
 function setStatus(id, message, type=""){
@@ -1187,7 +1382,7 @@ function setAvatar(imgId, fbId, url, name){
 }
 
 /* ================= NAVIGATION ================= */
-const MORE_PAGES = new Set(["pdfs","photos","notices","community","accounts","profile"]);
+const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -1239,13 +1434,15 @@ function openSection(pageId){
     const active = b.dataset.page === pageId || (b.dataset.page === "more" && MORE_PAGES.has(pageId));
     b.classList.toggle("active", active);
   });
-  document.body.classList.toggle("chat-open", pageId==="chat");
+  document.body.classList.toggle("chat-open", pageId==="chat" || pageId==="ai");
+  if(pageId!=="ai") closeAiHistory();
   if(pageId==="notices"){ unreadNotices=0; updateBellBadge(); localStorage.setItem("classhub_last_seen_notice", Date.now()); }
   if(pageId==="notes") renderNotesView();
   if(pageId==="pdfs") renderTestPapersView();
   if(pageId==="photos") renderCaseStudiesView();
   if(pageId==="notices") loadNotices();
   if(pageId==="chat"){ loadChatMessages(); setTimeout(scrollChatToBottom, 300); }
+  if(pageId==="ai") openAiChat();
   if(pageId==="profile") loadStudentProfile();
   if(pageId==="accounts") loadAccountsDirectory();
   if(pageId==="community") window.loadCommunityPosts();
@@ -1325,6 +1522,9 @@ async function updateAuthUI(user){
     chatComposer.placeholder = user ? "Write a message…" : "Sign in to join the chat";
   }
   if(chatSendButton) chatSendButton.disabled = !user;
+  document.getElementById("chatForm")?.classList.toggle("auth-hidden", !user);
+  const noticeCompose = document.getElementById("noticeCompose");
+  if(noticeCompose) noticeCompose.classList.toggle("auth-hidden", !user || user.id !== CR_USER_ID);
 
   if(!user){
     name.textContent = "Welcome to ClassHub";
@@ -1339,6 +1539,8 @@ async function updateAuthUI(user){
     try{ loadStudentProfile(); }catch(e){ console.error(e); }
     try{ if(typeof loadAccountsDirectory==="function") loadAccountsDirectory(); }catch(e){ console.error(e); }
     try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+    try{ if(currentPage==="chat") await loadChatMessages(); }catch(e){ console.error(e); }
+    try{ resetAiChat(); }catch(e){ console.error(e); }
     return;
   }
 
@@ -1365,7 +1567,10 @@ async function updateAuthUI(user){
   }catch(e){ console.error("Profile setup:", e); }
 
   if(version !== authUiVersion) return;   /* another auth change happened meanwhile */
+  try{ resetAiChat(); }catch(e){ console.error(e); }
+  if(currentPage==="ai"){ try{ await openAiChat(); }catch(e){ console.error(e); } }
   try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+  try{ if(currentPage==="chat") await loadChatMessages(); }catch(e){ console.error(e); }
   if(currentPage==="profile") loadStudentProfile();
   if(currentPage==="accounts" && typeof loadAccountsDirectory==="function") loadAccountsDirectory();
 }
@@ -1559,6 +1764,7 @@ async function rescanPdf(file, button){
     if(!hasSearchableText(text)) throw new Error("no readable text found, so the old text was kept");
     button.textContent = "Saving…";
     setPdfProgress("Saving searchable text…", 0.97);
+    throwIfAborted(controller.signal);
     const {data, error} = await db.from("pdfs").update({content_text:text, rescanned:true}).eq("id", file.id).select("id");
     if(error) throw error;
     if(!data || !data.length) throw new Error("you do not have permission to update this book");
@@ -1703,6 +1909,7 @@ async function uploadNotePDF(input,button){
       setPdfProgress(msg, 0.05 + fraction * 0.9);
     }, controller.signal);
     setPdfProgress("Saving to your library…", 0.97);
+    throwIfAborted(controller.signal);
     const {error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:subject, subcategory:subcategory,
@@ -1898,6 +2105,7 @@ async function uploadTestPDF(input,button){
       setPdfProgress(msg, 0.05 + fraction * 0.9);
     }, controller.signal);
     setPdfProgress("Saving to your library…", 0.97);
+    throwIfAborted(controller.signal);
     const {error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:null, subcategory:null,
@@ -2116,10 +2324,15 @@ function locationLabel(row){
 }
 
 async function runTopicSearch(){
+  const requestVersion = ++topicSearchRequestVersion;
   const input = document.getElementById("topicSearchInput");
   const query = (input.value || "").trim();
   const resultsBox = document.getElementById("topicSearchResults");
-  if(query.length < 2){ setStatus("topicSearchStatus","Type at least 2 characters.","error"); return; }
+  if(query.length < 2){
+    resultsBox.replaceChildren();
+    setStatus("topicSearchStatus","Type at least 2 characters.","error");
+    return;
+  }
   setStatus("topicSearchStatus","Searching every page of every book…");
   resultsBox.replaceChildren();
   skeletonList(resultsBox, 3);
@@ -2137,6 +2350,7 @@ async function runTopicSearch(){
     anyOk = true;
     (data||[]).forEach(r=>found.set(r.id, r));
   }catch(e){ lastError = e; }
+  if(requestVersion !== topicSearchRequestVersion) return;
 
   /* 1b) forgiving match: spelling / accent variants (dosa, dosha, doṣa) */
   try{
@@ -2151,6 +2365,7 @@ async function runTopicSearch(){
       (data||[]).forEach(r=>{ if(!found.has(r.id)) found.set(r.id, r); });
     }
   }catch(e){ if(!anyOk) lastError = e; }
+  if(requestVersion !== topicSearchRequestVersion) return;
 
   /* 2) full-text match — catches multi-word queries whose words are not side by side */
   if(query.split(/\s+/).length > 1){
@@ -2162,6 +2377,7 @@ async function runTopicSearch(){
       anyOk = true;
       (data||[]).forEach(r=>{ if(!found.has(r.id)) found.set(r.id, r); });
     }catch(e){ if(!anyOk) lastError = e; }
+    if(requestVersion !== topicSearchRequestVersion) return;
   }
 
   /* 3) last resort: download and scan on the device */
@@ -2174,11 +2390,13 @@ async function runTopicSearch(){
       const q = query.toLowerCase();
       (data||[]).filter(r=>(r.content_text||"").toLowerCase().includes(q)).forEach(r=>found.set(r.id, r));
     }catch(e){ lastError = e; }
+    if(requestVersion !== topicSearchRequestVersion) return;
   }
 
   resultsBox.replaceChildren();
   if(!anyOk){
-    setStatus("topicSearchStatus","Search failed: "+(lastError ? lastError.message : "unknown error"),"error");
+    console.error("Topic search:", lastError);
+    setStatus("topicSearchStatus","Search failed: "+friendlyError(lastError,"Could not search right now. Please try again."),"error");
     return;
   }
 
@@ -2265,6 +2483,8 @@ function lockBodyScroll(on){ document.body.style.overflow = on ? "hidden" : ""; 
 let viewerLastFocus = null;
 async function openPdfViewer({url, page, matcher, title, hitPages}){
   if(!url){ showToast("This book has no file link"); return; }
+  const fileUrl = safeUrl(url);
+  if(fileUrl === "#"){ showToast("This book has an invalid file link"); return; }
   const el = document.getElementById("pdfViewer");
   viewerLastFocus = document.activeElement;
   el.classList.add("open");
@@ -2276,7 +2496,7 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
   viewer.hitPages = hitPages || [];
   viewer.title = title || "PDF";
   document.getElementById("pvTitle").textContent = viewer.title;
-  document.getElementById("pvExternal").href = `${url}#page=${page}`;
+  document.getElementById("pvExternal").href = `${fileUrl}#page=${page}`;
   const body = document.getElementById("pvBody");
   const hasHits = viewer.hitPages.length > 0;
   document.getElementById("pvPrevHit").style.display = hasHits ? "" : "none";
@@ -2284,16 +2504,16 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
   setTimeout(()=>document.querySelector("#pdfViewer .pv-btn")?.focus(), 0);
 
   try{
-    if(viewer.url !== url || !viewer.pdf){
-      if(viewer.pdf && viewer.url !== url){
+    if(viewer.url !== fileUrl || !viewer.pdf){
+      if(viewer.pdf && viewer.url !== fileUrl){
         try{ await viewer.pdf.destroy(); }catch(e){}
         viewer.pdf = null;
       }
       body.replaceChildren(makeElement("div","pv-msg","Opening book…"));
       pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      viewer.pdf = await pdfjsLib.getDocument({url, disableAutoFetch:true, disableStream:true, rangeChunkSize:262144}).promise;
+      viewer.pdf = await pdfjsLib.getDocument({url:fileUrl, disableAutoFetch:true, disableStream:true, rangeChunkSize:262144}).promise;
       viewer.textCache = new Map();
-      viewer.url = url;
+      viewer.url = fileUrl;
       viewer.total = viewer.pdf.numPages;
     }
     document.getElementById("pvTotal").textContent = "/ " + viewer.total;
@@ -2308,7 +2528,7 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
       "This book could not be opened here. You can open it in your browser instead — it should go to page "+page+".");
     body.appendChild(msg);
     const link = makeElement("a","link-btn","Open in browser · page "+page);
-    link.href = `${url}#page=${page}`; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.href = `${fileUrl}#page=${page}`; link.target = "_blank"; link.rel = "noopener noreferrer";
     body.appendChild(link);
   }
 }
@@ -2606,27 +2826,45 @@ async function createCaseFolder(input, button){
 async function uploadCasePhotos(input, button){
   const files = Array.from(input.files || []);
   if(!files.length){ setStatus("caseStatus","Choose at least one photo.","error"); return; }
+  if(!selectedCaseFolder){ setStatus("caseStatus","Choose a folder first.","error"); return; }
+  const folderId = selectedCaseFolder === "unfiled" ? null : selectedCaseFolder.id;
+  const folderPart = folderId || "unfiled";
   button.disabled = true;
-  let uploaded = 0;
+  let uploaded = 0, failed = 0, skipped = 0;
   setStatus("caseStatus","Uploading photos…");
   try{
     for(const file of files){
-      if(!file.type.startsWith("image/")) continue;
-      const folderPart = selectedCaseFolder === "unfiled" ? "unfiled" : selectedCaseFolder.id;
+      if(!file.type.startsWith("image/")){ skipped++; continue; }
       const path = `case-studies/${folderPart}/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
-      const {error:uploadError} = await db.storage.from("photos").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
-      if(uploadError) throw uploadError;
-      const {data:urlData} = db.storage.from("photos").getPublicUrl(path);
-      const rec = {file_name:file.name, file_url:urlData.publicUrl};
-      if(selectedCaseFolder !== "unfiled") rec.folder_id = selectedCaseFolder.id;
-      const {error:insertError} = await db.from("photos").insert(rec);
-      if(insertError) throw insertError;
-      uploaded++;
+      let stored = false;
+      try{
+        const {error:uploadError} = await db.storage.from("photos").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+        if(uploadError) throw uploadError;
+        stored = true;
+        const {data:urlData} = db.storage.from("photos").getPublicUrl(path);
+        const rec = {file_name:file.name, file_url:urlData.publicUrl};
+        if(folderId) rec.folder_id = folderId;
+        const {error:insertError} = await db.from("photos").insert(rec);
+        if(insertError) throw insertError;
+        uploaded++;
+      }catch(error){
+        failed++;
+        console.error("Photo upload failed:", file.name, error);
+        if(stored){
+          try{ await db.storage.from("photos").remove([path]); }
+          catch(cleanupError){ console.error("Photo cleanup failed:", cleanupError); }
+        }
+      }
     }
     input.value = "";
-    setStatus("caseStatus",`${uploaded} photo(s) uploaded.`,"success");
-    showToast("Photos uploaded");
-    await loadCasePhotos();
+    if(uploaded){
+      await loadCasePhotos();
+      showToast("Photos uploaded");
+    }
+    let message = `${uploaded} photo(s) uploaded.`;
+    if(failed) message += ` ${failed} failed.`;
+    if(skipped) message += ` ${skipped} skipped (not images).`;
+    setStatus("caseStatus", message, failed ? "error" : "success");
   }catch(error){
     console.error("Photo upload:", error);
     setStatus("caseStatus","Upload failed: "+friendlyError(error),"error");
@@ -2653,6 +2891,10 @@ async function loadCasePhotos(){
 
 /* ================= NOTICES ================= */
 async function addNotice(){
+  if(!currentUser || currentUser.id !== CR_USER_ID){
+    setStatus("noticeStatus","Only the class representative can publish notices.","error");
+    return;
+  }
   const title = document.getElementById("noticeTitle").value.trim();
   const content = document.getElementById("noticeContent").value.trim();
   if(!title || !content){ setStatus("noticeStatus","Enter both a title and notice.","error"); return; }
@@ -2680,7 +2922,13 @@ async function loadNotices(){
     const {data,error} = await db.from("notices").select("*").order("created_at",{ascending:false});
     if(error) throw error;
     const lastSeen = Number(localStorage.getItem("classhub_last_seen_notice") || 0);
-    if(currentPage !== "notices"){
+    const viewingNotices = currentPage === "notices";
+    const seenCutoff = viewingNotices ? Date.now() : lastSeen;
+    if(viewingNotices){
+      unreadNotices = 0;
+      updateBellBadge();
+      localStorage.setItem("classhub_last_seen_notice", String(seenCutoff));
+    }else{
       unreadNotices = (data || []).filter(n=>new Date(n.created_at).getTime() > lastSeen).length;
       updateBellBadge();
     }
@@ -2699,7 +2947,7 @@ async function loadNotices(){
       p.style.margin = "5px 0 0";
       info.appendChild(p);
       card.appendChild(icon);
-      if(new Date(notice.created_at).getTime() > lastSeen){
+      if(new Date(notice.created_at).getTime() > seenCutoff){
         const tag = makeElement("span","","NEW");
         tag.style.cssText = "font-size:9.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:99px;margin-left:7px;vertical-align:2px";
         info.querySelector("strong").appendChild(tag);
@@ -2774,6 +3022,35 @@ chatNameInput.addEventListener("change",()=>{
 });
 let chatLoadVersion = 0;
 
+/* The chat table has no user_id column, so remember the ids of messages this
+   device sent. This keeps own-message alignment reliable without changing the DB. */
+let myChatIds = new Set();
+function myChatIdsKey(){
+  return "classhub_my_chat_ids_" + (currentUser ? currentUser.id : "guest");
+}
+function loadMyChatIds(){
+  try{
+    const ids = JSON.parse(localStorage.getItem(myChatIdsKey()) || "[]");
+    myChatIds = new Set(Array.isArray(ids) ? ids.map(String) : []);
+  }catch(e){ myChatIds = new Set(); }
+}
+function rememberMyChatId(id){
+  if(id == null || !currentUser) return;
+  myChatIds.add(String(id));
+  try{
+    localStorage.setItem(myChatIdsKey(), JSON.stringify([...myChatIds].slice(-200)));
+  }catch(e){ console.error("Could not save chat id:", e); }
+}
+
+function chatAuthGate(){
+  const gate = makeElement("div","gate");
+  gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-chat"/></svg>
+    <h2 class="panel-title" style="justify-content:center">Join the class chat</h2>
+    <p class="muted" style="margin-bottom:14px">Sign in with Google to view and send messages.</p>`;
+  gate.appendChild(makeButton("Continue with Google",()=>signInWithGoogle(),"btn"));
+  return gate;
+}
+
 function chatNearBottom(box){
   return box.scrollHeight - box.scrollTop - box.clientHeight < 140;
 }
@@ -2793,7 +3070,7 @@ function renderChatMessage(message, forceScroll){
   const myName = chatNameInput.value.trim();
   const isMine = (currentUser && message.user_id)
     ? message.user_id === currentUser.id
-    : !!(myName && message.sender_name === myName);
+    : (message.id != null && myChatIds.has(String(message.id))) || !!(myName && message.sender_name === myName);
   const stick = forceScroll === true || isMine || chatNearBottom(box);
   const wrap = makeElement("div","chat-message"+(isMine?" mine":""));
   if(message.id != null) wrap.dataset.id = message.id;
@@ -2809,6 +3086,13 @@ async function loadChatMessages(opts){
   const box = document.getElementById("chatMessages");
   if(!box) return;
   const version = ++chatLoadVersion;
+  document.getElementById("chatForm")?.classList.toggle("auth-hidden", !currentUser);
+  if(!currentUser){
+    setStatus("chatStatus","");
+    box.replaceChildren(chatAuthGate());
+    return;
+  }
+  loadMyChatIds();
   if(!silent) box.replaceChildren(makeEmptyState("Loading messages…","i-chat"));
   try{
     const {data,error} = await db.from("chat_messages").select("*")
@@ -2857,8 +3141,9 @@ document.getElementById("chatForm").addEventListener("submit", async event=>{
   button.disabled = true;
   setStatus("chatStatus","Sending…");
   try{
-    const {error} = await db.from("chat_messages").insert({sender_name, message});
+    const {data, error} = await db.from("chat_messages").insert({sender_name, message}).select("id");
     if(error) throw error;
+    rememberMyChatId(data && data[0] && data[0].id);
     messageInput.value = "";
     setStatus("chatStatus","");
     await loadChatMessages();
@@ -2868,6 +3153,548 @@ document.getElementById("chatForm").addEventListener("submit", async event=>{
   }finally{
     button.disabled = false;
     messageInput.focus();
+  }
+});
+
+/* ================= AI STUDY ASSISTANT ================= */
+const AI_CHAT_ENDPOINT = `${SUPABASE_URL}/functions/v1/ai-chat`;
+const AI_MAX_MESSAGE = 4000;
+const AI_SUGGESTIONS = [
+  "Explain tridosha in simple terms",
+  "Make a 7-day revision plan for Rachana Sharira",
+  "Quiz me on Samhita Adhyayan",
+  "Compare Vata, Pitta and Kapha"
+];
+
+let aiConversations = [];
+let aiActiveConversationId = null;
+let aiStreaming = false;
+let aiSending = false;
+let aiAbortController = null;
+let aiLoadVersion = 0;
+let aiMessagesVersion = 0;
+
+function friendlyAiError(error, fallback="Could not reach the AI. Please try again."){
+  const msg = String(error && error.message ? error.message : error || "");
+  if(/relation .* does not exist|42P01|schema cache/i.test(msg)) return "AI chat isn't set up yet. Please run the AI chat database migration.";
+  if(/not deployed|requested function.*not found|function.*not found|failed to fetch|networkerror|load failed|network request failed|offline/i.test(msg)) return "Can't reach the AI service. Check your connection and try again.";
+  if(/jwt|not authenticated|session expired|sign in again|401/i.test(msg)) return "Please sign in again.";
+  if(/quota|rate limit|too many requests|429|resource_exhausted/i.test(msg)) return "The AI is busy right now. Please wait a moment and try again.";
+  if(/model.*not found|not found.*model|model.*unavailable/i.test(msg)) return "The AI model is unavailable. Please check the GEMINI_MODEL setting.";
+  const known = friendlyError(error, null);
+  if(known) return known;
+  const clean = msg.replace(/\s+/g," ").trim();
+  const technical = /(error:|pgrst|postgrest|violates|constraint|column|syntax|typeerror|referenceerror|undefined)/i.test(clean);
+  if(clean && clean.length <= 200 && !technical) return clean;
+  return fallback;
+}
+
+function aiUserInitial(){
+  if(!currentUser) return "?";
+  const metadata = currentUser.user_metadata || {};
+  const name = (metadata.full_name || metadata.name || currentUser.email || "You").trim();
+  return (name[0] || "?").toUpperCase();
+}
+function aiFirstName(){
+  if(!currentUser) return "";
+  const metadata = currentUser.user_metadata || {};
+  const name = (metadata.full_name || metadata.name || currentUser.email || "").trim();
+  return name.split(/\s+/)[0] || "";
+}
+function aiShortDate(value){
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  if(date.toDateString() === now.toDateString()){
+    return date.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  }
+  return date.toLocaleDateString([], {month:"short",day:"numeric"});
+}
+function aiNearBottom(box){
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 130;
+}
+function aiScrollToBottom(force=false){
+  const box = document.getElementById("aiMessages");
+  if(!box || (!force && !aiNearBottom(box))) return;
+  box.scrollTop = box.scrollHeight;
+  requestAnimationFrame(()=>{ box.scrollTop = box.scrollHeight; });
+}
+
+function updateAiComposer(){
+  const form = document.getElementById("aiForm");
+  const input = document.getElementById("aiInput");
+  const send = document.getElementById("aiSendBtn");
+  const stop = document.getElementById("aiStopBtn");
+  const signedIn = !!currentUser;
+  form?.classList.toggle("auth-hidden", !signedIn);
+  if(input){
+    input.disabled = !signedIn || aiStreaming;
+    input.placeholder = signedIn ? "Ask about a topic, make a study plan…" : "Sign in to chat";
+  }
+  if(send){
+    send.disabled = !signedIn || aiStreaming;
+    send.classList.toggle("auth-hidden", aiStreaming);
+  }
+  stop?.classList.toggle("auth-hidden", !aiStreaming);
+}
+
+function resetAiChat(){
+  try{ aiAbortController?.abort(); }catch(error){}
+  aiAbortController = null;
+  aiStreaming = false;
+  aiSending = false;
+  aiLoadVersion++;
+  aiMessagesVersion++;
+  aiConversations = [];
+  aiActiveConversationId = null;
+  const list = document.getElementById("aiConversationList");
+  if(list){
+    list.replaceChildren(makeElement("div","ai-history-empty",currentUser ? "No chats yet. Start a new one." : "Sign in to see your chats."));
+  }
+  const box = document.getElementById("aiMessages");
+  if(box){
+    if(currentUser) renderAiWelcome();
+    else renderAiAuthGate();
+  }
+  updateAiComposer();
+  closeAiHistory();
+}
+
+function renderAiAuthGate(){
+  const box = document.getElementById("aiMessages");
+  if(!box) return;
+  box.replaceChildren();
+  const gate = makeElement("div","gate ai-gate");
+  gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-spark"/></svg>
+    <h2 class="panel-title" style="justify-content:center">ClassHub AI</h2>
+    <p class="muted" style="margin-bottom:14px">Sign in with Google to ask Gemini questions and keep your chat history saved to your account.</p>`;
+  gate.appendChild(makeButton("Continue with Google",()=>signInWithGoogle(),"btn"));
+  box.appendChild(gate);
+}
+
+function renderAiWelcome(){
+  const box = document.getElementById("aiMessages");
+  if(!box) return;
+  box.replaceChildren();
+  const wrap = makeElement("div","ai-welcome");
+  const orb = makeElement("div","ai-orb");
+  orb.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg>`;
+  const name = aiFirstName();
+  wrap.appendChild(orb);
+  wrap.appendChild(makeElement("h2","",name ? `Hi ${name}, what are we studying?` : "Ask ClassHub AI"));
+  wrap.appendChild(makeElement("p","","Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account."));
+  const suggestions = makeElement("div","ai-suggestions");
+  AI_SUGGESTIONS.forEach(text=>{
+    suggestions.appendChild(makeButton(text,()=>sendAiMessage(text),"ai-suggestion"));
+  });
+  wrap.appendChild(suggestions);
+  box.appendChild(wrap);
+}
+
+function renderAiConversationList(){
+  const list = document.getElementById("aiConversationList");
+  if(!list) return;
+  list.replaceChildren();
+  if(!currentUser){
+    list.appendChild(makeElement("div","ai-history-empty","Sign in to see your chats."));
+    return;
+  }
+  if(!aiConversations.length){
+    list.appendChild(makeElement("div","ai-history-empty","No chats yet. Start a new one."));
+    return;
+  }
+  aiConversations.forEach(conversation=>{
+    const row = makeElement("div","ai-history-item"+(conversation.id===aiActiveConversationId?" active":""));
+    const open = makeElement("button","ai-history-open");
+    open.type = "button";
+    open.title = conversation.title || "New chat";
+    open.appendChild(makeElement("span","ai-history-name",conversation.title || "New chat"));
+    open.appendChild(makeElement("span","ai-history-date",aiShortDate(conversation.updated_at)));
+    open.addEventListener("click",()=>selectAiConversation(conversation.id));
+    const remove = makeElement("button","ai-history-delete");
+    remove.type = "button";
+    remove.setAttribute("aria-label",`Delete ${conversation.title || "chat"}`);
+    remove.innerHTML = `<svg class="ic ic-sm"><use href="#i-trash"/></svg>`;
+    remove.addEventListener("click",()=>deleteAiConversation(conversation.id));
+    row.append(open, remove);
+    list.appendChild(row);
+  });
+}
+
+function openAiHistory(){
+  const page = document.getElementById("ai");
+  const panel = document.getElementById("aiHistory");
+  if(!page || !panel) return;
+  page.classList.add("history-open");
+  panel.classList.add("show");
+  document.querySelector(".ai-history-toggle")?.setAttribute("aria-expanded","true");
+}
+function closeAiHistory(){
+  const page = document.getElementById("ai");
+  const panel = document.getElementById("aiHistory");
+  if(!page || !panel) return;
+  page.classList.remove("history-open");
+  panel.classList.remove("show");
+  document.querySelector(".ai-history-toggle")?.setAttribute("aria-expanded","false");
+}
+
+async function loadAiConversations(opts={}){
+  if(!currentUser) return [];
+  const version = ++aiLoadVersion;
+  try{
+    const {data,error} = await db.from("ai_conversations")
+      .select("id,title,updated_at,created_at")
+      .order("updated_at",{ascending:false})
+      .limit(40);
+    if(error) throw error;
+    if(version !== aiLoadVersion) return [];
+    aiConversations = data || [];
+    if(opts.selectFirst && !aiActiveConversationId && aiConversations.length){
+      aiActiveConversationId = aiConversations[0].id;
+    }
+    renderAiConversationList();
+    return aiConversations;
+  }catch(error){
+    if(version !== aiLoadVersion) return [];
+    console.error("AI conversations:",error);
+    const message = friendlyAiError(error,"Could not load your chats.");
+    document.getElementById("aiConversationList")?.replaceChildren(makeElement("div","ai-history-empty",message));
+    setStatus("aiStatus",message,"error");
+    return [];
+  }
+}
+
+async function loadAiMessages(conversationId){
+  const box = document.getElementById("aiMessages");
+  if(!box || !conversationId) return;
+  const version = ++aiMessagesVersion;
+  box.replaceChildren(makeEmptyState("Loading conversation…","i-spark"));
+  try{
+    const {data,error} = await db.from("ai_messages")
+      .select("id,role,content,created_at")
+      .eq("conversation_id",conversationId)
+      .order("created_at",{ascending:false})
+      .limit(200);
+    if(error) throw error;
+    if(version !== aiMessagesVersion) return;
+    if(!data || !data.length){ renderAiWelcome(); return; }
+    box.replaceChildren();
+    data.slice().reverse().forEach(message=>appendAiMessage(message.role,message.content,{id:message.id,createdAt:message.created_at,scroll:false}));
+    aiScrollToBottom(true);
+  }catch(error){
+    if(version !== aiMessagesVersion) return;
+    console.error("AI messages:",error);
+    const message = friendlyAiError(error,"Could not load this chat.");
+    box.replaceChildren(makeEmptyState(message,"i-spark"));
+    setStatus("aiStatus",message,"error");
+  }
+}
+
+function appendAiMessage(role,content,opts={}){
+  const box = document.getElementById("aiMessages");
+  if(!box) return null;
+  box.querySelector(".ai-welcome")?.remove();
+  box.querySelector(".empty")?.remove();
+  const wrap = makeElement("div","ai-msg "+(role === "user" ? "ai-msg-user" : "ai-msg-assistant"));
+  if(opts.id) wrap.dataset.id = opts.id;
+  const avatar = makeElement("div","ai-msg-avatar");
+  if(role === "user") avatar.textContent = aiUserInitial();
+  else avatar.innerHTML = `<svg class="ic ic-sm"><use href="#i-spark"/></svg>`;
+  const body = makeElement("div","ai-msg-body");
+  const bubble = makeElement("div","ai-bubble",content == null ? "" : String(content));
+  body.appendChild(bubble);
+  if(opts.createdAt) body.appendChild(makeElement("div","ai-msg-time",formatDate(opts.createdAt)));
+  wrap.append(avatar,body);
+  box.appendChild(wrap);
+  if(opts.scroll !== false) aiScrollToBottom(true);
+  return {wrap,bubble,body};
+}
+
+async function openAiChat(){
+  updateAiComposer();
+  if(!currentUser){
+    document.getElementById("aiConversationList")?.replaceChildren(makeElement("div","ai-history-empty","Sign in to see your chats."));
+    renderAiAuthGate();
+    return;
+  }
+  if(aiStreaming || aiSending) return;
+  const userId = currentUser.id;
+  await loadAiConversations({selectFirst:true});
+  if(!currentUser || currentUser.id !== userId){
+    if(!currentUser) renderAiAuthGate();
+    return;
+  }
+  if(aiActiveConversationId) await loadAiMessages(aiActiveConversationId);
+  if(!currentUser || currentUser.id !== userId){
+    if(!currentUser) renderAiAuthGate();
+    return;
+  }
+  if(!aiActiveConversationId) renderAiWelcome();
+}
+
+async function selectAiConversation(conversationId){
+  if(aiSending) return;
+  if(aiStreaming) stopAiResponse();
+  aiActiveConversationId = conversationId;
+  renderAiConversationList();
+  closeAiHistory();
+  setStatus("aiStatus","");
+  await loadAiMessages(conversationId);
+}
+
+function newAiChat(){
+  if(aiSending) return;
+  if(aiStreaming) stopAiResponse();
+  aiActiveConversationId = null;
+  aiMessagesVersion++;
+  renderAiConversationList();
+  if(!currentUser){
+    closeAiHistory();
+    renderAiAuthGate();
+    setStatus("aiStatus","");
+    return;
+  }
+  renderAiWelcome();
+  closeAiHistory();
+  setStatus("aiStatus","");
+  const input = document.getElementById("aiInput");
+  if(input){
+    input.value = "";
+    input.style.height = "auto";
+    input.focus();
+  }
+}
+
+async function deleteAiConversation(conversationId){
+  if(!currentUser) return;
+  if(aiStreaming && aiActiveConversationId === conversationId){
+    setStatus("aiStatus","Wait for the reply to finish before deleting this chat.","error");
+    return;
+  }
+  const conversation = aiConversations.find(item=>item.id === conversationId);
+  if(!window.confirm(`Delete "${conversation?.title || "this chat"}"? This cannot be undone.`)) return;
+  try{
+    const {error} = await db.from("ai_conversations").delete().eq("id",conversationId);
+    if(error) throw error;
+    aiConversations = aiConversations.filter(item=>item.id !== conversationId);
+    if(aiActiveConversationId === conversationId){
+      aiActiveConversationId = aiConversations[0]?.id || null;
+      if(aiActiveConversationId) await loadAiMessages(aiActiveConversationId);
+      else renderAiWelcome();
+    }
+    renderAiConversationList();
+    showToast("Chat deleted");
+  }catch(error){
+    console.error("Delete AI chat:",error);
+    setStatus("aiStatus",friendlyAiError(error,"Could not delete that chat."),"error");
+  }
+}
+
+function updateAiConversationTitle(conversationId,title){
+  const conversation = aiConversations.find(item=>item.id === conversationId);
+  if(conversation && title) conversation.title = title;
+  renderAiConversationList();
+}
+
+function aiParseSseBlock(block){
+  let event = "message";
+  const data = [];
+  block.split("\n").forEach(line=>{
+    if(line.startsWith("event:")) event = line.slice(6).trim();
+    else if(line.startsWith("data:")) data.push(line.slice(5).replace(/^ /,""));
+  });
+  if(!data.length) return null;
+  return {event,data:data.join("\n")};
+}
+
+function aiSetStreaming(on){
+  aiStreaming = !!on;
+  updateAiComposer();
+}
+
+function stopAiResponse(){
+  if(aiAbortController){
+    try{ aiAbortController.abort(); }catch(error){}
+  }
+  setStatus("aiStatus","Stopping…");
+}
+
+async function sendAiMessage(textOverride){
+  if(aiStreaming || aiSending) return;
+  if(!currentUser){
+    setStatus("aiStatus","Sign in with Google to chat with the AI.","error");
+    return;
+  }
+  const input = document.getElementById("aiInput");
+  const raw = typeof textOverride === "string" ? textOverride : (input?.value || "");
+  const message = raw.trim();
+  if(!message) return;
+  if(message.length > AI_MAX_MESSAGE){
+    setStatus("aiStatus",`Keep messages under ${AI_MAX_MESSAGE.toLocaleString()} characters.`,"error");
+    return;
+  }
+  setStatus("aiStatus","");
+  const senderId = currentUser.id;
+  let conversationId = aiActiveConversationId;
+  aiSending = true;
+  try{
+    if(!conversationId){
+      const {data,error} = await db.from("ai_conversations")
+        .insert({user_id:currentUser.id,title:"New chat"})
+        .select("id,title,updated_at,created_at")
+        .single();
+      if(error) throw error;
+      aiConversations.unshift(data);
+      aiActiveConversationId = data.id;
+      conversationId = data.id;
+      renderAiConversationList();
+    }
+  }catch(error){
+    aiSending = false;
+    console.error("Create AI chat:",error);
+    setStatus("aiStatus",friendlyAiError(error,"Could not start a new chat."),"error");
+    return;
+  }
+  aiSending = false;
+  if(!currentUser || currentUser.id !== senderId) return;
+
+  if(input && typeof textOverride !== "string"){
+    input.value = "";
+    input.style.height = "auto";
+  }
+
+  const userRow = appendAiMessage("user",message,{scroll:true});
+  const assistantRow = appendAiMessage("assistant","",{scroll:true});
+  if(!assistantRow) return;
+  const typing = makeElement("span","ai-typing");
+  typing.innerHTML = "<i></i><i></i><i></i>";
+  assistantRow.bubble.appendChild(typing);
+  aiSetStreaming(true);
+  const controller = new AbortController();
+  aiAbortController = controller;
+  let assistantText = "";
+  let started = false;
+
+  try{
+    const {data:sessionData,error:sessionError} = await db.auth.getSession();
+    if(sessionError) throw sessionError;
+    const token = sessionData?.session?.access_token;
+    if(!token) throw new Error("Please sign in again.");
+
+    const response = await fetch(AI_CHAT_ENDPOINT,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${token}`,
+        "apikey":SUPABASE_KEY
+      },
+      body:JSON.stringify({conversationId,message}),
+      signal:controller.signal
+    });
+
+    if(!response.ok){
+      let payload = null;
+      try{ payload = await response.json(); }catch(error){}
+      if(response.status === 404 && !payload?.error) throw new Error("The AI service is not deployed yet.");
+      throw new Error(payload?.error || payload?.message || `AI request failed (${response.status}).`);
+    }
+    if(!response.body) throw new Error("This browser cannot stream the AI reply.");
+
+    const reader = response.body.getReader();
+    const textDecoder = new TextDecoder();
+    let buffer = "";
+    let streamDone = false;
+
+    while(!streamDone){
+      const {done,value} = await reader.read();
+      if(done) break;
+      buffer = (buffer + textDecoder.decode(value,{stream:true})).replace(/\r\n/g,"\n");
+      let split;
+      while((split = buffer.indexOf("\n\n")) !== -1){
+        const block = buffer.slice(0,split);
+        buffer = buffer.slice(split + 2);
+        const event = aiParseSseBlock(block);
+        if(!event) continue;
+        if(event.data === "[DONE]"){ streamDone = true; break; }
+        let payload = null;
+        try{ payload = JSON.parse(event.data); }catch(error){ continue; }
+
+        if(event.event === "delta" && typeof payload.text === "string"){
+          if(!started){
+            typing.remove();
+            assistantRow.bubble.textContent = "";
+            started = true;
+          }
+          assistantText += payload.text;
+          assistantRow.bubble.textContent = assistantText;
+          aiScrollToBottom();
+        }else if(event.event === "done"){
+          streamDone = true;
+          typing.remove();
+          if(payload.title) updateAiConversationTitle(conversationId,payload.title);
+          if(payload.createdAt) assistantRow.body.appendChild(makeElement("div","ai-msg-time",formatDate(payload.createdAt)));
+        }else if(event.event === "error"){
+          throw new Error(payload.message || "The AI could not finish that reply.");
+        }
+      }
+    }
+
+    if(!assistantText.trim()) throw new Error("The AI returned an empty response. Please try again.");
+    assistantRow.bubble.textContent = assistantText;
+    if(started) aiScrollToBottom();
+    await loadAiConversations({selectFirst:false});
+  }catch(error){
+    if(aiAbortController !== controller) return;
+    typing.remove();
+    if(isAbortError(error)){
+      setStatus("aiStatus","Stopped.");
+      if(!assistantText.trim()) assistantRow.bubble.textContent = "Stopped.";
+    }else{
+      console.error("AI chat:",error);
+      const messageText = friendlyAiError(error);
+      setStatus("aiStatus",messageText,"error");
+      if(!assistantText.trim()){
+        userRow?.wrap.remove();
+        assistantRow.bubble.textContent = messageText;
+        assistantRow.bubble.classList.add("ai-error-text");
+        if(conversationId){
+          const retry = makeButton("Try again",()=>{
+            assistantRow.wrap.remove();
+            sendAiMessage(message);
+          },"btn secondary ai-retry");
+          assistantRow.body.appendChild(retry);
+        }
+      }else{
+        assistantRow.body.appendChild(makeElement("div","ai-error-text ai-msg-time",messageText));
+      }
+    }
+  }finally{
+    if(aiAbortController === controller){
+      aiSetStreaming(false);
+      aiAbortController = null;
+      if(currentUser && currentPage === "ai") input?.focus();
+    }
+  }
+}
+
+document.getElementById("aiForm")?.addEventListener("submit",event=>{
+  event.preventDefault();
+  sendAiMessage();
+});
+document.getElementById("aiInput")?.addEventListener("input",event=>{
+  const input = event.currentTarget;
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight,160) + "px";
+});
+document.getElementById("aiInput")?.addEventListener("keydown",event=>{
+  if(event.key === "Enter" && !event.shiftKey && !event.isComposing){
+    event.preventDefault();
+    document.getElementById("aiForm")?.requestSubmit();
+  }
+});
+document.addEventListener("keydown",event=>{
+  if(event.key === "Escape" && document.getElementById("ai")?.classList.contains("history-open")){
+    closeAiHistory();
   }
 });
 
@@ -3271,9 +4098,10 @@ function subscribeToContent(){
 function subscribeToChat(){
   const channel = db.channel("classhub-chat")
     .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_messages"}, payload=>{
+      if(!currentUser) return;   /* signed-out visitors see only the sign-in gate */
       if(currentPage==="chat" && payload.new){
         const box = document.getElementById("chatMessages");
-        if(box && !box.querySelector(".empty")) renderChatMessage(payload.new);
+        if(box && !box.querySelector(".gate") && !box.querySelector(".empty")) renderChatMessage(payload.new);
         else loadChatMessages();
       }
     })
@@ -3385,11 +4213,18 @@ async function loadAccountsDirectory(){
     // Emails come from auth.users through a server-side, CR-guarded RPC;
     // they are never selected from a public profile table.
     const emailByUserId = {};
+    let emailWarning = "";
     if(currentUser.id === CR_USER_ID){
-      const {data:emailRows,error:emailError} = await db.rpc("cr_get_account_emails");
-      if(emailError) throw emailError;
-      (emailRows||[]).forEach(row=>{ emailByUserId[row.user_id] = row.email || ""; });
+      try{
+        const {data:emailRows,error:emailError} = await db.rpc("cr_get_account_emails");
+        if(emailError) throw emailError;
+        (emailRows||[]).forEach(row=>{ emailByUserId[row.user_id] = row.email || ""; });
+      }catch(emailError){
+        console.error("Account emails:", emailError);
+        emailWarning = "Emails could not be loaded.";
+      }
     }
+    if(requestVersion !== accountsRequestVersion) return;
 
     accountDirectory = (data||[]).map(p=>({
       id:p.id,
@@ -3399,7 +4234,8 @@ async function loadAccountsDirectory(){
       status:p.status||"",
       email: currentUser.id === CR_USER_ID ? (emailByUserId[p.id] || "") : ""
     }));
-    setStatus("accountsStatus",`${accountDirectory.length} account${accountDirectory.length===1?"":"s"}`);
+    const accountCount = `${accountDirectory.length} account${accountDirectory.length===1?"":"s"}`;
+    setStatus("accountsStatus", emailWarning ? `${accountCount} · ${emailWarning}` : accountCount, emailWarning ? "error" : "");
     renderAccountsDirectory();
   }catch(error){
     if(requestVersion !== accountsRequestVersion) return;

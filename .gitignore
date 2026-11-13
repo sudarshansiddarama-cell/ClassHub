@@ -1,0 +1,10 @@
+# Supabase Edge Function secrets (contains GEMINI_API_KEY)
+supabase/functions/.env
+
+# Local tooling and scratch files
+.graphify_temp/
+.graphify_temp_dir/
+index.html.github-backup
+opencode.json
+opencode.json.backup
+opencode.json.before-mcp-fix
