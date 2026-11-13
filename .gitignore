@@ -1,4 +1,4 @@
-# Supabase Edge Function secrets (contains GEMINI_API_KEY)
+# Supabase Edge Function secrets (contains AI provider API keys)
 supabase/functions/.env
 
 # Local tooling and scratch files

@@ -6,32 +6,9 @@
 export const MAX_MESSAGE_CHARS = 4000;
 export const MAX_HISTORY_MESSAGES = 20;
 export const MAX_STORED_MESSAGE_CHARS = 20000;
-export const DEFAULT_MODEL = "gemini-3.8-flash";
+export const DEFAULT_MODEL = "deepseek-flash";
 export const AI_BUSY_MESSAGE =
   "The AI is busy right now. Please wait a few seconds and try again.";
-
-/** Transient upstream failures worth retrying (demand spikes, quota, gateway). */
-export function isRetryableStatus(status: number): boolean {
-  return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
-}
-
-/** Exponential backoff with jitter, capped so a retry never stalls the chat. */
-export function retryDelayMs(
-  attempt: number,
-  baseMs = 600,
-  capMs = 4000,
-  random: () => number = Math.random,
-): number {
-  const base = Math.min(capMs, baseMs * 2 ** Math.max(0, attempt));
-  const jitter = 0.75 + Math.min(1, Math.max(0, random())) * 0.5;
-  return Math.min(capMs, Math.round(base * jitter));
-}
-
-/** Google sometimes reports overload inside the streamed events too. */
-export function isBusyMessage(message: string): boolean {
-  return /high demand|overloaded|busy right now|resource_exhausted|quota|temporarily unavailable|rate limit|too many requests/i
-    .test(String(message ?? ""));
-}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -39,6 +16,11 @@ export type ChatRole = "user" | "assistant";
 
 export interface ChatMessage {
   role: ChatRole;
+  content: string;
+}
+
+export interface DeepSeekMessage {
+  role: "system" | ChatRole;
   content: string;
 }
 
@@ -91,7 +73,7 @@ export function validateChatRequest(body: unknown): ChatRequestValidation {
   };
 }
 
-/** Trim and normalise history before it is sent back to Gemini. */
+/** Trim and normalise history before it is sent to DeepSeek. */
 export function normaliseHistory(history: unknown[], maxMessages = MAX_HISTORY_MESSAGES): ChatMessage[] {
   const output: ChatMessage[] = [];
   const rows = Array.isArray(history) ? history.slice(-maxMessages) : [];
@@ -117,7 +99,7 @@ export interface SseEvent {
   data: string;
 }
 
-/** Incremental parser for the SSE framing used by Gemini and by our proxy. */
+/** Incremental parser for the SSE framing used by DeepSeek and by our proxy. */
 export class SseDecoder {
   private buffer = "";
 
@@ -162,72 +144,82 @@ function parseEventBlock(raw: string): SseEvent | null {
   return { event, data: data.join("\n") };
 }
 
-export interface InteractionEvent {
+export interface DeepSeekEvent {
   text: string;
-  interactionId?: string;
-  status?: string;
+  finishReason?: string;
   error?: string;
 }
 
-/**
- * Read one Interactions API SSE payload.
- * Text arrives both in step.start.content (first chunk) and step.delta.text.
- */
-export function readInteractionEvent(payload: unknown): InteractionEvent {
+/** Read one OpenAI-compatible streaming chunk from DeepSeek. */
+export function readDeepSeekEvent(payload: unknown): DeepSeekEvent {
   if (!payload || typeof payload !== "object") return { text: "" };
   const record = payload as Record<string, any>;
 
-  if (record.event_type === "error") {
-    const message = record.error && typeof record.error.message === "string"
-      ? record.error.message
-      : "The AI service returned an error.";
+  if (record.error) {
+    let message = "The AI service returned an error.";
+    if (typeof record.error === "string" && record.error.trim()) {
+      message = record.error.trim();
+    } else if (
+      typeof record.error === "object" &&
+      typeof record.error.message === "string" &&
+      record.error.message.trim()
+    ) {
+      message = record.error.message.trim();
+    }
     return { text: "", error: message };
   }
 
-  if (record.event_type === "interaction.created" || record.event_type === "interaction.completed") {
-    const interaction = record.interaction && typeof record.interaction === "object"
-      ? record.interaction
-      : {};
-    return {
-      text: "",
-      interactionId: typeof interaction.id === "string" ? interaction.id : undefined,
-      status: typeof interaction.status === "string" ? interaction.status : undefined,
-    };
-  }
+  const choices = Array.isArray(record.choices) ? record.choices : [];
+  const choice = choices[0];
+  if (!choice || typeof choice !== "object") return { text: "" };
 
-  if (record.event_type === "step.start") {
-    const step = record.step;
-    if (!step || step.type !== "model_output" || !Array.isArray(step.content)) {
-      return { text: "" };
-    }
-    return { text: textFromParts(step.content) };
-  }
-
-  if (record.event_type === "step.delta") {
-    const delta = record.delta;
-    if (delta && delta.type === "text" && typeof delta.text === "string") {
-      return { text: delta.text };
-    }
-  }
-
-  return { text: "" };
+  const delta = choice.delta && typeof choice.delta === "object" ? choice.delta : {};
+  return {
+    text: typeof delta.content === "string" ? delta.content : "",
+    finishReason: typeof choice.finish_reason === "string" ? choice.finish_reason : undefined,
+  };
 }
 
-function textFromParts(parts: unknown[]): string {
-  let text = "";
-  for (const part of parts) {
-    if (!part || typeof part !== "object") continue;
-    const record = part as Record<string, unknown>;
-    if (record.type === "text" && typeof record.text === "string") {
-      text += record.text;
-    }
-  }
-  return text;
+/** Build the OpenAI-style message list expected by DeepSeek. */
+export function buildDeepSeekMessages(
+  systemPrompt: string,
+  history: ChatMessage[],
+): DeepSeekMessage[] {
+  return [
+    { role: "system", content: systemPrompt },
+    ...history.map((message) => ({ role: message.role, content: message.content })),
+  ];
+}
+
+export interface DeepSeekRequest {
+  model: string;
+  messages: DeepSeekMessage[];
+  stream: true;
+  thinking: { type: "disabled" };
+  max_tokens: number;
+}
+
+/** Build the streaming, non-thinking request body described in the DeepSeek API. */
+export function buildDeepSeekRequest(
+  model: string,
+  messages: DeepSeekMessage[],
+  maxTokens = 4096,
+): DeepSeekRequest {
+  return {
+    model,
+    messages,
+    stream: true,
+    thinking: { type: "disabled" },
+    max_tokens: maxTokens,
+  };
 }
 
 export function upstreamErrorMessage(payload: unknown, status: number): string {
   if (payload && typeof payload === "object") {
     const record = payload as Record<string, any>;
+    if (typeof record.error === "string" && record.error.trim()) {
+      return record.error.trim().slice(0, 300);
+    }
     const message = record.error && record.error.message;
     if (typeof message === "string" && message.trim()) {
       return message.trim().slice(0, 300);
@@ -236,10 +228,8 @@ export function upstreamErrorMessage(payload: unknown, status: number): string {
   return `The AI service returned ${status}.`;
 }
 
-/** Convert stored messages into Interactions API input steps. */
-export function historyToInteractionInput(history: ChatMessage[]): Array<Record<string, unknown>> {
-  return history.map((message) => ({
-    type: message.role === "assistant" ? "model_output" : "user_input",
-    content: [{ type: "text", text: message.content }],
-  }));
+/** DeepSeek reports throttling and overload in a few different ways. */
+export function isBusyMessage(message: string): boolean {
+  return /rate limit|too many requests|overloaded|busy|temporarily unavailable|quota/i
+    .test(String(message ?? ""));
 }

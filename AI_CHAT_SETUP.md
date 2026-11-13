@@ -1,29 +1,30 @@
 # ClassHub AI Assistant — Setup
 
-ClassHub AI is a study chatbot built into the ClassHub page. It uses the Google
-Gemini Interactions API (`gemini-3.8-flash`) and keeps the Gemini API key on the
-server.
+ClassHub AI is a study chatbot built into the ClassHub page. It uses the
+DeepSeek Chat Completions API (`deepseek-flash`) in non-thinking mode and keeps
+the DeepSeek API key on the server.
 
 ## How it fits together
 
 | Piece | Where | Purpose |
 | --- | --- | --- |
 | UI | `index.html` (`#ai` section) | Chat page, history drawer, streaming messages, auth gate |
-| Backend | `supabase/functions/ai-chat/index.ts` | Verifies the student, stores messages, calls Gemini, proxies SSE |
-| Shared helpers | `supabase/functions/_shared/gemini.ts` | Validation and SSE parsing (also used by tests) |
+| Backend | `supabase/functions/ai-chat/index.ts` | Verifies the student, stores messages, calls DeepSeek, proxies SSE |
+| Shared helpers | `supabase/functions/_shared/deepseek.ts` | Validation, history mapping, and SSE parsing (also used by tests) |
 | Database | `supabase/migrations/20261113000000_add_ai_chat.sql` | `ai_conversations` and `ai_messages` with row-level security |
 | Tests | `tests/ai-chat.test.mjs` | `node --test tests/ai-chat.test.mjs` |
 
 Security model:
 
 - The browser only ever gets the Supabase publishable key that is already in
-  `index.html`. `GEMINI_API_KEY` exists only as a Supabase Edge Function secret.
+  `index.html`. `DEEPSEEK_API_KEY` exists only as a Supabase Edge Function
+  secret.
 - The Edge Function requires a signed-in user's access token, verifies it with
   Supabase Auth, and writes through RLS as that user.
 - Every conversation and message belongs to `auth.uid()`. Other students cannot
   read or delete them.
-- Conversations continue with Gemini's `previous_interaction_id`, so the
-  student's earlier turns are understood without resending the whole chat.
+- DeepSeek is stateless, so the function replays the latest stored turns on
+  every request.
 
 ## 1. Apply the database migration
 
@@ -56,23 +57,23 @@ order by tablename, policyname;
 You should see select/insert/update/delete policies on `ai_conversations` and
 select/insert/delete policies on `ai_messages`.
 
-## 2. Create a Gemini API key
+## 2. Create a DeepSeek API key
 
-1. Open <https://aistudio.google.com/apikey>.
-2. Create an API key in the same Google Cloud project you want to use.
+1. Open <https://platform.deepseek.com/api_keys>.
+2. Create an API key.
 3. Keep the key private. Do not paste it into `index.html`, a commit, or chat.
 
 ## 3. Set the Edge Function secrets
 
 ```bash
 supabase secrets set \
-  GEMINI_API_KEY=your-key-here \
-  GEMINI_MODEL=gemini-3.8-flash
+  DEEPSEEK_API_KEY=your-key-here \
+  DEEPSEEK_MODEL=deepseek-flash
 ```
 
-`GEMINI_MODEL` is optional and defaults to `gemini-3.8-flash`. Do not create a
-`VITE_` or `SUPABASE_` prefixed variable for the Gemini key; only the names above
-are read by the function.
+`DEEPSEEK_MODEL` is optional and defaults to `deepseek-flash`. Do not create a
+`VITE_` or `SUPABASE_` prefixed variable for the DeepSeek key; only the names
+above are read by the function.
 
 ## 4. Deploy the function
 
@@ -121,11 +122,15 @@ node --test tests/ai-chat.test.mjs
 | --- | --- | --- |
 | "AI chat isn't set up yet" | Migration was not applied | Run step 1 |
 | "Can't reach the AI service" | Function is not deployed, wrong project, or offline | Run step 4 and check the network |
-| "The AI assistant is not configured yet" | `GEMINI_API_KEY` secret is missing | Run step 3, then redeploy if needed |
-| "The AI model is unavailable" | Bad `GEMINI_MODEL` value | Set it to `gemini-3.8-flash` |
+| "The AI assistant is not configured yet" | `DEEPSEEK_API_KEY` secret is missing | Run step 3, then redeploy if needed |
+| "The AI assistant is not configured correctly" | DeepSeek rejected the API key | Check that `DEEPSEEK_API_KEY` is valid and has credit |
+| "The AI could not process that request" | Bad `DEEPSEEK_MODEL` value or malformed request | Set it to `deepseek-flash` |
 | "Please sign in again" | Expired session or missing bearer token | Sign out and sign in again |
 | "You're sending messages too quickly" | More than 10 messages in a minute | Wait a minute |
-| "The AI is busy right now" | Google returned a transient 429/5xx demand spike | The function retries automatically; if it persists, wait a few seconds and tap **Try again** |
+| "The AI is busy right now" | DeepSeek returned a 429 rate limit | Wait a few seconds and tap **Try again** |
+| "The AI service is temporarily unavailable" | DeepSeek returned a 5xx error | Wait a moment and retry |
+| "The AI took too long to respond" | The 120-second request timeout elapsed | Retry with a shorter question |
+| "The connection to the AI was interrupted" | The stream ended before completion | Tap **Try again** |
 | Function returns 401 before your code runs | Supabase JWT verification rejected the token | Sign in again; check the project URL/key |
 
 ## Notes and limits
@@ -133,12 +138,12 @@ node --test tests/ai-chat.test.mjs
 - Each question is capped at 4,000 characters; stored replies at 20,000
   characters. Replies are requested with a 4,096-token output cap.
 - The backend allows 10 student messages per minute per account.
-- Transient Gemini overloads (429/500/502/503/504) are retried up to three
-  times with exponential backoff and jitter before the student sees an error.
-- Gemini stores the interaction when `store: true`. If Google expires an
-  interaction, the function clears the stored ID and replays the latest stored
-  turns; if replay is rejected, it answers from the new message alone. The full
-  ClassHub chat history remains visible in Supabase either way.
+- The function sends the system prompt plus the latest 20 stored messages to
+  DeepSeek on every turn. Stored history is limited to the same 20-message
+  window.
+- Thinking is disabled with `"thinking": {"type": "disabled"}`.
+- The legacy `ai_conversations.last_interaction_id` column is left in place for
+  database compatibility but is no longer read or written.
 - The UI renders replies as plain text (no HTML or Markdown injection), so
   model output cannot execute scripts in ClassHub.
 - Conversations are never shared between accounts.

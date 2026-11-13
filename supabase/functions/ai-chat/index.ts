@@ -1,15 +1,15 @@
 /**
- * ClassHub AI chat backend.
+ * ClassHub AI chat backend (DeepSeek).
  *
- * The browser never sees GEMINI_API_KEY. It calls this function with the
+ * The browser never sees DEEPSEEK_API_KEY. It calls this function with the
  * student's Supabase access token; the function verifies the user, checks
- * conversation ownership through RLS, stores messages, and streams Gemini's
- * reply back as server-sent events.
+ * conversation ownership through RLS, stores messages, and streams the
+ * DeepSeek reply back as server-sent events.
  *
  * Required secrets:
- *   GEMINI_API_KEY
+ *   DEEPSEEK_API_KEY
  * Optional:
- *   GEMINI_MODEL (defaults to gemini-3.8-flash)
+ *   DEEPSEEK_MODEL (defaults to deepseek-flash)
  *
  * SUPABASE_URL and SUPABASE_ANON_KEY are provided by the Edge Runtime.
  */
@@ -22,25 +22,25 @@ import {
   MAX_STORED_MESSAGE_CHARS,
   SseDecoder,
   type SseEvent,
-  historyToInteractionInput,
+  buildDeepSeekMessages,
+  buildDeepSeekRequest,
   isBusyMessage,
-  isRetryableStatus,
   normaliseHistory,
-  retryDelayMs,
+  readDeepSeekEvent,
   titleFromMessage,
   upstreamErrorMessage,
   validateChatRequest,
-  readInteractionEvent,
-} from "../_shared/gemini.ts";
+} from "../_shared/deepseek.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")
   ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")
   ?? "";
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || DEFAULT_MODEL;
+const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY") ?? "";
+const DEEPSEEK_MODEL = Deno.env.get("DEEPSEEK_MODEL") || DEFAULT_MODEL;
 const RATE_LIMIT_PER_MINUTE = 10;
-const GEMINI_MAX_ATTEMPTS = 4;
+const DEEPSEEK_TIMEOUT_MS = 120_000;
+const DEEPSEEK_MAX_TOKENS = 4096;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -108,66 +108,61 @@ function isMissingTable(error: { code?: string; message?: string } | null): bool
     /relation .* does not exist|schema cache/i.test(error.message ?? "");
 }
 
-async function callGemini(
-  input: string | Array<Record<string, unknown>>,
-  previousInteractionId: string | null,
-): Promise<Response> {
-  const payload: Record<string, unknown> = {
-    model: GEMINI_MODEL,
-    input,
-    system_instruction: SYSTEM_PROMPT,
-    stream: true,
-    store: true,
-    generation_config: { thinking_level: "low", max_output_tokens: 4096 },
-  };
-  if (previousInteractionId) {
-    payload.previous_interaction_id = previousInteractionId;
+function isTimeoutError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return /timed? ?out/i.test(String(error ?? ""));
   }
+  const name = "name" in error ? String((error as { name?: unknown }).name ?? "") : "";
+  return name === "TimeoutError" || name === "AbortError" ||
+    /timed? ?out/i.test(String(error));
+}
 
-  return await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/interactions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(120_000),
+async function callDeepSeek(
+  messages: ReturnType<typeof buildDeepSeekMessages>,
+): Promise<Response> {
+  return await fetch("https://api.deepseek.com/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
     },
-  );
+    body: JSON.stringify(buildDeepSeekRequest(DEEPSEEK_MODEL, messages, DEEPSEEK_MAX_TOKENS)),
+    signal: AbortSignal.timeout(DEEPSEEK_TIMEOUT_MS),
+  });
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+function deepSeekErrorResponse(status: number, detail: unknown): Response {
+  console.error("ai-chat: DeepSeek rejected request", status, detail);
 
-/**
- * Google's demand spikes are usually brief. Retry transient statuses with
- * exponential backoff before giving up, so one busy moment does not fail the
- * student's message.
- */
-async function callGeminiWithRetry(
-  input: string | Array<Record<string, unknown>>,
-  previousInteractionId: string | null,
-): Promise<Response> {
-  let response = await callGemini(input, previousInteractionId);
-  for (let attempt = 0; attempt < GEMINI_MAX_ATTEMPTS - 1; attempt++) {
-    if (response.ok || !isRetryableStatus(response.status)) return response;
-
-    const delay = retryDelayMs(attempt);
-    console.warn(
-      `ai-chat: Gemini ${response.status}; retry ${attempt + 1}/${GEMINI_MAX_ATTEMPTS - 1} in ${delay}ms`,
-    );
-    try {
-      await response.body?.cancel();
-    } catch {
-      // Response already closed.
-    }
-    await sleep(delay);
-    response = await callGemini(input, previousInteractionId);
+  if (status === 401 || status === 403) {
+    return json(503, {
+      error: "The AI assistant is not configured correctly. Please try again later.",
+      code: "AI_AUTH_ERROR",
+    });
   }
-  return response;
+  if (status === 429) {
+    return json(
+      503,
+      { error: AI_BUSY_MESSAGE, code: "AI_BUSY" },
+      { "Retry-After": "5" },
+    );
+  }
+  if (status >= 500) {
+    return json(503, {
+      error: "The AI service is temporarily unavailable. Please try again shortly.",
+      code: "AI_UNAVAILABLE",
+    });
+  }
+  if (status === 400 || status === 404) {
+    return json(502, {
+      error: "The AI could not process that request. Please try again.",
+      code: "AI_BAD_REQUEST",
+    });
+  }
+  return json(502, {
+    error: upstreamErrorMessage(detail, status),
+    code: "AI_ERROR",
+  });
 }
 
 Deno.serve(async (request: Request) => {
@@ -177,8 +172,8 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed." });
   }
-  if (!GEMINI_API_KEY) {
-    console.error("ai-chat: GEMINI_API_KEY is not configured");
+  if (!DEEPSEEK_API_KEY) {
+    console.error("ai-chat: DEEPSEEK_API_KEY is not configured");
     return json(503, { error: "The AI assistant is not configured yet." });
   }
 
@@ -211,7 +206,7 @@ Deno.serve(async (request: Request) => {
   }
   const { conversationId, message } = validation.value;
 
-  // A small per-user guard on top of Gemini's own quotas.
+  // A small per-user guard on top of DeepSeek's own quotas.
   const since = new Date(Date.now() - 60_000).toISOString();
   const { count: recentCount, error: rateError } = await supabase
     .from("ai_messages")
@@ -227,7 +222,7 @@ Deno.serve(async (request: Request) => {
 
   const { data: conversation, error: conversationError } = await supabase
     .from("ai_conversations")
-    .select("id, title, last_interaction_id")
+    .select("id, title")
     .eq("id", conversationId)
     .maybeSingle();
 
@@ -261,91 +256,63 @@ Deno.serve(async (request: Request) => {
     return json(500, { error: "Could not save your message. Please try again." });
   }
 
-  let previousInteractionId: string | null = conversation.last_interaction_id || null;
-  let geminiResponse: Response;
+  // DeepSeek is stateless, so replay the latest stored turns on every request.
+  const { data: historyRows, error: historyError } = await supabase
+    .from("ai_messages")
+    .select("role, content")
+    .eq("conversation_id", conversation.id)
+    .order("created_at", { ascending: false })
+    .limit(MAX_HISTORY_MESSAGES);
+
+  if (historyError) {
+    console.error("ai-chat: could not load conversation history", historyError.message);
+  }
+
+  let history = historyError || !historyRows?.length
+    ? []
+    : normaliseHistory(historyRows.slice().reverse());
+
+  if (!history.length) {
+    history = [{ role: "user", content: message }];
+  }
+
+  let deepSeekResponse: Response;
   try {
-    geminiResponse = await callGeminiWithRetry(message, previousInteractionId);
+    deepSeekResponse = await callDeepSeek(buildDeepSeekMessages(SYSTEM_PROMPT, history));
   } catch (error) {
     await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-    console.error("ai-chat: Gemini fetch failed", error);
-    return json(502, { error: "Could not reach the AI service. Please try again." });
-  }
-
-  // If Google has expired the stored interaction, start a fresh one rather
-  // than failing the conversation. History in Supabase remains available in
-  // the UI; the model simply begins a new reasoning context.
-  if (!geminiResponse.ok && previousInteractionId && [400, 404].includes(geminiResponse.status)) {
-    const detail = await readErrorBody(geminiResponse);
-    console.warn("ai-chat: retrying without previous interaction", geminiResponse.status, detail);
-    await supabase
-      .from("ai_conversations")
-      .update({ last_interaction_id: null })
-      .eq("id", conversation.id);
-    previousInteractionId = null;
-
-    // Replay the latest stored turns so the conversation keeps its context
-    // even when Google has expired the stored interaction.
-    const { data: historyRows, error: historyError } = await supabase
-      .from("ai_messages")
-      .select("role, content")
-      .eq("conversation_id", conversation.id)
-      .order("created_at", { ascending: false })
-      .limit(MAX_HISTORY_MESSAGES);
-    if (historyError) {
-      console.error("ai-chat: could not load history fallback", historyError.message);
-    }
-    const historyInput = historyError || !historyRows?.length
-      ? null
-      : historyToInteractionInput(normaliseHistory(historyRows.slice().reverse()));
-
-    try {
-      geminiResponse = await callGeminiWithRetry(
-        historyInput?.length ? historyInput : message,
-        null,
-      );
-    } catch (error) {
-      await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-      console.error("ai-chat: Gemini retry failed", error);
-      return json(502, { error: "Could not reach the AI service. Please try again." });
-    }
-
-    // If replaying steps is rejected, still answer this turn from the new
-    // message alone instead of failing the chat.
-    if (!geminiResponse.ok && historyInput?.length) {
-      const replayDetail = await readErrorBody(geminiResponse);
-      console.warn("ai-chat: history replay rejected", geminiResponse.status, replayDetail);
-      try {
-        geminiResponse = await callGeminiWithRetry(message, null);
-      } catch (error) {
-        await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-        console.error("ai-chat: Gemini fallback failed", error);
-        return json(502, { error: "Could not reach the AI service. Please try again." });
-      }
-    }
-  }
-
-  if (!geminiResponse.ok || !geminiResponse.body) {
-    const detail = await readErrorBody(geminiResponse);
-    await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-    console.error("ai-chat: Gemini rejected request", geminiResponse.status, detail);
-    if (isRetryableStatus(geminiResponse.status)) {
-      return json(
-        503,
-        { error: AI_BUSY_MESSAGE, code: "GEMINI_BUSY" },
-        { "Retry-After": "5" },
-      );
-    }
-    return json(502, {
-      error: upstreamErrorMessage(detail, geminiResponse.status),
-      code: "GEMINI_ERROR",
+    console.error("ai-chat: DeepSeek fetch failed", error);
+    const timedOut = isTimeoutError(error);
+    return json(timedOut ? 504 : 502, {
+      error: timedOut
+        ? "The AI took too long to respond. Please try again."
+        : "Could not reach the AI service. Please try again.",
+      code: "AI_NETWORK_ERROR",
     });
   }
 
-  const upstreamBody = geminiResponse.body;
+  if (!deepSeekResponse.ok) {
+    const detail = await readErrorBody(deepSeekResponse);
+    await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
+    return deepSeekErrorResponse(deepSeekResponse.status, detail);
+  }
+
+  const upstreamBody = deepSeekResponse.body;
+  if (!upstreamBody) {
+    await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
+    console.error("ai-chat: DeepSeek returned no body");
+    return json(502, {
+      error: "The AI returned an empty response. Please try again.",
+      code: "AI_EMPTY",
+    });
+  }
+
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   let assistantText = "";
-  let interactionId: string | null = previousInteractionId;
+  let finishReason = "";
+  let sawDone = false;
+  let streamDone = false;
   let streamError = "";
   let closed = false;
 
@@ -369,32 +336,23 @@ Deno.serve(async (request: Request) => {
       const reader = upstreamBody.getReader();
 
       const handleEvent = (event: SseEvent): boolean => {
-        if (!event.data || event.data === "[DONE]") return false;
-        const payload = parseJsonSafe(event.data);
+        const data = event.data.trim();
+        if (!data) return false;
+        if (data === "[DONE]") {
+          sawDone = true;
+          streamDone = true;
+          return true;
+        }
+
+        const payload = parseJsonSafe(data);
         if (!payload) return false;
-        const result = readInteractionEvent(payload);
+        const result = readDeepSeekEvent(payload);
 
         if (result.error) {
           streamError = isBusyMessage(result.error) ? AI_BUSY_MESSAGE : result.error;
           return true;
         }
-        if (result.interactionId) interactionId = result.interactionId;
-        if (result.status === "requires_action") {
-          streamError = "The AI asked for an action this app does not support.";
-          return true;
-        }
-        if (result.status === "failed") {
-          streamError = "The AI could not finish that reply.";
-          return true;
-        }
-        if (result.status === "requires_continuation") {
-          streamError = "The AI reply was too long to finish. Please ask a shorter question.";
-          return true;
-        }
-        if (result.status === "incomplete" && !assistantText) {
-          streamError = "The AI reply was cut off before it could finish. Please ask a shorter question.";
-          return true;
-        }
+        if (result.finishReason) finishReason = result.finishReason;
         if (result.text) {
           assistantText += result.text;
           send("delta", { text: result.text });
@@ -403,7 +361,7 @@ Deno.serve(async (request: Request) => {
       };
 
       try {
-        while (!streamError) {
+        while (!streamError && !streamDone) {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
@@ -411,14 +369,14 @@ Deno.serve(async (request: Request) => {
             if (handleEvent(event)) break;
           }
         }
-        if (!streamError) {
+        if (!streamError && !streamDone) {
           for (const event of decoderSse.flush()) {
             if (handleEvent(event)) break;
           }
         }
       } catch (error) {
-        console.error("ai-chat: upstream stream failed", error);
-        streamError = "The connection to the AI was interrupted.";
+        console.error("ai-chat: DeepSeek stream failed", error);
+        streamError = "The connection to the AI was interrupted. Please try again.";
       } finally {
         // Stop reading as soon as possible if the reply ended early or the
         // client disconnected; cancel is harmless after a normal stream end.
@@ -438,6 +396,24 @@ Deno.serve(async (request: Request) => {
 
       if (!assistantText && !streamError) {
         streamError = "The AI returned an empty response. Please try again.";
+      }
+      if (!streamError && finishReason === "length") {
+        streamError = "The AI reply was cut off before it finished. Please ask a shorter question.";
+      }
+      if (!streamError && finishReason === "content_filter") {
+        streamError = "The AI could not answer that request. Please try rephrasing it.";
+      }
+      if (
+        !streamError &&
+        finishReason &&
+        finishReason !== "stop" &&
+        finishReason !== "length" &&
+        finishReason !== "content_filter"
+      ) {
+        streamError = "The AI could not finish that reply. Please try again.";
+      }
+      if (!streamError && !sawDone && !finishReason) {
+        streamError = "The connection to the AI was interrupted. Please try again.";
       }
 
       // Nothing useful was produced: remove the user row so a retry does not
@@ -478,7 +454,6 @@ Deno.serve(async (request: Request) => {
         updated_at: new Date().toISOString(),
       };
       if (title !== conversation.title) update.title = title;
-      if (!streamError && interactionId) update.last_interaction_id = interactionId;
 
       const { error: updateError } = await supabase
         .from("ai_conversations")

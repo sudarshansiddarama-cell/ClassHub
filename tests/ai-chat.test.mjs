@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  historyToInteractionInput,
+  AI_BUSY_MESSAGE,
+  buildDeepSeekMessages,
+  buildDeepSeekRequest,
   isBusyMessage,
-  isRetryableStatus,
   normaliseHistory,
-  readInteractionEvent,
-  retryDelayMs,
+  readDeepSeekEvent,
   SseDecoder,
   titleFromMessage,
   upstreamErrorMessage,
   validateChatRequest,
-} from "../supabase/functions/_shared/gemini.ts";
+} from "../supabase/functions/_shared/deepseek.ts";
 
 const CONVERSATION_ID = "5d1a2b3c-4d5e-4f60-8a1b-2c3d4e5f6a7b";
 
@@ -47,100 +47,86 @@ test("titleFromMessage collapses whitespace and truncates", () => {
 
 test("SseDecoder handles arbitrary chunk boundaries and CRLF", () => {
   const decoder = new SseDecoder();
-  const raw = [
-    "event: interaction.created",
-    'data: {"event_type":"interaction.created","interaction":{"id":"v1_abc","status":"in_progress"}}',
-    "",
-    "event: step.delta",
-    'data: {"event_type":"step.delta","delta":{"type":"text","text":"Hello"}}',
-    "",
-    "",
-  ].join("\r\n");
-
+  const stream = 'event: message\r\ndata: {"choices":[]}\r\n\r\ndata: [DONE]\r\n\r\n';
   const events = [];
-  for (let i = 0; i < raw.length; i += 7) {
-    events.push(...decoder.push(raw.slice(i, i + 7)));
+  for (let i = 0; i < stream.length; i += 3) {
+    events.push(...decoder.push(stream.slice(i, i + 3)));
   }
+  events.push(...decoder.flush());
   assert.equal(events.length, 2);
-  assert.equal(events[0].event, "interaction.created");
-  assert.equal(JSON.parse(events[0].data).interaction.id, "v1_abc");
-  assert.equal(events[1].event, "step.delta");
-  assert.equal(JSON.parse(events[1].data).delta.text, "Hello");
+  assert.equal(events[0].event, "message");
+  assert.equal(events[0].data, '{"choices":[]}');
+  assert.equal(events[1].data, "[DONE]");
 });
 
-test("readInteractionEvent collects step.start and step.delta text only", () => {
-  const start = readInteractionEvent({
-    event_type: "step.start",
-    step: {
-      type: "model_output",
-      content: [{ type: "text", text: "First chunk " }],
-    },
+test("readDeepSeekEvent extracts delta text, finish reason, and errors", () => {
+  const chunk = readDeepSeekEvent({
+    id: "chatcmpl-1",
+    choices: [{
+      index: 0,
+      delta: { role: "assistant", content: "Rasa is " },
+      finish_reason: null,
+    }],
   });
-  assert.equal(start.text, "First chunk ");
+  assert.equal(chunk.text, "Rasa is ");
+  assert.equal(chunk.finishReason, undefined);
 
-  const delta = readInteractionEvent({
-    event_type: "step.delta",
-    delta: { type: "text", text: "second chunk" },
+  const finished = readDeepSeekEvent({
+    choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
   });
-  assert.equal(delta.text, "second chunk");
+  assert.equal(finished.text, "");
+  assert.equal(finished.finishReason, "stop");
 
-  const thought = readInteractionEvent({
-    event_type: "step.delta",
-    delta: { type: "thought_summary", content: { type: "text", text: "secret" } },
+  const reasoningOnly = readDeepSeekEvent({
+    choices: [{ delta: { reasoning_content: "hidden chain of thought" } }],
   });
-  assert.equal(thought.text, "");
+  assert.equal(reasoningOnly.text, "");
 
-  const created = readInteractionEvent({
-    event_type: "interaction.created",
-    interaction: { id: "v1_123", status: "in_progress" },
+  const failed = readDeepSeekEvent({
+    error: { message: "upstream overloaded", type: "server_error" },
   });
-  assert.equal(created.interactionId, "v1_123");
-
-  const error = readInteractionEvent({
-    event_type: "error",
-    error: { message: "quota exceeded" },
-  });
-  assert.equal(error.error, "quota exceeded");
-
-  const completed = readInteractionEvent({
-    event_type: "interaction.completed",
-    interaction: { id: "v1_456", status: "completed" },
-  });
-  assert.equal(completed.interactionId, "v1_456");
-  assert.equal(completed.status, "completed");
-  assert.equal(completed.text, "");
+  assert.equal(failed.text, "");
+  assert.equal(failed.error, "upstream overloaded");
 });
 
-test("a realistic SSE stream produces the full answer", () => {
+test("a realistic DeepSeek SSE stream produces the full answer", () => {
   const decoder = new SseDecoder();
   const stream = [
-    'event: interaction.created\ndata: {"event_type":"interaction.created","interaction":{"id":"v1_x","status":"in_progress"}}\n\n',
-    'event: step.start\ndata: {"event_type":"step.start","step":{"type":"model_output","content":[{"type":"text","text":"Rasa "}]}}\n\n',
-    'event: step.delta\ndata: {"event_type":"step.delta","delta":{"type":"text","text":"is the "}}\n\n',
-    'event: step.delta\ndata: {"event_type":"step.delta","delta":{"type":"text","text":"essence of taste."}}\n\n',
-    'event: interaction.completed\ndata: {"event_type":"interaction.completed","interaction":{"id":"v1_x","status":"completed"}}\n\n',
-    "event: done\ndata: [DONE]\n\n",
+    'data: {"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}\n\n',
+    'data: {"choices":[{"index":0,"delta":{"content":"Rasa "},"finish_reason":null}]}\n\n',
+    'data: {"choices":[{"index":0,"delta":{"content":"is the "},"finish_reason":null}]}\n\n',
+    'data: {"choices":[{"index":0,"delta":{"content":"essence of taste."},"finish_reason":null}]}\n\n',
+    'data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n',
+    "data: [DONE]\n\n",
   ].join("");
 
   let text = "";
-  let interactionId = "";
+  let finishReason = "";
+  let sawDone = false;
   for (let i = 0; i < stream.length; i += 11) {
     for (const event of decoder.push(stream.slice(i, i + 11))) {
-      if (event.data === "[DONE]") continue;
-      const result = readInteractionEvent(JSON.parse(event.data));
+      if (event.data === "[DONE]") {
+        sawDone = true;
+        continue;
+      }
+      const result = readDeepSeekEvent(JSON.parse(event.data));
       text += result.text;
-      if (result.interactionId) interactionId = result.interactionId;
+      if (result.finishReason) finishReason = result.finishReason;
     }
   }
   for (const event of decoder.flush()) {
-    if (event.data === "[DONE]") continue;
-    const result = readInteractionEvent(JSON.parse(event.data));
+    if (event.data === "[DONE]") {
+      sawDone = true;
+      continue;
+    }
+    const result = readDeepSeekEvent(JSON.parse(event.data));
     text += result.text;
-    if (result.interactionId) interactionId = result.interactionId;
+    if (result.finishReason) finishReason = result.finishReason;
   }
 
   assert.equal(text, "Rasa is the essence of taste.");
-  assert.equal(interactionId, "v1_x");
+  assert.equal(finishReason, "stop");
+  assert.equal(sawDone, true);
 });
 
 test("normaliseHistory trims, merges consecutive roles, and respects the limit", () => {
@@ -163,51 +149,46 @@ test("normaliseHistory trims, merges consecutive roles, and respects the limit",
   assert.deepEqual(limited.map((row) => row.content), ["26", "27", "28", "29"]);
 });
 
-test("upstreamErrorMessage prefers Google's message and caps it", () => {
+test("buildDeepSeekMessages prepends the system prompt and keeps roles", () => {
+  const messages = buildDeepSeekMessages("Be helpful.", [
+    { role: "user", content: "Hello" },
+    { role: "assistant", content: "Hi" },
+    { role: "user", content: "Explain rasa" },
+  ]);
+  assert.deepEqual(messages, [
+    { role: "system", content: "Be helpful." },
+    { role: "user", content: "Hello" },
+    { role: "assistant", content: "Hi" },
+    { role: "user", content: "Explain rasa" },
+  ]);
+});
+
+test("buildDeepSeekRequest enables streaming and disables thinking", () => {
+  const request = buildDeepSeekRequest(
+    "deepseek-flash",
+    buildDeepSeekMessages("Be helpful.", [{ role: "user", content: "Hello" }]),
+  );
+  assert.equal(request.model, "deepseek-flash");
+  assert.equal(request.stream, true);
+  assert.deepEqual(request.thinking, { type: "disabled" });
+  assert.equal(request.max_tokens, 4096);
+  assert.deepEqual(request.messages[0], { role: "system", content: "Be helpful." });
+  assert.deepEqual(request.messages[1], { role: "user", content: "Hello" });
+});
+
+test("upstreamErrorMessage prefers DeepSeek's message and caps it", () => {
   assert.equal(
     upstreamErrorMessage({ error: { message: "model not found" } }, 404),
     "model not found",
   );
+  assert.equal(upstreamErrorMessage({ error: "bad request" }, 400), "bad request");
   assert.equal(upstreamErrorMessage({}, 502), "The AI service returned 502.");
   assert.equal(upstreamErrorMessage({ error: { message: "x".repeat(999) } }, 500).length, 300);
 });
 
-test("historyToInteractionInput uses Interactions API step shapes", () => {
-  const input = historyToInteractionInput([
-    { role: "user", content: "Hello" },
-    { role: "assistant", content: "Hi" },
-  ]);
-  assert.deepEqual(input, [
-    { type: "user_input", content: [{ type: "text", text: "Hello" }] },
-    { type: "model_output", content: [{ type: "text", text: "Hi" }] },
-  ]);
-});
-
-test("isRetryableStatus retries only transient upstream failures", () => {
-  for (const status of [429, 500, 502, 503, 504]) {
-    assert.equal(isRetryableStatus(status), true);
-  }
-  for (const status of [200, 400, 401, 404, 413]) {
-    assert.equal(isRetryableStatus(status), false);
-  }
-});
-
-test("retryDelayMs backs off exponentially, jitters, and stays capped", () => {
-  assert.equal(retryDelayMs(0, 600, 4000, () => 0.5), 600);
-  assert.equal(retryDelayMs(1, 600, 4000, () => 0.5), 1200);
-  assert.equal(retryDelayMs(2, 600, 4000, () => 0.5), 2400);
-  assert.equal(retryDelayMs(10, 600, 4000, () => 0.5), 4000);
-  assert.ok(retryDelayMs(3, 600, 4000, () => 1) <= 4000);
-  assert.ok(retryDelayMs(0, 600, 4000, () => 0) >= 450);
-  assert.ok(retryDelayMs(0, 600, 4000, () => 1) >= 600);
-});
-
-test("isBusyMessage recognises Google overload text", () => {
-  assert.equal(
-    isBusyMessage("gemini-3.8-flash is currently experiencing high demand"),
-    true,
-  );
-  assert.equal(isBusyMessage("The model is overloaded"), true);
-  assert.equal(isBusyMessage("quota exceeded"), true);
-  assert.equal(isBusyMessage("The interaction was not found."), false);
+test("isBusyMessage recognises throttling and overload text", () => {
+  assert.equal(isBusyMessage("Rate limit reached. Please try again later."), true);
+  assert.equal(isBusyMessage("The server is overloaded"), true);
+  assert.equal(isBusyMessage(AI_BUSY_MESSAGE), true);
+  assert.equal(isBusyMessage("The request was invalid."), false);
 });

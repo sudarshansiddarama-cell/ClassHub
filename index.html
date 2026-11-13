@@ -1132,7 +1132,7 @@ body.sheet-open{overflow:hidden}
             <button class="back-btn" type="button" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
             <div class="ai-head-info">
               <h1 id="aiHeading">ClassHub AI</h1>
-              <small>Powered by Gemini · Chats saved to your account</small>
+              <small>Powered by DeepSeek · Chats saved to your account</small>
             </div>
             <div class="ai-head-actions">
               <button class="icon-btn ai-history-toggle" type="button" onclick="openAiHistory()" aria-label="Open chat history" aria-controls="aiHistory" aria-expanded="false"><svg class="ic"><use href="#i-history"/></svg></button>
@@ -3180,7 +3180,7 @@ function friendlyAiError(error, fallback="Could not reach the AI. Please try aga
   if(/not deployed|requested function.*not found|function.*not found|failed to fetch|networkerror|load failed|network request failed|offline/i.test(msg)) return "Can't reach the AI service. Check your connection and try again.";
   if(/jwt|not authenticated|session expired|sign in again|401/i.test(msg)) return "Please sign in again.";
   if(/quota|rate limit|too many requests|429|resource_exhausted|high demand|overloaded|busy right now|service unavailable|503/i.test(msg)) return "The AI is busy right now. Please wait a few seconds and try again.";
-  if(/model.*not found|not found.*model|model.*unavailable/i.test(msg)) return "The AI model is unavailable. Please check the GEMINI_MODEL setting.";
+  if(/model.*not found|not found.*model|model.*unavailable/i.test(msg)) return "The AI model is unavailable. Please check the DEEPSEEK_MODEL setting.";
   const known = friendlyError(error, null);
   if(known) return known;
   const clean = msg.replace(/\s+/g," ").trim();
@@ -3267,7 +3267,7 @@ function renderAiAuthGate(){
   const gate = makeElement("div","gate ai-gate");
   gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-spark"/></svg>
     <h2 class="panel-title" style="justify-content:center">ClassHub AI</h2>
-    <p class="muted" style="margin-bottom:14px">Sign in with Google to ask Gemini questions and keep your chat history saved to your account.</p>`;
+    <p class="muted" style="margin-bottom:14px">Sign in with Google to ask DeepSeek questions and keep your chat history saved to your account.</p>`;
   gate.appendChild(makeButton("Continue with Google",()=>signInWithGoogle(),"btn"));
   box.appendChild(gate);
 }
