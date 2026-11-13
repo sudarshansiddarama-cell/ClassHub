@@ -6,7 +6,7 @@
 export const MAX_MESSAGE_CHARS = 4000;
 export const MAX_HISTORY_MESSAGES = 20;
 export const MAX_STORED_MESSAGE_CHARS = 20000;
-export const DEFAULT_MODEL = "deepseek-flash";
+export const DEFAULT_MODEL = "openai/gpt-oss-120b";
 export const AI_BUSY_MESSAGE =
   "The AI is busy right now. Please wait a few seconds and try again.";
 
@@ -19,7 +19,7 @@ export interface ChatMessage {
   content: string;
 }
 
-export interface DeepSeekMessage {
+export interface GroqMessage {
   role: "system" | ChatRole;
   content: string;
 }
@@ -73,7 +73,7 @@ export function validateChatRequest(body: unknown): ChatRequestValidation {
   };
 }
 
-/** Trim and normalise history before it is sent to DeepSeek. */
+/** Trim and normalise history before it is sent to Groq. */
 export function normaliseHistory(history: unknown[], maxMessages = MAX_HISTORY_MESSAGES): ChatMessage[] {
   const output: ChatMessage[] = [];
   const rows = Array.isArray(history) ? history.slice(-maxMessages) : [];
@@ -99,7 +99,7 @@ export interface SseEvent {
   data: string;
 }
 
-/** Incremental parser for the SSE framing used by DeepSeek and by our proxy. */
+/** Incremental parser for the SSE framing used by Groq and by our proxy. */
 export class SseDecoder {
   private buffer = "";
 
@@ -144,14 +144,14 @@ function parseEventBlock(raw: string): SseEvent | null {
   return { event, data: data.join("\n") };
 }
 
-export interface DeepSeekEvent {
+export interface GroqEvent {
   text: string;
   finishReason?: string;
   error?: string;
 }
 
-/** Read one OpenAI-compatible streaming chunk from DeepSeek. */
-export function readDeepSeekEvent(payload: unknown): DeepSeekEvent {
+/** Read one OpenAI-compatible streaming chunk from Groq. */
+export function readGroqEvent(payload: unknown): GroqEvent {
   if (!payload || typeof payload !== "object") return { text: "" };
   const record = payload as Record<string, any>;
 
@@ -174,44 +174,55 @@ export function readDeepSeekEvent(payload: unknown): DeepSeekEvent {
   if (!choice || typeof choice !== "object") return { text: "" };
 
   const delta = choice.delta && typeof choice.delta === "object" ? choice.delta : {};
+  // Groq may stream a separate `reasoning` field for GPT-OSS. ClassHub only
+  // displays the final answer, so that field is intentionally ignored.
   return {
     text: typeof delta.content === "string" ? delta.content : "",
     finishReason: typeof choice.finish_reason === "string" ? choice.finish_reason : undefined,
   };
 }
 
-/** Build the OpenAI-style message list expected by DeepSeek. */
-export function buildDeepSeekMessages(
+/** Build the OpenAI-style message list expected by Groq. */
+export function buildGroqMessages(
   systemPrompt: string,
   history: ChatMessage[],
-): DeepSeekMessage[] {
+): GroqMessage[] {
   return [
     { role: "system", content: systemPrompt },
     ...history.map((message) => ({ role: message.role, content: message.content })),
   ];
 }
 
-export interface DeepSeekRequest {
+export interface GroqRequest {
   model: string;
-  messages: DeepSeekMessage[];
+  messages: GroqMessage[];
   stream: true;
-  thinking: { type: "disabled" };
-  max_tokens: number;
+  max_completion_tokens: number;
+  reasoning_effort?: "low";
+  include_reasoning?: boolean;
 }
 
-/** Build the streaming, non-thinking request body described in the DeepSeek API. */
-export function buildDeepSeekRequest(
+/**
+ * Build the streaming request body for Groq. GPT-OSS models support reasoning
+ * controls; hiding reasoning keeps the ClassHub reply clean and low effort
+ * keeps latency down. Other GROQ_MODEL values omit those parameters.
+ */
+export function buildGroqRequest(
   model: string,
-  messages: DeepSeekMessage[],
-  maxTokens = 4096,
-): DeepSeekRequest {
-  return {
+  messages: GroqMessage[],
+  maxCompletionTokens = 4096,
+): GroqRequest {
+  const request: GroqRequest = {
     model,
     messages,
     stream: true,
-    thinking: { type: "disabled" },
-    max_tokens: maxTokens,
+    max_completion_tokens: maxCompletionTokens,
   };
+  if (model.startsWith("openai/gpt-oss-")) {
+    request.reasoning_effort = "low";
+    request.include_reasoning = false;
+  }
+  return request;
 }
 
 export function upstreamErrorMessage(payload: unknown, status: number): string {
@@ -228,8 +239,8 @@ export function upstreamErrorMessage(payload: unknown, status: number): string {
   return `The AI service returned ${status}.`;
 }
 
-/** DeepSeek reports throttling and overload in a few different ways. */
+/** Groq reports throttling and overload in a few different ways. */
 export function isBusyMessage(message: string): boolean {
-  return /rate limit|too many requests|overloaded|busy|temporarily unavailable|quota/i
+  return /rate limit|too many requests|overloaded|busy|temporarily unavailable|quota|capacity/i
     .test(String(message ?? ""));
 }

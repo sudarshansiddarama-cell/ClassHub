@@ -3,16 +3,16 @@ import test from "node:test";
 
 import {
   AI_BUSY_MESSAGE,
-  buildDeepSeekMessages,
-  buildDeepSeekRequest,
+  buildGroqMessages,
+  buildGroqRequest,
   isBusyMessage,
   normaliseHistory,
-  readDeepSeekEvent,
+  readGroqEvent,
   SseDecoder,
   titleFromMessage,
   upstreamErrorMessage,
   validateChatRequest,
-} from "../supabase/functions/_shared/deepseek.ts";
+} from "../supabase/functions/_shared/groq.ts";
 
 const CONVERSATION_ID = "5d1a2b3c-4d5e-4f60-8a1b-2c3d4e5f6a7b";
 
@@ -59,8 +59,8 @@ test("SseDecoder handles arbitrary chunk boundaries and CRLF", () => {
   assert.equal(events[1].data, "[DONE]");
 });
 
-test("readDeepSeekEvent extracts delta text, finish reason, and errors", () => {
-  const chunk = readDeepSeekEvent({
+test("readGroqEvent extracts delta text, finish reason, and errors", () => {
+  const chunk = readGroqEvent({
     id: "chatcmpl-1",
     choices: [{
       index: 0,
@@ -71,25 +71,25 @@ test("readDeepSeekEvent extracts delta text, finish reason, and errors", () => {
   assert.equal(chunk.text, "Rasa is ");
   assert.equal(chunk.finishReason, undefined);
 
-  const finished = readDeepSeekEvent({
+  const finished = readGroqEvent({
     choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
   });
   assert.equal(finished.text, "");
   assert.equal(finished.finishReason, "stop");
 
-  const reasoningOnly = readDeepSeekEvent({
-    choices: [{ delta: { reasoning_content: "hidden chain of thought" } }],
+  const reasoningOnly = readGroqEvent({
+    choices: [{ delta: { reasoning: "hidden chain of thought" } }],
   });
   assert.equal(reasoningOnly.text, "");
 
-  const failed = readDeepSeekEvent({
+  const failed = readGroqEvent({
     error: { message: "upstream overloaded", type: "server_error" },
   });
   assert.equal(failed.text, "");
   assert.equal(failed.error, "upstream overloaded");
 });
 
-test("a realistic DeepSeek SSE stream produces the full answer", () => {
+test("a realistic Groq SSE stream produces the full answer", () => {
   const decoder = new SseDecoder();
   const stream = [
     'data: {"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}\n\n',
@@ -109,7 +109,7 @@ test("a realistic DeepSeek SSE stream produces the full answer", () => {
         sawDone = true;
         continue;
       }
-      const result = readDeepSeekEvent(JSON.parse(event.data));
+      const result = readGroqEvent(JSON.parse(event.data));
       text += result.text;
       if (result.finishReason) finishReason = result.finishReason;
     }
@@ -119,7 +119,7 @@ test("a realistic DeepSeek SSE stream produces the full answer", () => {
       sawDone = true;
       continue;
     }
-    const result = readDeepSeekEvent(JSON.parse(event.data));
+    const result = readGroqEvent(JSON.parse(event.data));
     text += result.text;
     if (result.finishReason) finishReason = result.finishReason;
   }
@@ -149,8 +149,8 @@ test("normaliseHistory trims, merges consecutive roles, and respects the limit",
   assert.deepEqual(limited.map((row) => row.content), ["26", "27", "28", "29"]);
 });
 
-test("buildDeepSeekMessages prepends the system prompt and keeps roles", () => {
-  const messages = buildDeepSeekMessages("Be helpful.", [
+test("buildGroqMessages prepends the system prompt and keeps roles", () => {
+  const messages = buildGroqMessages("Be helpful.", [
     { role: "user", content: "Hello" },
     { role: "assistant", content: "Hi" },
     { role: "user", content: "Explain rasa" },
@@ -163,20 +163,33 @@ test("buildDeepSeekMessages prepends the system prompt and keeps roles", () => {
   ]);
 });
 
-test("buildDeepSeekRequest enables streaming and disables thinking", () => {
-  const request = buildDeepSeekRequest(
-    "deepseek-flash",
-    buildDeepSeekMessages("Be helpful.", [{ role: "user", content: "Hello" }]),
+test("buildGroqRequest enables streaming and hides GPT-OSS reasoning", () => {
+  const request = buildGroqRequest(
+    "openai/gpt-oss-120b",
+    buildGroqMessages("Be helpful.", [{ role: "user", content: "Hello" }]),
   );
-  assert.equal(request.model, "deepseek-flash");
+  assert.equal(request.model, "openai/gpt-oss-120b");
   assert.equal(request.stream, true);
-  assert.deepEqual(request.thinking, { type: "disabled" });
-  assert.equal(request.max_tokens, 4096);
+  assert.equal(request.max_completion_tokens, 4096);
+  assert.equal(request.reasoning_effort, "low");
+  assert.equal(request.include_reasoning, false);
   assert.deepEqual(request.messages[0], { role: "system", content: "Be helpful." });
   assert.deepEqual(request.messages[1], { role: "user", content: "Hello" });
 });
 
-test("upstreamErrorMessage prefers DeepSeek's message and caps it", () => {
+test("buildGroqRequest omits GPT-OSS-only controls for other models", () => {
+  const request = buildGroqRequest(
+    "llama-3.3-70b-versatile",
+    buildGroqMessages("Be helpful.", [{ role: "user", content: "Hello" }]),
+  );
+  assert.equal(request.model, "llama-3.3-70b-versatile");
+  assert.equal(request.stream, true);
+  assert.equal(request.max_completion_tokens, 4096);
+  assert.equal("reasoning_effort" in request, false);
+  assert.equal("include_reasoning" in request, false);
+});
+
+test("upstreamErrorMessage prefers Groq's message and caps it", () => {
   assert.equal(
     upstreamErrorMessage({ error: { message: "model not found" } }, 404),
     "model not found",
@@ -189,6 +202,7 @@ test("upstreamErrorMessage prefers DeepSeek's message and caps it", () => {
 test("isBusyMessage recognises throttling and overload text", () => {
   assert.equal(isBusyMessage("Rate limit reached. Please try again later."), true);
   assert.equal(isBusyMessage("The server is overloaded"), true);
+  assert.equal(isBusyMessage("Flex tier capacity exceeded"), true);
   assert.equal(isBusyMessage(AI_BUSY_MESSAGE), true);
   assert.equal(isBusyMessage("The request was invalid."), false);
 });

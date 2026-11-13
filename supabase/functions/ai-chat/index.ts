@@ -1,15 +1,15 @@
 /**
- * ClassHub AI chat backend (DeepSeek).
+ * ClassHub AI chat backend (Groq).
  *
- * The browser never sees DEEPSEEK_API_KEY. It calls this function with the
+ * The browser never sees GROQ_API_KEY. It calls this function with the
  * student's Supabase access token; the function verifies the user, checks
  * conversation ownership through RLS, stores messages, and streams the
- * DeepSeek reply back as server-sent events.
+ * Groq reply back as server-sent events.
  *
  * Required secrets:
- *   DEEPSEEK_API_KEY
+ *   GROQ_API_KEY
  * Optional:
- *   DEEPSEEK_MODEL (defaults to deepseek-flash)
+ *   GROQ_MODEL (defaults to openai/gpt-oss-120b)
  *
  * SUPABASE_URL and SUPABASE_ANON_KEY are provided by the Edge Runtime.
  */
@@ -22,25 +22,25 @@ import {
   MAX_STORED_MESSAGE_CHARS,
   SseDecoder,
   type SseEvent,
-  buildDeepSeekMessages,
-  buildDeepSeekRequest,
+  buildGroqMessages,
+  buildGroqRequest,
   isBusyMessage,
   normaliseHistory,
-  readDeepSeekEvent,
+  readGroqEvent,
   titleFromMessage,
   upstreamErrorMessage,
   validateChatRequest,
-} from "../_shared/deepseek.ts";
+} from "../_shared/groq.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")
   ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")
   ?? "";
-const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY") ?? "";
-const DEEPSEEK_MODEL = Deno.env.get("DEEPSEEK_MODEL") || DEFAULT_MODEL;
+const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
+const GROQ_MODEL = Deno.env.get("GROQ_MODEL") || DEFAULT_MODEL;
 const RATE_LIMIT_PER_MINUTE = 10;
-const DEEPSEEK_TIMEOUT_MS = 120_000;
-const DEEPSEEK_MAX_TOKENS = 4096;
+const GROQ_TIMEOUT_MS = 120_000;
+const GROQ_MAX_COMPLETION_TOKENS = 4096;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -117,22 +117,24 @@ function isTimeoutError(error: unknown): boolean {
     /timed? ?out/i.test(String(error));
 }
 
-async function callDeepSeek(
-  messages: ReturnType<typeof buildDeepSeekMessages>,
+async function callGroq(
+  messages: ReturnType<typeof buildGroqMessages>,
 ): Promise<Response> {
-  return await fetch("https://api.deepseek.com/chat/completions", {
+  return await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+      "Authorization": `Bearer ${GROQ_API_KEY}`,
     },
-    body: JSON.stringify(buildDeepSeekRequest(DEEPSEEK_MODEL, messages, DEEPSEEK_MAX_TOKENS)),
-    signal: AbortSignal.timeout(DEEPSEEK_TIMEOUT_MS),
+    body: JSON.stringify(
+      buildGroqRequest(GROQ_MODEL, messages, GROQ_MAX_COMPLETION_TOKENS),
+    ),
+    signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
   });
 }
 
-function deepSeekErrorResponse(status: number, detail: unknown): Response {
-  console.error("ai-chat: DeepSeek rejected request", status, detail);
+function groqErrorResponse(status: number, detail: unknown): Response {
+  console.error("ai-chat: Groq rejected request", status, detail);
 
   if (status === 401 || status === 403) {
     return json(503, {
@@ -140,12 +142,18 @@ function deepSeekErrorResponse(status: number, detail: unknown): Response {
       code: "AI_AUTH_ERROR",
     });
   }
-  if (status === 429) {
+  if (status === 429 || status === 498) {
     return json(
       503,
       { error: AI_BUSY_MESSAGE, code: "AI_BUSY" },
       { "Retry-After": "5" },
     );
+  }
+  if (status === 413) {
+    return json(413, {
+      error: "This conversation is too long. Start a new chat and try again.",
+      code: "AI_CONTEXT_TOO_LARGE",
+    });
   }
   if (status >= 500) {
     return json(503, {
@@ -153,7 +161,7 @@ function deepSeekErrorResponse(status: number, detail: unknown): Response {
       code: "AI_UNAVAILABLE",
     });
   }
-  if (status === 400 || status === 404) {
+  if (status === 400 || status === 404 || status === 422 || status === 424) {
     return json(502, {
       error: "The AI could not process that request. Please try again.",
       code: "AI_BAD_REQUEST",
@@ -172,8 +180,8 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed." });
   }
-  if (!DEEPSEEK_API_KEY) {
-    console.error("ai-chat: DEEPSEEK_API_KEY is not configured");
+  if (!GROQ_API_KEY) {
+    console.error("ai-chat: GROQ_API_KEY is not configured");
     return json(503, { error: "The AI assistant is not configured yet." });
   }
 
@@ -206,7 +214,7 @@ Deno.serve(async (request: Request) => {
   }
   const { conversationId, message } = validation.value;
 
-  // A small per-user guard on top of DeepSeek's own quotas.
+  // A small per-user guard on top of Groq's own quotas.
   const since = new Date(Date.now() - 60_000).toISOString();
   const { count: recentCount, error: rateError } = await supabase
     .from("ai_messages")
@@ -256,7 +264,7 @@ Deno.serve(async (request: Request) => {
     return json(500, { error: "Could not save your message. Please try again." });
   }
 
-  // DeepSeek is stateless, so replay the latest stored turns on every request.
+  // Groq is stateless, so replay the latest stored turns on every request.
   const { data: historyRows, error: historyError } = await supabase
     .from("ai_messages")
     .select("role, content")
@@ -276,12 +284,12 @@ Deno.serve(async (request: Request) => {
     history = [{ role: "user", content: message }];
   }
 
-  let deepSeekResponse: Response;
+  let groqResponse: Response;
   try {
-    deepSeekResponse = await callDeepSeek(buildDeepSeekMessages(SYSTEM_PROMPT, history));
+    groqResponse = await callGroq(buildGroqMessages(SYSTEM_PROMPT, history));
   } catch (error) {
     await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-    console.error("ai-chat: DeepSeek fetch failed", error);
+    console.error("ai-chat: Groq fetch failed", error);
     const timedOut = isTimeoutError(error);
     return json(timedOut ? 504 : 502, {
       error: timedOut
@@ -291,16 +299,16 @@ Deno.serve(async (request: Request) => {
     });
   }
 
-  if (!deepSeekResponse.ok) {
-    const detail = await readErrorBody(deepSeekResponse);
+  if (!groqResponse.ok) {
+    const detail = await readErrorBody(groqResponse);
     await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-    return deepSeekErrorResponse(deepSeekResponse.status, detail);
+    return groqErrorResponse(groqResponse.status, detail);
   }
 
-  const upstreamBody = deepSeekResponse.body;
+  const upstreamBody = groqResponse.body;
   if (!upstreamBody) {
     await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
-    console.error("ai-chat: DeepSeek returned no body");
+    console.error("ai-chat: Groq returned no body");
     return json(502, {
       error: "The AI returned an empty response. Please try again.",
       code: "AI_EMPTY",
@@ -346,7 +354,7 @@ Deno.serve(async (request: Request) => {
 
         const payload = parseJsonSafe(data);
         if (!payload) return false;
-        const result = readDeepSeekEvent(payload);
+        const result = readGroqEvent(payload);
 
         if (result.error) {
           streamError = isBusyMessage(result.error) ? AI_BUSY_MESSAGE : result.error;
@@ -375,7 +383,7 @@ Deno.serve(async (request: Request) => {
           }
         }
       } catch (error) {
-        console.error("ai-chat: DeepSeek stream failed", error);
+        console.error("ai-chat: Groq stream failed", error);
         streamError = "The connection to the AI was interrupted. Please try again.";
       } finally {
         // Stop reading as soon as possible if the reply ended early or the
