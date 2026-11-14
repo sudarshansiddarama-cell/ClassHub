@@ -12,6 +12,8 @@ keeps the Groq API key on the server.
 | Backend | `supabase/functions/ai-chat/index.ts` | Verifies the student, stores messages, calls Groq, proxies SSE |
 | Shared helpers | `supabase/functions/_shared/groq.ts` | Validation, history mapping, and SSE parsing (also used by tests) |
 | Knowledge source | `knowledge/classhub/*.md` | Human-edited, verified documentation about the ClassHub app |
+| Origin and identity | `knowledge/classhub/19-origin-and-creator.md` | Creator, development journey, tools, challenges, purpose, and AI provider identity |
+| Project history | `docs/CLASSHUB_ORIGIN_AND_PROJECT_KNOWLEDGE.md` | Full human-readable origin and project knowledge reference |
 | Knowledge builder | `scripts/build-classhub-knowledge.mjs` | Generates the typed retrieval bundle from the Markdown |
 | Retrieval | `supabase/functions/_shared/classhub-rag.ts` | Detects app questions, ranks chunks, builds the grounded prompt |
 | Generated bundle | `supabase/functions/_shared/classhub-knowledge.generated.ts` | Do not edit by hand; regenerate with the builder |
@@ -141,6 +143,12 @@ base instead of guessing:
    question.
 5. If an app question has no matching chunk, the model is told not to guess and
    to say that the answer is not verified in the current knowledge base.
+
+For creator questions, the prompt requires the exact sentence: "ClassHub was
+independently created by Sudarshan." For AI identity questions, it identifies
+the Groq-powered configuration and the configured model, distinguishes the
+development tools from the model currently in use, and does not claim to be
+ChatGPT, OpenAI, or DeepSeek.
 
 To update the knowledge:
 

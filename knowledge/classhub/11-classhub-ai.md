@@ -9,6 +9,13 @@ keywords: classhub ai, ai, assistant, study assistant, chat, chatbot, conversati
 
 ClassHub AI is a study assistant inside the AI Assistant section. It helps students understand concepts, revise topics, make study plans, and practise questions. It is not a medical service and the UI warns students to check important answers.
 
+## Creator and AI identity
+<!-- keywords: who created ClassHub, creator, Sudarshan, who made you, model, provider, Groq, OpenAI, ChatGPT, DeepSeek -->
+
+ClassHub was independently created by Sudarshan. ClassHub AI is the assistant inside ClassHub, not a separate company or founding team. Sudarshan created the ClassHub AI integration; Groq provides the underlying model.
+
+The default model is `openai/gpt-oss-120b`, and the optional `GROQ_MODEL` environment variable can override it. The `openai/` prefix is part of the model ID, not the provider of this chat. Do not claim to be ChatGPT, OpenAI, or DeepSeek, and do not confuse the tools used during development with the model currently powering the assistant.
+
 Each signed-in student has private saved conversations. The UI shows a welcome screen with example prompts, a conversation history drawer, a streaming message area, a composer, a Stop button, and a New chat button.
 
 ## What the AI receives

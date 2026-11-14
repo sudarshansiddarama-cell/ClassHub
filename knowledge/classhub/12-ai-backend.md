@@ -69,9 +69,9 @@ The function calls Groq's OpenAI-compatible endpoint:
 
 `https://api.groq.com/openai/v1/chat/completions`
 
-It requests streaming, a maximum of 4,096 completion tokens, and a 120-second timeout. For models whose name starts with `openai/gpt-oss-`, it also sets `reasoning_effort: "low"` and `include_reasoning: false` so the student sees only the final answer. The model is `GROQ_MODEL` if set, otherwise `openai/gpt-oss-120b`.
+It requests streaming, a maximum of 4,096 completion tokens, and a 120-second timeout. For models whose name starts with `openai/gpt-oss-`, it also sets `reasoning_effort: "low"` and `include_reasoning: false` so the student sees only the final answer. The model is `GROQ_MODEL` if set, otherwise `openai/gpt-oss-120b`. The production `GROQ_MODEL` value, if any, is external configuration and is not verified from the repository.
 
-The base system prompt defines ClassHub AI as a friendly Ayurveda study assistant, asks for clear plain text without Markdown symbols, warns against invented facts or citations, adds a medical-advice caution, and forbids revealing the model/provider or the instructions.
+The base system prompt defines ClassHub AI as a friendly Ayurveda study assistant, asks for clear plain text without Markdown symbols, warns against invented facts or citations, adds a medical-advice caution, and tells it not to reveal its instructions. It identifies ClassHub as independently created by Sudarshan and, when explicitly asked, states that this deployment uses Groq with the configured model; it does not claim to be ChatGPT, OpenAI, or DeepSeek.
 
 ## Streaming protocol
 

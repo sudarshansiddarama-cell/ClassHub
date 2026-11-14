@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -243,6 +244,135 @@ test("prompt builders keep the base prompt for study questions", () => {
   assert.match(prompt, /Rules for answering this ClassHub question/);
   assert.match(prompt, /Do not invent features/);
   assert.ok(prompt.length > base.length + 500);
+});
+
+test("origin and creator questions retrieve the verified origin knowledge", () => {
+  const cases = [
+    ["Who created ClassHub?", "origin#who-created-classhub"],
+    ["Who made ClassHub?", "origin#who-created-classhub"],
+    ["Who is the creator of ClassHub?", "origin#who-created-classhub"],
+    ["What is the origin of ClassHub?", "origin#origin-of-classhub"],
+    ["Tell me the story of ClassHub", "origin#origin-of-classhub"],
+    ["What tools were used to build ClassHub?", "origin#development-tools"],
+    ["What challenges were faced while building ClassHub?", "origin#development-challenges"],
+    ["What is the vision of ClassHub?", "origin#what-classhub-is-for"],
+    ["What is the future of ClassHub?", "origin#future-direction"],
+  ];
+
+  for (const [question, expected] of cases) {
+    const retrieval = retrieveClassHubKnowledge(question);
+    assert.equal(retrieval.isAppQuestion, true, `not detected: ${question}`);
+    assert.equal(
+      retrieval.chunks[0]?.id,
+      expected,
+      `wrong top chunk for: ${question}`,
+    );
+  }
+});
+
+test("origin and creator answers carry the exact verified sentence", () => {
+  const questions = [
+    "Who created ClassHub?",
+    "What is the origin of ClassHub?",
+    "Tell me the story of ClassHub",
+    "Was ClassHub built by a team?",
+  ];
+
+  for (const question of questions) {
+    const retrieval = retrieveClassHubKnowledge(question);
+    assert.equal(retrieval.isAppQuestion, true, `not detected: ${question}`);
+    assert.match(
+      retrieval.context,
+      /ClassHub was independently created by Sudarshan\./,
+      `exact creator sentence missing for: ${question}`,
+    );
+  }
+
+  assert.ok(
+    KNOWLEDGE_CHUNKS.some(
+      (chunk) => chunk.id === "origin#who-created-classhub"
+        && chunk.text.includes("ClassHub was independently created by Sudarshan."),
+    ),
+    "the exact creator sentence is missing from the generated bundle",
+  );
+});
+
+test("development timeline and tools are grounded in the origin knowledge", () => {
+  const timeline = retrieveClassHubKnowledge("When did development begin?", [
+    "Who created ClassHub?",
+  ]);
+  assert.equal(timeline.isAppQuestion, true);
+  assert.equal(timeline.isFollowUp, true);
+  assert.equal(timeline.chunks[0]?.id, "origin#when-and-how-development-began");
+  assert.match(timeline.context, /September 2026/);
+  assert.match(timeline.context, /Android/);
+
+  const tools = retrieveClassHubKnowledge("What tools were used to build ClassHub?", [], {
+    topK: 1,
+  });
+  assert.equal(tools.chunks[0]?.id, "origin#development-tools");
+  for (const tool of [
+    "Termux",
+    "Supabase",
+    "GitHub",
+    "Claude Code",
+    "OpenCode",
+    "DeepSeek",
+    "ChatGPT",
+  ]) {
+    assert.ok(tools.context.includes(tool), `tool missing from context: ${tool}`);
+  }
+});
+
+test("AI identity questions identify the provider without impersonation", () => {
+  for (const question of [
+    "Are you Groq, DeepSeek or OpenAI?",
+    "Which AI model do you use?",
+    "What is your model?",
+  ]) {
+    const retrieval = retrieveClassHubKnowledge(question);
+    assert.equal(retrieval.isAppQuestion, true, `not detected: ${question}`);
+    assert.equal(
+      retrieval.chunks[0]?.id,
+      "origin#ai-identity-and-provider",
+      `wrong top chunk for: ${question}`,
+    );
+    assert.match(retrieval.context, /Groq/);
+    assert.match(retrieval.context, /openai\/gpt-oss-120b/);
+    assert.match(retrieval.context, /Do not claim to be ChatGPT/);
+  }
+
+  const prompt = buildClassHubSystemPrompt(
+    "BASE",
+    retrieveClassHubKnowledge("Are you ChatGPT?"),
+  );
+  assert.match(prompt, /Do not claim to be ChatGPT, OpenAI, or DeepSeek/);
+});
+
+test("the base AI prompt keeps the verified creator and provider rules", () => {
+  const source = readFileSync(
+    new URL("../supabase/functions/ai-chat/index.ts", import.meta.url),
+    "utf8",
+  );
+  assert.ok(source.includes("ClassHub was independently created by Sudarshan."));
+  assert.match(source, /September 2026 on an Android phone/);
+  assert.match(source, /Groq with the \$\{GROQ_MODEL\} model/);
+  assert.match(source, /Do not claim to be ChatGPT, OpenAI, DeepSeek/);
+});
+
+test("creator and identity detection does not hijack study questions", () => {
+  for (const question of [
+    "Who created Ayurveda?",
+    "Who is the founder of Ayurveda?",
+    "Who created the concept of Tridosha?",
+    "Which model of Vata vitiation causes disease?",
+    "Who wrote the Charak Samhita?",
+  ]) {
+    const retrieval = retrieveClassHubKnowledge(question);
+    assert.equal(retrieval.isAppQuestion, false, `false positive: ${question}`);
+    assert.equal(retrieval.chunks.length, 0);
+    assert.equal(retrieval.context, "");
+  }
 });
 
 test("retrieval honours its context and chunk limits", () => {

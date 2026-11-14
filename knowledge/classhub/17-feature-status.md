@@ -95,7 +95,7 @@ No maintained roadmap or TODO list in the repository verifies future features. T
 These cannot be confirmed from the repository alone:
 
 - Whether the currently deployed site matches the latest source.
-- Whether the `ai-chat` Edge Function is deployed and which model/secret it uses.
+- Whether the live `ai-chat` Edge Function matches the latest source and whether a production `GROQ_MODEL` override is set.
 - The live Supabase Auth provider configuration and redirect allow-list.
 - Current data volumes and whether any content is stale.
 - Browser/device-specific behaviour, especially for large PDFs, OCR, and notifications.

@@ -22,6 +22,7 @@ This folder is the single source of truth for ClassHub AI's knowledge about the 
 - `16-dependencies-and-decisions.md` — stack, CDNs, design decisions, limits.
 - `17-feature-status.md` — implemented, partial, schema-only, planned, unknown.
 - `18-knowledge-base.md` — how retrieval and maintenance work.
+- `19-origin-and-creator.md` — creator, development journey, tools, challenges, purpose, AI identity, and future direction.
 
 ## Format
 

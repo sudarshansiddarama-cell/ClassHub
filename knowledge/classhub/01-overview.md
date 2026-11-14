@@ -9,6 +9,8 @@ keywords: classhub, app, application, purpose, users, students, Ayurveda, class 
 
 ClassHub is a single-page class space for one Ayurveda student class. It brings shared study material, class communication, and an AI study assistant into one web app.
 
+ClassHub was independently created by Sudarshan, who began developing it in September 2026 on an Android phone.
+
 Its main purposes are:
 
 - Share subject-wise notes as PDFs and search inside every uploaded book.
