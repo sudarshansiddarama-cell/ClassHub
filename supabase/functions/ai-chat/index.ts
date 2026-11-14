@@ -31,6 +31,10 @@ import {
   upstreamErrorMessage,
   validateChatRequest,
 } from "../_shared/groq.ts";
+import {
+  buildClassHubSystemPrompt,
+  retrieveClassHubKnowledge,
+} from "../_shared/classhub-rag.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")
@@ -285,9 +289,31 @@ Deno.serve(async (request: Request) => {
     history = [{ role: "user", content: message }];
   }
 
+  // App-specific questions get a few verified knowledge chunks in the system
+  // prompt. General study questions keep the base prompt unchanged. A retrieval
+  // failure must never break normal study help.
+  let systemPrompt = SYSTEM_PROMPT;
+  try {
+    const priorUserMessages = history
+      .filter((entry) => entry.role === "user")
+      .map((entry) => entry.content)
+      .slice(0, -1)
+      .slice(-6);
+    const retrieval = retrieveClassHubKnowledge(message, priorUserMessages);
+    if (retrieval.isAppQuestion) {
+      console.log(
+        "ai-chat: ClassHub knowledge retrieval",
+        retrieval.chunks.length ? retrieval.chunks.map((chunk) => chunk.id).join(", ") : "no match",
+      );
+    }
+    systemPrompt = buildClassHubSystemPrompt(SYSTEM_PROMPT, retrieval);
+  } catch (error) {
+    console.error("ai-chat: ClassHub knowledge retrieval failed", error);
+  }
+
   let groqResponse: Response;
   try {
-    groqResponse = await callGroq(buildGroqMessages(SYSTEM_PROMPT, history));
+    groqResponse = await callGroq(buildGroqMessages(systemPrompt, history));
   } catch (error) {
     await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);
     console.error("ai-chat: Groq fetch failed", error);

@@ -11,8 +11,12 @@ keeps the Groq API key on the server.
 | UI | `index.html` (`#ai` section) | Chat page, history drawer, streaming messages, auth gate |
 | Backend | `supabase/functions/ai-chat/index.ts` | Verifies the student, stores messages, calls Groq, proxies SSE |
 | Shared helpers | `supabase/functions/_shared/groq.ts` | Validation, history mapping, and SSE parsing (also used by tests) |
+| Knowledge source | `knowledge/classhub/*.md` | Human-edited, verified documentation about the ClassHub app |
+| Knowledge builder | `scripts/build-classhub-knowledge.mjs` | Generates the typed retrieval bundle from the Markdown |
+| Retrieval | `supabase/functions/_shared/classhub-rag.ts` | Detects app questions, ranks chunks, builds the grounded prompt |
+| Generated bundle | `supabase/functions/_shared/classhub-knowledge.generated.ts` | Do not edit by hand; regenerate with the builder |
 | Database | `supabase/migrations/20261113000000_add_ai_chat.sql` | `ai_conversations` and `ai_messages` with row-level security |
-| Tests | `tests/ai-chat.test.mjs` | `node --test tests/ai-chat.test.mjs` |
+| Tests | `tests/ai-chat.test.mjs`, `tests/classhub-rag.test.mjs` | `node --test tests/*.test.mjs` |
 
 Security model:
 
@@ -114,8 +118,44 @@ supabase functions serve ai-chat --env-file supabase/functions/.env
 Front-end helper tests run without any credentials:
 
 ```bash
-node --test tests/ai-chat.test.mjs
+node --test tests/*.test.mjs
 ```
+
+## Knowledge retrieval (RAG)
+
+ClassHub AI answers questions about the app itself from a verified knowledge
+base instead of guessing:
+
+1. `supabase/functions/_shared/classhub-rag.ts` detects whether the student's
+   message is about ClassHub (product name, app nouns, authentication, storage,
+   AI conversations, and so on). General study questions are left alone.
+2. For an app question, it tokenises the message, expands common synonyms, and
+   scores chunks from `classhub-knowledge.generated.ts` with a small BM25-style
+   lexical ranker. It uses no embeddings, vector database, or extra API.
+3. The best three chunks above the score and coverage thresholds are inserted
+   into the system prompt, capped at 5,000 characters. The rest of the docs are
+   never sent.
+4. The prompt tells the model to answer only from the retrieved knowledge, to
+   state whether a feature is verified, partial, schema-only, planned, or
+   unknown, and to say honestly when the knowledge base does not cover the
+   question.
+5. If an app question has no matching chunk, the model is told not to guess and
+   to say that the answer is not verified in the current knowledge base.
+
+To update the knowledge:
+
+```bash
+# 1. Edit or add a document in knowledge/classhub/
+# 2. Regenerate the typed bundle
+node scripts/build-classhub-knowledge.mjs
+# 3. Check that the bundle is current and retrieval still passes
+node scripts/build-classhub-knowledge.mjs --check
+node --test tests/*.test.mjs
+```
+
+Never put `GROQ_API_KEY`, tokens, passwords, student emails, private data, or the
+CR user id in `knowledge/classhub/`. The generated file is bundled with the
+server-side Edge Function, not sent to the browser.
 
 ## Troubleshooting
 
@@ -142,6 +182,10 @@ node --test tests/ai-chat.test.mjs
 - The backend allows 10 student messages per minute per account.
 - The function sends the system prompt plus the latest 20 stored messages to
   Groq on every turn. Stored history is limited to the same 20-message window.
+- App-specific questions add at most three retrieved knowledge chunks, capped at
+  5,000 characters. General study questions do not trigger retrieval.
+- The generated knowledge bundle is checked by `tests/classhub-rag.test.mjs`; it
+  must be regenerated after any `knowledge/classhub/*.md` change.
 - For `openai/gpt-oss-*` models the request sets `reasoning_effort: "low"` and
   `include_reasoning: false`, so the student sees only the final answer. Other
   `GROQ_MODEL` values omit those parameters.
