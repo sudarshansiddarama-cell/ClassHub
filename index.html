@@ -2,15 +2,16 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0D0D0E" id="themeColorMeta">
 <title>ClassHub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230D0D0E'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' fill='%23F2F2F0' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ============================================================
    CLASSHUB — SIGNAL EDITION · Design System
@@ -499,19 +500,22 @@ label.f-label{
 
 /* ---------- FULLSCREEN CHAT ---------- */
 #chat.active{
-  display:flex;flex-direction:column;height:calc(100dvh - var(--topbar-h));
-  width:100vw!important;max-width:none!important;margin:0!important;padding:0!important;
-  border:none!important;background:var(--bg)!important;z-index:50;
+  position:fixed;top:var(--topbar-h);left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;height:auto;
+  width:auto!important;max-width:none!important;margin:0!important;padding:0!important;
+  border:none!important;background:var(--bg)!important;z-index:50;overflow:hidden;animation:none;
 }
-@media(min-width:960px){#chat.active{height:calc(100dvh - var(--topbar-h))}}
 .chat-head{
   display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 12px;
   border-bottom:1px solid var(--border);background:var(--bg);
 }
 .chat-head .back-btn{margin:0;flex-shrink:0}
 .chat-head .page-title{font-size:14px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#chat.active .chat-box{flex:1;overflow-y:auto;padding:12px;border:none!important;background:var(--bg)!important}
-#chat.active .chat-compose{position:sticky;bottom:0;left:0;right:0;z-index:30;padding:8px 12px;background:var(--bg)}
+#chat.active .chat-box{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;border:none!important;background:var(--bg)!important}
+#chat.active .chat-compose{position:static;bottom:auto;left:auto;right:auto;z-index:30;flex-shrink:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--bg)}
+#chat.active #chatStatus{flex-shrink:0;margin:0;padding:0 12px}
+#chat.active #chatStatus:empty{display:none}
+#chat.active #chatStatus:not(:empty){padding-bottom:6px}
 
 /* ---------- AI ASSISTANT ---------- */
 #ai.active{
@@ -757,6 +761,7 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
 @media(max-width:430px){.account-card{padding:14px 0}}
 
 /* ---------- MORE SHEET ---------- */
+body.chat-open{overflow:hidden}
 body.chat-open .bottom-nav{display:none !important}
 .more-sheet{
   position:fixed;inset:0;z-index:95;display:none;align-items:flex-end;justify-content:center;
@@ -1147,11 +1152,11 @@ body.sheet-open{overflow:hidden}
         <h1 class="page-title">Class Chat</h1>
       </div>
       <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
+      <div id="chatStatus" class="status" aria-live="polite"></div>
       <form id="chatForm" class="chat-compose auth-hidden">
         <input id="chatInput" class="field" maxlength="2000" aria-label="Chat message" placeholder="Write a message…" autocomplete="off" required>
         <button class="btn send-btn" type="submit" id="sendChatBtn" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button>
       </form>
-      <div id="chatStatus" class="status" aria-live="polite"></div>
     </section>
 
     <!-- AI STUDY ASSISTANT -->
@@ -1264,6 +1269,7 @@ body.sheet-open{overflow:hidden}
   <div style="clear:both"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 function safeUrl(u){
   try{
@@ -1582,7 +1588,7 @@ async function updateAuthUI(user){
     /* clear everything that belonged to the previous user */
     try{ loadStudentProfile(); }catch(e){ console.error(e); }
     try{ if(typeof loadAccountsDirectory==="function") loadAccountsDirectory(); }catch(e){ console.error(e); }
-    try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+    try{ if(currentPage==="community") await window.loadCommunityPosts(); }catch(e){ console.error(e); }
     try{ if(currentPage==="chat") await loadChatMessages(); }catch(e){ console.error(e); }
     try{ resetAiChat(); }catch(e){ console.error(e); }
     return;
@@ -1613,7 +1619,7 @@ async function updateAuthUI(user){
   if(version !== authUiVersion) return;   /* another auth change happened meanwhile */
   try{ resetAiChat(); }catch(e){ console.error(e); }
   if(currentPage==="ai"){ try{ await openAiChat(); }catch(e){ console.error(e); } }
-  try{ await window.loadCommunityPosts(); }catch(e){ console.error(e); }
+  try{ if(currentPage==="community") await window.loadCommunityPosts(); }catch(e){ console.error(e); }
   try{ if(currentPage==="chat") await loadChatMessages(); }catch(e){ console.error(e); }
   if(currentPage==="profile") loadStudentProfile();
   if(currentPage==="accounts" && typeof loadAccountsDirectory==="function") loadAccountsDirectory();
@@ -2210,6 +2216,23 @@ const PDF_TEXT_MAX_CHARS = 9000000;     /* ~9 million characters per book */
 const HITS_FIRST_BATCH = 30;
 const HITS_NEXT_BATCH = 60;
 const HITS_MAX_PER_BOOK = 1500;
+const PDF_JS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+
+/* PDF.js is only needed once someone opens or uploads a PDF, so keep it out of startup. */
+let pdfJsLoading = null;
+function ensurePdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(!pdfJsLoading){
+    pdfJsLoading = new Promise((resolve,reject)=>{
+      const script = document.createElement("script");
+      script.src = PDF_JS_URL;
+      script.onload = ()=>{ pdfJsLoading = null; resolve(window.pdfjsLib); };
+      script.onerror = ()=>{ pdfJsLoading = null; reject(new Error("Could not load the PDF engine")); };
+      document.head.appendChild(script);
+    });
+  }
+  return pdfJsLoading;
+}
 
 /* Reads every page of a PDF and stores "[[PAGE n]]" markers so we can later tell which page a match is on */
 async function extractPdfText_old(file, onProgress){
@@ -2554,6 +2577,7 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
         viewer.pdf = null;
       }
       body.replaceChildren(makeElement("div","pv-msg","Opening book…"));
+      await ensurePdfJs();
       pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       viewer.pdf = await pdfjsLib.getDocument({url:fileUrl, disableAutoFetch:true, disableStream:true, rangeChunkSize:262144}).promise;
       viewer.textCache = new Map();
@@ -4204,6 +4228,22 @@ async function initialiseClassHub(){
       if(noticeSoundContext && noticeSoundContext.state==="suspended") noticeSoundContext.resume();
     }catch(e){}
   }, {once:true});
+  const sndTgl = document.getElementById("noticeSoundToggle");
+  if(sndTgl) sndTgl.checked = localStorage.getItem("classhub_notice_sound")!=="0";
+  renderNotesView();
+  renderTestPapersView();
+  renderCaseStudiesView();
+  if(currentPage==="chat") loadChatMessages();
+  /* Live connections and the notice fetch are not needed for first paint. */
+  const startBackground = ()=>{
+    loadNotices();
+    subscribeToNotices();
+    subscribeToContent();
+    subscribeToChat();
+    subscribeToCommunity();
+  };
+  if("requestIdleCallback" in window) requestIdleCallback(startBackground,{timeout:1500});
+  else setTimeout(startBackground,600);
   try{
     const {error} = await db.from("notices").select("id").limit(1);
     const conn = document.getElementById("connectionStatus");
@@ -4213,17 +4253,6 @@ async function initialiseClassHub(){
     document.getElementById("connectionStatus").textContent = "Offline";
     document.getElementById("connDot").classList.add("off");
   }
-  const sndTgl = document.getElementById("noticeSoundToggle");
-  if(sndTgl) sndTgl.checked = localStorage.getItem("classhub_notice_sound")!=="0";
-  subscribeToNotices();
-  subscribeToContent();
-  subscribeToChat();
-  subscribeToCommunity();
-  renderNotesView();
-  renderTestPapersView();
-  renderCaseStudiesView();
-  loadNotices();
-  loadChatMessages();
 }
 initialiseClassHub();
 
@@ -4459,9 +4488,10 @@ async function ocrPages(pdf, pages, texts, onProgress, signal){
 }
 
 async function extractPdfText(file, onProgress, signal){
-  if(!window.pdfjsLib) return null;
   let pdf = null;
   try{
+    throwIfAborted(signal);
+    await ensurePdfJs();
     throwIfAborted(signal);
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     const buffer = await file.arrayBuffer();
