@@ -714,6 +714,124 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
 .pv-page-input:focus{border-color:var(--border-strong);box-shadow:none}
 .pv-total{font-family:var(--font-mono);font-size:10px;color:var(--muted);font-weight:400}
 
+/* ---------- READING MODE (text layer of the open PDF) ---------- */
+#pdfViewer.reading .pv-head,
+#pdfViewer.reading .pv-body,
+#pdfViewer.reading .pv-foot{display:none}
+.pv-read{
+  display:none;flex:1;min-height:0;flex-direction:column;
+  --rd-bg:#F4F4F2;--rd-text:#171714;--rd-muted:#6B6B70;--rd-muted2:#8A8A8F;
+  --rd-surface:#FFFFFF;--rd-border:#DADAD6;--rd-border-strong:#BEBEB8;
+  --rd-accent:#E5440D;--rd-accent-soft:rgba(229,68,13,.08);
+  --rd-width:720px;--rd-font:17px;--rd-leading:1.72;
+  background:var(--rd-bg);color:var(--rd-text);
+}
+.pv-read[data-rd-theme="dark"]{
+  --rd-bg:#121211;--rd-text:#EDEAE3;--rd-muted:#A09C92;--rd-muted2:#7D7A72;
+  --rd-surface:#191918;--rd-border:#2E2E2B;--rd-border-strong:#44443F;
+  --rd-accent:#FF7A42;--rd-accent-soft:rgba(255,122,66,.12);
+  color-scheme:dark;
+}
+.pv-read[data-rd-theme="sepia"]{
+  --rd-bg:#F4ECD8;--rd-text:#3A3024;--rd-muted:#7A6A55;--rd-muted2:#93826B;
+  --rd-surface:#EFE4CE;--rd-border:#DCCFB6;--rd-border-strong:#C5B69A;
+  --rd-accent:#9A5B2B;--rd-accent-soft:rgba(154,91,43,.10);
+  color-scheme:light;
+}
+#pdfViewer.reading .pv-read{display:flex}
+.pv-read .pv-btn{border-color:var(--rd-border);color:var(--rd-text);background:transparent}
+.pv-read .pv-btn:hover:not(:disabled){border-color:var(--rd-border-strong);background:var(--rd-surface);color:var(--rd-text)}
+.pv-read .pv-btn[aria-pressed="true"]{border-color:var(--rd-accent);color:var(--rd-accent);background:var(--rd-accent-soft)}
+.pv-read .pv-page-input{background:transparent;border-color:var(--rd-border);color:var(--rd-text);-moz-appearance:textfield;appearance:textfield}
+.pv-read .pv-page-input::-webkit-outer-spin-button,
+.pv-read .pv-page-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pv-read .pv-page-input:focus{border-color:var(--rd-accent)}
+.pv-read .pv-total{color:var(--rd-muted)}
+.pv-read :focus-visible{outline-color:var(--rd-accent)}
+.pv-read ::selection{background:var(--rd-accent);color:#fff}
+.rd-head{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  padding-top:calc(8px + env(safe-area-inset-top));
+  border-bottom:1px solid var(--rd-border);background:var(--rd-surface);flex-shrink:0;
+}
+.rd-title{flex:1;min-width:0;text-align:center;font-family:var(--font-mono);font-size:10.5px;color:var(--rd-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-bar{height:3px;background:var(--rd-border);flex-shrink:0}
+.rd-bar i{display:block;height:100%;width:0;background:var(--rd-accent)}
+.rd-settings{
+  padding:8px 14px 10px;border-bottom:1px solid var(--rd-border);
+  background:var(--rd-surface);flex-shrink:0;max-height:42vh;overflow:auto;
+}
+.rd-settings[hidden]{display:none}
+.rd-settings-inner{max-width:760px;margin:0 auto}
+.rd-set-row{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;align-items:center;padding:4px 0}
+.rd-set-label{font-family:var(--font-mono);font-size:9px;font-weight:400;letter-spacing:.05em;text-transform:uppercase;color:var(--rd-muted)}
+.rd-seg{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
+.rd-opt{
+  min-height:32px;padding:0 10px;border-radius:5px;
+  border:1px solid var(--rd-border);background:transparent;color:var(--rd-text);
+  font-family:var(--font-sans);font-size:11px;font-weight:400;
+  transition:background-color .12s,border-color .12s,color .12s;
+}
+.rd-opt:hover{border-color:var(--rd-border-strong);background:var(--rd-surface)}
+.rd-opt[aria-pressed="true"]{border-color:var(--rd-accent);color:var(--rd-accent);background:var(--rd-accent-soft)}
+.rd-font-val{min-width:40px;text-align:center;font-family:var(--font-mono);font-size:10.5px;color:var(--rd-muted)}
+.rd-scroll{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--rd-bg);
+}
+.rd-col{
+  width:100%;max-width:var(--rd-width);margin:0 auto;
+  padding:30px clamp(20px,4vw,38px) 96px;
+  font-family:Georgia,"Iowan Old Style","Palatino Linotype","Noto Serif","Times New Roman","Noto Sans Devanagari","Nirmala UI",serif;
+  font-size:var(--rd-font);line-height:var(--rd-leading);letter-spacing:0;color:var(--rd-text);
+  overflow-wrap:break-word;text-rendering:optimizeLegibility;
+}
+.rd-page{min-height:1px}
+.rd-ph{min-height:900px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--rd-muted2)}
+.rd-divider{display:flex;align-items:center;gap:10px;margin:32px 0 22px;font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--rd-muted2)}
+.rd-divider::before,.rd-divider::after{content:"";height:1px;flex:1;background:var(--rd-border)}
+.rd-page > :first-child{margin-top:0}
+.rd-h1{font-family:var(--font-sans);font-size:1.5em;font-weight:600;letter-spacing:-.025em;line-height:1.25;margin:0 0 .75em;text-wrap:balance}
+.rd-h2{font-family:var(--font-sans);font-size:1.2em;font-weight:600;letter-spacing:-.02em;line-height:1.3;margin:1.7em 0 .55em;text-wrap:balance}
+.rd-h3{font-family:var(--font-sans);font-size:1.06em;font-weight:600;letter-spacing:-.015em;line-height:1.35;margin:1.5em 0 .45em;text-wrap:balance}
+.rd-p{margin:0 0 1.05em}
+.rd-p:last-child{margin-bottom:0}
+.rd-li{padding-left:1.5em;text-indent:-1.5em;margin-bottom:.5em}
+.rd-fig{margin:1.25em 0}
+.rd-fig canvas{display:block;max-width:100%;height:auto;border-radius:2px;background:#fff}
+.rd-note{font-family:var(--font-mono);font-size:9.5px;line-height:1.6;color:var(--rd-muted);margin:0 0 .9em}
+.rd-full{display:block;width:100%;height:auto;border:1px solid var(--rd-border);border-radius:2px;background:#fff}
+.rd-orig{margin:0 0 1.5em;padding:0 0 1.2em;border-bottom:1px solid var(--rd-border)}
+.rd-orig[hidden]{display:none}
+.rd-orig .rd-note{margin:0 0 .6em}
+.rd-error{padding:20px 0;border-bottom:1px solid var(--rd-border)}
+.rd-error .rd-note{margin:0}
+.rd-error-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.rd-foot{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:6px 9px calc(6px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--rd-border);background:var(--rd-surface);flex-shrink:0;
+}
+.rd-pct{font-family:var(--font-mono);font-size:9px;color:var(--rd-muted2);min-width:28px;text-align:right}
+.rd-orig-btn{font-size:9px}
+#pvRead[data-rd-theme="light"] .rd-fig canvas,
+#pvRead[data-rd-theme="sepia"] .rd-fig canvas{mix-blend-mode:multiply}
+#pvRead[data-rd-theme="dark"] .rd-fig canvas,
+#pvRead[data-rd-theme="dark"] .rd-full{filter:invert(1) hue-rotate(180deg)}
+#pvRead[data-rd-theme="sepia"] .rd-full{filter:sepia(.14)}
+#rdCol mark.hl-text{background:var(--rd-accent);color:#fff;border-radius:2px;padding:0 2px}
+@media (max-width:640px){
+  .rd-col{padding:22px 18px 72px}
+  .rd-h1{font-size:1.4em}
+  .rd-head{padding-left:8px;padding-right:8px}
+  .rd-settings{padding:8px 10px 10px}
+  .rd-set-row{grid-template-columns:72px minmax(0,1fr);gap:8px}
+  .rd-opt{padding:0 8px;min-height:32px;font-size:10.5px}
+  .rd-foot{gap:4px;padding-left:6px;padding-right:6px}
+  .pv-read .pv-btn{min-width:37px;padding:0 8px}
+  .rd-orig-btn{min-width:0;padding:0 7px}
+}
+
 /* ---------- MOBILE POLISH ---------- */
 @media (max-width:640px){
   .home-greeting{font-size:22px}
@@ -1241,9 +1359,65 @@ body.sheet-open{overflow:hidden}
   <div class="pv-head">
     <button class="pv-btn" type="button" onclick="closePdfViewer()" aria-label="Back to results"><svg class="ic ic-sm"><use href="#i-back"/></svg>Results</button>
     <div class="pv-title" id="pvTitle">PDF</div>
+    <button class="pv-btn" type="button" id="pvReadBtn" onclick="toggleReadingMode()" aria-pressed="false" aria-label="Reading mode" title="Reading mode"><svg class="ic ic-sm"><use href="#i-book"/></svg></button>
     <a class="pv-btn" id="pvExternal" href="#" target="_blank" rel="noopener noreferrer" aria-label="Open original PDF" style="text-decoration:none;color:inherit"><svg class="ic ic-sm"><use href="#i-external"/></svg></a>
   </div>
   <div class="pv-body" id="pvBody"><div class="pv-msg">Loading…</div></div>
+  <div class="pv-read" id="pvRead">
+    <div class="rd-head">
+      <button class="pv-btn" type="button" onclick="closeReadingMode()" aria-label="Back to PDF view"><svg class="ic ic-sm"><use href="#i-back"/></svg>PDF</button>
+      <div class="rd-title" id="rdTitle"></div>
+      <button class="pv-btn" type="button" id="rdSizeBtn" onclick="readerToggleSettings()" aria-expanded="false" aria-controls="rdSettings" aria-label="Reading settings">Aa</button>
+    </div>
+    <div class="rd-bar" id="rdBarWrap" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="rdBar"></i></div>
+    <div class="rd-settings" id="rdSettings" hidden>
+      <div class="rd-settings-inner">
+        <div class="rd-set-row">
+          <span class="rd-set-label">Text size</span>
+          <div class="rd-seg" role="group" aria-label="Text size">
+            <button class="rd-opt" type="button" onclick="readerStepFont(-1)" aria-label="Smaller text">A−</button>
+            <output class="rd-font-val" id="rdFontVal">17 px</output>
+            <button class="rd-opt" type="button" onclick="readerStepFont(1)" aria-label="Larger text">A+</button>
+          </div>
+        </div>
+        <div class="rd-set-row">
+          <span class="rd-set-label">Line spacing</span>
+          <div class="rd-seg" role="group" aria-label="Line spacing">
+            <button class="rd-opt" type="button" data-rd-set="leading" data-rd-value="1.55" aria-pressed="false" onclick="readerSetLeading(1.55)">Compact</button>
+            <button class="rd-opt" type="button" data-rd-set="leading" data-rd-value="1.72" aria-pressed="true" onclick="readerSetLeading(1.72)">Normal</button>
+            <button class="rd-opt" type="button" data-rd-set="leading" data-rd-value="1.95" aria-pressed="false" onclick="readerSetLeading(1.95)">Relaxed</button>
+          </div>
+        </div>
+        <div class="rd-set-row">
+          <span class="rd-set-label">Page width</span>
+          <div class="rd-seg" role="group" aria-label="Reading width">
+            <button class="rd-opt" type="button" data-rd-set="width" data-rd-value="600" aria-pressed="false" onclick="readerSetWidth(600)">Narrow</button>
+            <button class="rd-opt" type="button" data-rd-set="width" data-rd-value="720" aria-pressed="true" onclick="readerSetWidth(720)">Normal</button>
+            <button class="rd-opt" type="button" data-rd-set="width" data-rd-value="860" aria-pressed="false" onclick="readerSetWidth(860)">Wide</button>
+          </div>
+        </div>
+        <div class="rd-set-row">
+          <span class="rd-set-label">Theme</span>
+          <div class="rd-seg" role="group" aria-label="Reader theme">
+            <button class="rd-opt" type="button" data-rd-set="theme" data-rd-value="light" aria-pressed="false" onclick="readerSetTheme('light')">Light</button>
+            <button class="rd-opt" type="button" data-rd-set="theme" data-rd-value="sepia" aria-pressed="false" onclick="readerSetTheme('sepia')">Sepia</button>
+            <button class="rd-opt" type="button" data-rd-set="theme" data-rd-value="dark" aria-pressed="false" onclick="readerSetTheme('dark')">Dark</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rd-scroll" id="rdScroll">
+      <div class="rd-col" id="rdCol"></div>
+    </div>
+    <div class="rd-foot">
+      <button class="pv-btn" type="button" onclick="readerGo(-1)" aria-label="Previous page"><svg class="ic ic-sm"><use href="#i-left"/></svg></button>
+      <input class="pv-page-input" id="rdPageInput" type="number" min="1" inputmode="numeric" aria-label="Page number" onchange="readerGoTo(this.value)">
+      <span class="pv-total" id="rdTotal">/ –</span>
+      <span class="rd-pct" id="rdPct" aria-hidden="true">0%</span>
+      <button class="pv-btn" type="button" onclick="readerGo(1)" aria-label="Next page"><svg class="ic ic-sm"><use href="#i-right"/></svg></button>
+      <button class="pv-btn rd-orig-btn" type="button" id="rdOrigBtn" onclick="readerToggleOriginalForCurrent()" aria-pressed="false" title="Show the original page (tables, diagrams, damaged text)">Original</button>
+    </div>
+  </div>
   <div class="pv-foot">
     <button class="pv-btn" type="button" id="pvPrevHit" onclick="viewerJumpHit(-1)" title="Previous page with a match">◀ Match</button>
     <button class="pv-btn" type="button" onclick="viewerGo(-1)" aria-label="Previous page"><svg class="ic ic-sm"><use href="#i-left"/></svg></button>
@@ -1845,6 +2019,16 @@ function pdfItem(file){
   info.appendChild(makeElement("small","",formatDate(file.created_at)));
   const actions = makeElement("div","item-actions");
   if(file.file_url){
+    const saved = readerPositionFor(file.file_url);
+    const read = makeElement("button","link-btn","Read");
+    read.type = "button";
+    read.style.cursor = "pointer";
+    read.title = saved ? "Continue reading from page " + saved.page : "Read this book as text";
+    read.addEventListener("click", ()=>openPdfViewer({
+      url:file.file_url, page:saved ? saved.page : 1, title:file.file_name || "PDF",
+      startReading:true, resumeReading:true
+    }));
+    actions.appendChild(read);
     const link = makeElement("a","link-btn","Open");
     link.href = safeUrl(file.file_url); link.target = "_blank"; link.rel = "noopener noreferrer";
     actions.appendChild(link);
@@ -2548,10 +2732,11 @@ const viewer = {
 function lockBodyScroll(on){ document.body.style.overflow = on ? "hidden" : ""; }
 
 let viewerLastFocus = null;
-async function openPdfViewer({url, page, matcher, title, hitPages}){
+async function openPdfViewer({url, page, matcher, title, hitPages, startReading, resumeReading}){
   if(!url){ showToast("This book has no file link"); return; }
   const fileUrl = safeUrl(url);
   if(fileUrl === "#"){ showToast("This book has an invalid file link"); return; }
+  if(reader.on) closeReadingMode(true);
   const el = document.getElementById("pdfViewer");
   viewerLastFocus = document.activeElement;
   el.classList.add("open");
@@ -2587,7 +2772,9 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
     document.getElementById("pvTotal").textContent = "/ " + viewer.total;
     document.getElementById("pvPageInput").max = viewer.total;
     viewer.zoom = 1;
-    await viewerShowPage(Math.min(Math.max(1, page || 1), viewer.total));
+    const startPage = Math.min(Math.max(1, page || 1), viewer.total);
+    await viewerShowPage(startPage);
+    if(startReading && viewer.pdf) await openReadingMode(startPage, {resume:!!resumeReading});
   }catch(error){
     console.error("Viewer error:", error);
     viewer.url = null; viewer.pdf = null;
@@ -2602,6 +2789,7 @@ async function openPdfViewer({url, page, matcher, title, hitPages}){
 }
 
 function closePdfViewer(){
+  if(reader.on) closeReadingMode(true);
   const el = document.getElementById("pdfViewer");
   el.classList.remove("open");
   el.setAttribute("aria-hidden","true");
@@ -2728,21 +2916,1148 @@ function viewerJumpHit(direction){
   if(target == null){ showToast(direction > 0 ? "No more matches ahead" : "No earlier matches"); return; }
   viewerShowPage(target);
 }
+/* ================= READING MODE ================= */
+/* Text-first reader built on the open PDF's own text layer. The canvas
+   viewer is never modified: reading mode is a layer inside #pdfViewer. */
+const READER_SETTINGS_KEY = "classhub_reader_settings_v1";
+const READER_POSITIONS_KEY = "classhub_reader_positions_v1";
+const READER_FONT_MIN = 14;
+const READER_FONT_MAX = 26;
+const READER_LEADINGS = [1.55, 1.72, 1.95];
+const READER_WIDTHS = [600, 720, 860];
+const READER_MAX_JOBS = 2;
+const READER_KEEP_BEHIND = 8;
+const READER_KEEP_AHEAD = 5;
+const READER_SAVE_DELAY = 800;
+
+function readerLoadSettings(){
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(READER_SETTINGS_KEY) || "{}") || {}; }catch(e){}
+  const fontSize = Math.round(Number(saved.fontSize));
+  const leading = Number(saved.leading);
+  const width = Number(saved.width);
+  const theme = String(saved.theme || "");
+  return {
+    fontSize: Number.isFinite(fontSize) ? Math.min(READER_FONT_MAX, Math.max(READER_FONT_MIN, fontSize)) : 17,
+    leading: READER_LEADINGS.includes(leading) ? leading : 1.72,
+    width: READER_WIDTHS.includes(width) ? width : 720,
+    theme: ["light","sepia","dark"].includes(theme) ? theme : ""
+  };
+}
+function readerSaveSettings(){
+  try{ localStorage.setItem(READER_SETTINGS_KEY, JSON.stringify(reader.settings)); }catch(e){}
+}
+function readerTheme(){
+  return reader.settings.theme || (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+}
+
+const reader = {
+  on:false, opening:false, gen:0, page:1, total:0, settings:readerLoadSettings(),
+  built:new Set(), failed:new Set(), sections:[], session:null,
+  scroll:null, col:null, observer:null, posObserver:null, jumpAt:0,
+  scrollRaf:0, saveTimer:0, reflowTimer:0
+};
+
+/* --- per-book position, remembered across sessions --- */
+function readerPositions(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(READER_POSITIONS_KEY) || "{}");
+    return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  }catch(e){ return {}; }
+}
+function readerPositionFor(url){
+  if(!url) return null;
+  const key = safeUrl(url);
+  if(!key || key === "#") return null;
+  const rec = readerPositions()[key];
+  if(!rec) return null;
+  const page = parseInt(rec.page, 10);
+  if(!Number.isFinite(page) || page < 1) return null;
+  return {
+    page: page,
+    offset: Math.min(.95, Math.max(0, Number(rec.offset) || 0)),
+    at: Number(rec.at) || 0
+  };
+}
+function readerSavePositionNow(){
+  if(!reader.on || reader.opening || !viewer.url) return;
+  try{
+    const map = readerPositions();
+    map[viewer.url] = {page:reader.page, offset:+readerReadFraction().toFixed(4), at:Date.now()};
+    const recent = Object.entries(map)
+      .sort((a,b)=>(Number(b[1] && b[1].at)||0) - (Number(a[1] && a[1].at)||0))
+      .slice(0, 80);
+    localStorage.setItem(READER_POSITIONS_KEY, JSON.stringify(Object.fromEntries(recent)));
+  }catch(e){}
+}
+
+/* --- page build queue: two jobs at most, no duplicate work --- */
+function readerDropSession(){
+  const s = reader.session;
+  if(!s) return;
+  s.closed = true;
+  for(const job of s.queue) job.resolve();
+  s.queue.length = 0;
+  s.jobs.clear();
+  reader.session = null;
+}
+function readerStartSession(){
+  readerDropSession();
+  reader.gen++;
+  reader.session = {gen:reader.gen, queue:[], active:0, jobs:new Map(), closed:false};
+  return reader.session;
+}
+function readerStopSession(){
+  readerDropSession();
+  reader.gen++;
+}
+
+function readerPlaceholder(n, loading){
+  return makeElement("div","rd-ph", loading ? "Loading page " + n + "…" : "Page " + n);
+}
+
+function buildReaderPage(n, priority, force){
+  if(!reader.on || !viewer.pdf) return Promise.resolve();
+  const s = reader.session;
+  if(!s || s.closed) return Promise.resolve();
+  if(reader.built.has(n)) return Promise.resolve();
+  if(reader.failed.has(n) && !force) return Promise.resolve();
+  const existing = s.jobs.get(n);
+  if(existing) return existing;
+
+  let resolve;
+  const promise = new Promise(r=>{ resolve = r; });
+  const job = {n:n, resolve:resolve, priority:!!priority};
+  s.jobs.set(n, promise);
+  if(priority) s.queue.unshift(job); else s.queue.push(job);
+
+  if(priority){
+    for(let i=s.queue.length-1;i>=0;i--){
+      const queued = s.queue[i];
+      if(queued.priority) continue;
+      if(Math.abs(queued.n - reader.page) > 4){
+        s.queue.splice(i,1);
+        s.jobs.delete(queued.n);
+        queued.resolve();
+      }
+    }
+  }
+  while(s.queue.length > 8){
+    let drop = -1;
+    for(let i=s.queue.length-1;i>=0;i--){ if(!s.queue[i].priority){ drop = i; break; } }
+    if(drop < 0) break;
+    const queued = s.queue.splice(drop,1)[0];
+    s.jobs.delete(queued.n);
+    queued.resolve();
+  }
+
+  readerPumpSession(s);
+  return promise;
+}
+function readerPumpSession(s){
+  if(!s || s.closed || s !== reader.session) return;
+  while(s.active < READER_MAX_JOBS && s.queue.length){
+    const job = s.queue.shift();
+    s.active++;
+    readerBuildPageJob(job.n, s).catch(error=>{
+      console.error("Reading mode: page " + job.n + " failed", error);
+      if(!s.closed && s.gen === reader.gen){
+        reader.failed.add(job.n);
+        const sec = reader.sections[job.n - 1];
+        if(sec) sec.replaceChildren(readerErrorNode(job.n));
+      }
+    }).finally(()=>{
+      s.active--;
+      s.jobs.delete(job.n);
+      job.resolve();
+      readerPumpSession(s);
+    });
+  }
+}
+
+async function readerBuildPageJob(n, s){
+  const sec = reader.sections[n - 1];
+  if(!sec || s.closed || s.gen !== reader.gen) return;
+  if(reader.built.has(n) || reader.failed.has(n)) return;
+  const gen = reader.gen;
+  /* If a page above the reader's current page grows or shrinks, keep the
+     current page visually still. Placeholder heights are estimates. */
+  const anchorPage = reader.page;
+  const anchorSec = reader.sections[anchorPage - 1];
+  const anchorTop = anchorSec ? anchorSec.getBoundingClientRect().top : 0;
+  sec.setAttribute("aria-busy","true");
+  try{
+    const pg = await viewer.pdf.getPage(n);
+    if(s.closed || gen !== reader.gen) return;
+    const info = await readerExtractPage(pg, n, gen);
+    if(s.closed || gen !== reader.gen) return;
+    const blocks = info.blocks;
+    if(blocks.some(b=>b.crop)){
+      await readerPaintCrops(pg, blocks, gen);
+      if(s.closed || gen !== reader.gen) return;
+    }
+
+    const frag = document.createDocumentFragment();
+    if(n > 1) frag.appendChild(makeElement("div","rd-divider","Page " + n));
+    const autoOriginal = info.table || (info.graphics && info.lines <= 18);
+    if(!blocks.length){
+      const node = await readerPageImage(pg, gen);
+      if(s.closed || gen !== reader.gen) return;
+      if(node){
+        blocks.push({type:"note", text:"No text layer on this page — showing the original page image."});
+        blocks.push({type:"image", node:node});
+      }else{
+        blocks.push({type:"note", text:"This page has no readable text layer. Use the PDF view for the original page."});
+      }
+    }
+    for(const b of blocks) frag.appendChild(readerBlockNode(b, n));
+    sec.replaceChildren(frag);
+    sec.style.minHeight = "";
+    const imageOnly = blocks.some(b=>b.type === "image");
+    sec.dataset.original = imageOnly ? "page" : "0";
+    reader.built.add(n);
+    reader.failed.delete(n);
+    updateReaderChrome();
+
+    if(autoOriginal && !imageOnly){
+      await readerSetOriginal(n, true, {pg:pg, gen:gen, kind:info.table ? "table" : "graphics"});
+    }
+  }catch(error){
+    console.error("Reading mode: page " + n + " failed", error);
+    if(gen === reader.gen && !s.closed){
+      reader.failed.add(n);
+      sec.replaceChildren(readerErrorNode(n));
+    }
+  }finally{
+    sec.removeAttribute("aria-busy");
+    /* Keep the current page visually still when a page above it changes height. */
+    if(n < anchorPage && reader.on && gen === reader.gen && !reader.opening &&
+       reader.page === anchorPage && anchorSec && anchorSec.isConnected && reader.scroll){
+      const delta = anchorSec.getBoundingClientRect().top - anchorTop;
+      if(Math.abs(delta) > 0.5) reader.scroll.scrollTop += delta;
+    }
+  }
+}
+
+function readerErrorNode(n){
+  const wrap = makeElement("div","rd-error");
+  wrap.appendChild(makeElement("p","rd-note",
+    "Could not read page " + n + " as text. The page may be damaged, unusually complex, or the book may still be loading."));
+  const actions = makeElement("div","rd-error-actions");
+  const retry = makeElement("button","rd-opt","Retry");
+  retry.type = "button";
+  retry.addEventListener("click", ()=>readerRetryPage(n));
+  const original = makeElement("button","rd-opt","Show original page");
+  original.type = "button";
+  original.addEventListener("click", ()=>readerSetOriginal(n, true));
+  const pdf = makeElement("button","rd-opt","PDF view");
+  pdf.type = "button";
+  pdf.addEventListener("click", ()=>closeReadingMode());
+  actions.append(retry, original, pdf);
+  wrap.appendChild(actions);
+  return wrap;
+}
+function readerRetryPage(n){
+  if(!reader.on) return;
+  reader.failed.delete(n);
+  const sec = reader.sections[n - 1];
+  if(sec){
+    sec.style.minHeight = "";
+    sec.replaceChildren(readerPlaceholder(n, true));
+  }
+  buildReaderPage(n, true, true);
+}
+
+/* --- open / close --- */
+function toggleReadingMode(){
+  if(reader.on){ closeReadingMode(); return; }
+  openReadingMode(viewer.page || 1, {offset:readerViewerOffset()});
+}
+
+async function openReadingMode(startPage, options){
+  options = options || {};
+  if(!viewer.pdf || reader.on) return false;
+  reader.on = true;
+  reader.opening = true;
+  reader.total = viewer.total || 1;
+  reader.page = Math.min(Math.max(1, parseInt(startPage, 10) || 1), reader.total);
+  const targetPage = reader.page;
+  reader.built.clear();
+  reader.failed.clear();
+  reader.sections = [];
+  readerStartSession();
+
+  const el = document.getElementById("pdfViewer");
+  const col = document.getElementById("rdCol");
+  const scroll = document.getElementById("rdScroll");
+  try{
+    el.classList.add("reading");
+    document.getElementById("pvReadBtn").setAttribute("aria-pressed","true");
+    const title = viewer.title || "PDF";
+    const titleEl = document.getElementById("rdTitle");
+    titleEl.textContent = title;
+    titleEl.title = title;
+    document.getElementById("rdTotal").textContent = "/ " + reader.total;
+    const input = document.getElementById("rdPageInput");
+    input.max = reader.total;
+    input.value = reader.page;
+
+    reader.col = col;
+    reader.scroll = scroll;
+    readerApplySettings();
+    readerToggleSettings(false);
+    col.replaceChildren();
+    scroll.scrollTop = 0;
+
+    for(let n=1;n<=reader.total;n++){
+      const sec = document.createElement("section");
+      sec.className = "rd-page";
+      sec.dataset.page = String(n);
+      sec.dataset.original = "0";
+      sec.appendChild(readerPlaceholder(n, n === reader.page));
+      col.appendChild(sec);
+      reader.sections.push(sec);
+    }
+
+    scroll.removeEventListener("scroll", readerOnScroll);
+    scroll.addEventListener("scroll", readerOnScroll, {passive:true});
+    readerRefreshObservers();
+    updateReaderChrome();
+    readerUpdateProgress();
+
+    const stored = readerPositionFor(viewer.url);
+    let offset = typeof options.offset === "number" ? options.offset : 0;
+    if(options.resume && stored && stored.page === targetPage) offset = stored.offset;
+
+    reader.jumpAt = Date.now();
+    await buildReaderPage(targetPage, true, true);
+    if(!reader.on) return false;
+    readerScrollTo(targetPage, offset, {build:false});
+    reader.opening = false;
+    reader.jumpAt = Date.now();
+    setTimeout(()=>document.querySelector("#pvRead .rd-head .pv-btn")?.focus(), 0);
+    return true;
+  }catch(error){
+    console.error("Reading mode could not open:", error);
+    readerStopSession();
+    reader.on = false;
+    reader.opening = false;
+    if(reader.observer){ reader.observer.disconnect(); reader.observer = null; }
+    if(reader.posObserver){ reader.posObserver.disconnect(); reader.posObserver = null; }
+    if(scroll) scroll.removeEventListener("scroll", readerOnScroll);
+    if(col) col.replaceChildren();
+    reader.sections = [];
+    el.classList.remove("reading");
+    document.getElementById("pvReadBtn").setAttribute("aria-pressed","false");
+    showToast("Reading mode could not open for this book");
+    return false;
+  }
+}
+
+function closeReadingMode(skipViewerSync){
+  if(!reader.on) return;
+  const page = reader.page;
+  const frac = readerReadFraction();
+  readerSavePositionNow();
+  reader.on = false;
+  reader.opening = false;
+  readerStopSession();
+
+  if(reader.observer){ reader.observer.disconnect(); reader.observer = null; }
+  if(reader.posObserver){ reader.posObserver.disconnect(); reader.posObserver = null; }
+  if(reader.scroll) reader.scroll.removeEventListener("scroll", readerOnScroll);
+  if(reader.scrollRaf){ cancelAnimationFrame(reader.scrollRaf); reader.scrollRaf = 0; }
+  clearTimeout(reader.saveTimer);
+  clearTimeout(reader.reflowTimer);
+  if(reader.col){ reader.col.replaceChildren(); reader.col.style.minHeight = ""; }
+  reader.built.clear();
+  reader.failed.clear();
+  reader.sections = [];
+  readerToggleSettings(false);
+
+  document.getElementById("pdfViewer").classList.remove("reading");
+  document.getElementById("pvReadBtn").setAttribute("aria-pressed","false");
+  if(!skipViewerSync){
+    if(viewer.pdf){
+      viewerShowPage(page).then(()=>readerApplyViewerOffset(frac)).catch(()=>{});
+    }
+    setTimeout(()=>document.getElementById("pvReadBtn")?.focus(), 0);
+  }
+}
+
+function readerViewerOffset(){
+  const body = document.getElementById("pvBody");
+  if(!body) return 0;
+  const max = body.scrollHeight - body.clientHeight;
+  return max > 2 ? Math.min(.95, Math.max(0, body.scrollTop / max)) : 0;
+}
+function readerApplyViewerOffset(frac){
+  const body = document.getElementById("pvBody");
+  if(!body) return;
+  const max = body.scrollHeight - body.clientHeight;
+  if(max > 2) body.scrollTop = Math.min(max, Math.max(0, frac * max));
+}
+
+/* --- navigation, progress and position --- */
+function readerReadFraction(){
+  if(!reader.on || !reader.scroll) return 0;
+  const sec = reader.sections[reader.page - 1];
+  if(!sec) return 0;
+  const sr = reader.scroll.getBoundingClientRect();
+  const r = sec.getBoundingClientRect();
+  return Math.min(.95, Math.max(0, (sr.top - r.top) / Math.max(1, r.height)));
+}
+function readerScrollAt(sec, offset){
+  if(!reader.scroll || !sec) return;
+  const sr = reader.scroll.getBoundingClientRect();
+  const r = sec.getBoundingClientRect();
+  const top = r.top - sr.top + reader.scroll.scrollTop;
+  reader.scroll.scrollTop = Math.max(0, top + Math.min(.95, Math.max(0, offset || 0)) * r.height);
+}
+function readerScrollTo(n, offset, options){
+  options = options || {};
+  if(!reader.on) return;
+  n = Math.min(Math.max(1, parseInt(n, 10) || 1), reader.total);
+  const sec = reader.sections[n - 1];
+  if(!sec) return;
+  reader.page = n;
+  reader.jumpAt = Date.now();
+  if(n === 1 && !offset) reader.scroll.scrollTop = 0;
+  else readerScrollAt(sec, offset || 0);
+  updateReaderChrome();
+  if(options.build === false) return;
+  const gen = reader.gen;
+  buildReaderPage(n, true, true).then(()=>{
+    if(!reader.on || gen !== reader.gen || reader.page !== n) return;
+    if(n === 1 && !offset) reader.scroll.scrollTop = 0;
+    else readerScrollAt(sec, offset || 0);
+    updateReaderChrome();
+  });
+}
+function readerGo(delta){
+  if(!reader.on) return;
+  const target = reader.page + delta;
+  if(target < 1){ showToast("Already at the first page"); return; }
+  if(target > reader.total){ showToast("Already at the last page"); return; }
+  readerScrollTo(target);
+}
+function readerGoTo(value){
+  if(!reader.on) return;
+  const input = document.getElementById("rdPageInput");
+  const n = parseInt(value, 10);
+  if(Number.isNaN(n)){
+    if(input) input.value = reader.page;
+    return;
+  }
+  const target = Math.min(Math.max(1, n), reader.total);
+  if(input) input.value = target;
+  readerScrollTo(target);
+}
+function updateReaderChrome(){
+  if(!reader.on) return;
+  const input = document.getElementById("rdPageInput");
+  if(input && document.activeElement !== input) input.value = reader.page;
+  const total = document.getElementById("rdTotal");
+  if(total) total.textContent = "/ " + reader.total;
+
+  const sec = reader.sections[reader.page - 1];
+  const orig = document.getElementById("rdOrigBtn");
+  if(orig){
+    const imageOnly = !!(sec && sec.dataset.original === "page");
+    const showing = !!(sec && sec.dataset.original === "1");
+    orig.disabled = imageOnly || !reader.built.has(reader.page);
+    orig.setAttribute("aria-pressed", showing ? "true" : "false");
+    orig.title = imageOnly ? "This page is already shown as the original image"
+      : (showing ? "Hide the original page" : "Show the original page (tables, diagrams, damaged text)");
+  }
+  readerUpdateProgress();
+}
+function readerUpdateProgress(){
+  if(!reader.on || !reader.scroll) return;
+  const frac = readerReadFraction();
+  const max = reader.scroll.scrollHeight - reader.scroll.clientHeight;
+  const atBottom = max > 2 && reader.scroll.scrollTop >= max - 2;
+  const pct = atBottom ? 100
+    : Math.round(Math.min(1, Math.max(0, ((reader.page - 1) + frac) / Math.max(1, reader.total))) * 100);
+  const bar = document.getElementById("rdBar");
+  if(bar) bar.style.width = pct + "%";
+  const label = document.getElementById("rdPct");
+  if(label) label.textContent = pct + "%";
+  const wrap = document.getElementById("rdBarWrap");
+  if(wrap) wrap.setAttribute("aria-valuenow", String(pct));
+}
+function readerOnScroll(){
+  if(!reader.on || reader.scrollRaf) return;
+  reader.scrollRaf = requestAnimationFrame(()=>{
+    reader.scrollRaf = 0;
+    if(!reader.on) return;
+    readerUpdateProgress();
+    clearTimeout(reader.saveTimer);
+    reader.saveTimer = setTimeout(()=>{
+      if(!reader.on || reader.opening) return;
+      readerSavePositionNow();
+      readerPrune();
+    }, READER_SAVE_DELAY);
+  });
+}
+
+/* --- bounded memory: far pages are released, their height is kept --- */
+function readerPrune(){
+  if(!reader.on) return;
+  const page = reader.page;
+  let removed = 0;
+  for(let i=0;i<reader.sections.length && removed<3;i++){
+    const p = i + 1;
+    if(p >= page - READER_KEEP_BEHIND && p <= page + READER_KEEP_AHEAD) continue;
+    if(!reader.built.has(p)) continue;
+    const sec = reader.sections[i];
+    const h = Math.max(80, Math.round(sec.getBoundingClientRect().height));
+    sec.style.minHeight = h + "px";
+    sec.dataset.original = "0";
+    sec.replaceChildren(readerPlaceholder(p));
+    reader.built.delete(p);
+    removed++;
+  }
+}
+
+function readerRefreshObservers(){
+  if(reader.observer){ reader.observer.disconnect(); reader.observer = null; }
+  if(reader.posObserver){ reader.posObserver.disconnect(); reader.posObserver = null; }
+  if(!reader.on || !reader.scroll) return;
+  const scroll = reader.scroll;
+  reader.observer = new IntersectionObserver(entries=>{
+    if(!reader.on) return;
+    for(const en of entries){ if(en.isIntersecting) buildReaderPage(Number(en.target.dataset.page)); }
+  }, {root:scroll, rootMargin:"1600px 0px"});
+
+  reader.posObserver = new IntersectionObserver(entries=>{
+    if(!reader.on || reader.opening || Date.now() - reader.jumpAt < 550) return;
+    let best = null;
+    for(const en of entries){
+      if(!en.isIntersecting) continue;
+      const rb = en.rootBounds;
+      const rect = en.boundingClientRect;
+      const line = rb ? (rb.top + rb.bottom) / 2 : 0;
+      if(rect.top <= line && rect.bottom >= line){ best = en; break; }
+    }
+    if(!best) return;
+    const n = Number(best.target.dataset.page);
+    if(n !== reader.page){
+      reader.page = n;
+      updateReaderChrome();
+    }
+  }, {root:scroll, rootMargin:"-42% 0px -52% 0px"});
+
+  for(const sec of reader.sections){
+    reader.observer.observe(sec);
+    reader.posObserver.observe(sec);
+  }
+}
+
+/* --- display settings --- */
+function readerApplySettings(){
+  const pane = document.getElementById("pvRead");
+  if(!pane) return;
+  pane.dataset.rdTheme = readerTheme();
+  pane.style.setProperty("--rd-width", reader.settings.width + "px");
+  pane.style.setProperty("--rd-font", reader.settings.fontSize + "px");
+  pane.style.setProperty("--rd-leading", String(reader.settings.leading));
+  const fontVal = document.getElementById("rdFontVal");
+  if(fontVal) fontVal.textContent = reader.settings.fontSize + " px";
+  const sizeBtn = document.getElementById("rdSizeBtn");
+  if(sizeBtn) sizeBtn.setAttribute("aria-label", "Reading settings, text size " + reader.settings.fontSize + " pixels");
+  readerSyncSettingButtons();
+}
+function readerSyncSettingButtons(){
+  const theme = readerTheme();
+  document.querySelectorAll("#rdSettings [data-rd-set]").forEach(btn=>{
+    const set = btn.dataset.rdSet;
+    const value = btn.dataset.rdValue;
+    let active = false;
+    if(set === "leading") active = Math.abs(reader.settings.leading - Number(value)) < .001;
+    else if(set === "width") active = reader.settings.width === Number(value);
+    else if(set === "theme") active = theme === value;
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+function readerToggleSettings(force){
+  const panel = document.getElementById("rdSettings");
+  if(!panel) return;
+  const open = typeof force === "boolean" ? force : panel.hidden;
+  panel.hidden = !open;
+  const btn = document.getElementById("rdSizeBtn");
+  if(btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+  if(open) readerApplySettings();
+}
+function readerStepFont(delta){
+  if(!reader.on) return;
+  const next = Math.min(READER_FONT_MAX, Math.max(READER_FONT_MIN, reader.settings.fontSize + (delta < 0 ? -1 : 1)));
+  if(next === reader.settings.fontSize) return;
+  reader.settings.fontSize = next;
+  readerSaveSettings();
+  readerApplySettings();
+  readerScheduleReflow();
+}
+function readerSetLeading(value){
+  if(!reader.on) return;
+  value = Number(value);
+  if(!READER_LEADINGS.includes(value) || value === reader.settings.leading) return;
+  reader.settings.leading = value;
+  readerSaveSettings();
+  readerApplySettings();
+  readerScheduleReflow();
+}
+function readerSetWidth(value){
+  if(!reader.on) return;
+  value = Number(value);
+  if(!READER_WIDTHS.includes(value) || value === reader.settings.width) return;
+  reader.settings.width = value;
+  readerSaveSettings();
+  readerApplySettings();
+  readerScheduleReflow();
+}
+function readerSetTheme(value){
+  if(!reader.on || !["light","sepia","dark"].includes(value)) return;
+  if(reader.settings.theme === value) return;
+  reader.settings.theme = value;
+  readerSaveSettings();
+  readerApplySettings();
+}
+
+function readerScheduleReflow(){
+  if(!reader.on) return;
+  clearTimeout(reader.reflowTimer);
+  reader.reflowTimer = setTimeout(readerReflow, 180);
+}
+async function readerReflow(){
+  if(!reader.on || !reader.sections.length) return;
+  const page = reader.page;
+  const frac = readerReadFraction();
+  const heights = reader.sections.map(sec=>Math.max(80, Math.round(sec.getBoundingClientRect().height)));
+  readerStartSession();
+  reader.built.clear();
+  reader.failed.clear();
+  reader.sections.forEach((sec, i)=>{
+    sec.style.minHeight = heights[i] + "px";
+    sec.dataset.original = "0";
+    sec.replaceChildren(readerPlaceholder(i + 1, (i + 1) === page));
+  });
+  reader.jumpAt = Date.now();
+  const gen = reader.gen;
+  readerRefreshObservers();
+  await buildReaderPage(page, true, true);
+  if(!reader.on || gen !== reader.gen) return;
+  const sec = reader.sections[page - 1];
+  if(sec) sec.style.minHeight = "";
+  readerScrollTo(page, frac, {build:false});
+}
+
+/* --- original page fallback (tables, diagrams, damaged text) --- */
+function readerOriginalNote(kind, n){
+  if(kind === "table") return makeElement("p","rd-note",
+    "This page appears to contain a table. The original page is shown because table layout cannot be reconstructed reliably. Extracted text follows.");
+  if(kind === "graphics") return makeElement("p","rd-note",
+    "This page contains graphics. The original page is shown for accurate layout. Extracted text follows.");
+  return makeElement("p","rd-note","Original page " + n + ".");
+}
+async function readerSetOriginal(n, show, options){
+  options = options || {};
+  const sec = reader.sections[n - 1];
+  if(!reader.on || !sec) return;
+  if(show && sec.dataset.original === "page") return;
+
+  let wrap = sec.querySelector(":scope > .rd-orig");
+  if(!show){
+    if(wrap) wrap.hidden = true;
+    sec.dataset.original = "0";
+    updateReaderChrome();
+    return;
+  }
+
+  const kind = options.kind || (wrap && wrap.dataset.kind) || "manual";
+  if(wrap && wrap.dataset.ready === "1"){
+    wrap.hidden = false;
+    sec.dataset.original = "1";
+    updateReaderChrome();
+    return;
+  }
+  if(wrap && wrap.dataset.loading === "1"){
+    wrap.hidden = false;
+    sec.dataset.original = "1";
+    updateReaderChrome();
+    return;
+  }
+  if(!wrap){
+    wrap = makeElement("div","rd-orig");
+    wrap.dataset.kind = kind;
+    wrap.appendChild(readerOriginalNote(kind, n));
+    wrap.appendChild(makeElement("p","rd-note","Loading the original page…"));
+    const divider = sec.querySelector(":scope > .rd-divider");
+    if(divider && divider.nextSibling) sec.insertBefore(wrap, divider.nextSibling);
+    else if(divider) sec.appendChild(wrap);
+    else sec.prepend(wrap);
+  }
+  wrap.hidden = false;
+  sec.dataset.original = "1";
+  updateReaderChrome();
+  if(wrap.dataset.ready === "1") return;
+
+  const gen = reader.gen;
+  wrap.dataset.loading = "1";
+  try{
+    const pg = options.pg || await viewer.pdf.getPage(n);
+    if(!reader.on || gen !== reader.gen || !wrap.isConnected) return;
+    const node = await readerPageImage(pg, gen);
+    if(!reader.on || gen !== reader.gen || !wrap.isConnected) return;
+    if(node){
+      wrap.replaceChildren(readerOriginalNote(kind, n), node);
+      wrap.dataset.ready = "1";
+      wrap.dataset.kind = kind;
+    }else{
+      wrap.replaceChildren(readerOriginalNote(kind, n),
+        makeElement("p","rd-note","The original page could not be rendered. The extracted text is still available below."));
+      wrap.dataset.ready = "1";
+    }
+  }catch(error){
+    console.error("Reading mode: original page failed", error);
+    if(reader.on && gen === reader.gen && wrap.isConnected){
+      wrap.replaceChildren(readerOriginalNote(kind, n),
+        makeElement("p","rd-note","The original page could not be rendered. The extracted text is still available below."));
+      wrap.dataset.ready = "1";
+    }
+  }finally{
+    delete wrap.dataset.loading;
+  }
+  updateReaderChrome();
+}
+function readerToggleOriginalForCurrent(){
+  if(!reader.on) return;
+  const sec = reader.sections[reader.page - 1];
+  if(!sec) return;
+  if(sec.dataset.original === "page"){ showToast("This page is already the original image"); return; }
+  const show = sec.dataset.original !== "1";
+  readerSetOriginal(reader.page, show);
+}
+
+/* --- text layer -> blocks --- */
+async function readerExtractPage(pg, n, gen){
+  const empty = {blocks:[], table:false, graphics:false, lines:0};
+  if(pg.rotate % 180 !== 0) return empty;   /* rotated pages render as an image instead */
+  const tc = await pg.getTextContent();
+  if(gen !== reader.gen) return empty;
+  const styles = tc.styles || {};
+  const items = (tc.items || []).filter(it=>it && typeof it.str === "string" && it.str.trim());
+  if(!items.length) return empty;
+  const vp = pg.getViewport({scale:1});
+
+  /* Resolve the real font of every run. fontName ids (g_dX_fY) are per
+     document load and can be renumbered, so never assume f1 = bold. */
+  let opList = null;
+  try{ opList = await pg.getOperatorList(); }catch(e){}
+  if(gen !== reader.gen) return empty;
+  const boldMap = Object.create(null);
+  for(const it of items){
+    if(boldMap[it.fontName] !== undefined) continue;
+    let bold = false;
+    try{
+      const f = pg.commonObjs.get(it.fontName);
+      bold = /bold|black|semibold|heavy|demi/i.test((f && f.name) || "");
+    }catch(e){ bold = false; }
+    boldMap[it.fontName] = bold;
+  }
+
+  let imageOps = 0, pathOps = 0;
+  if(opList && pdfjsLib.OPS){
+    const ops = pdfjsLib.OPS;
+    for(const fn of opList.fnArray){
+      if(fn === ops.paintImageXObject || fn === ops.paintInlineImage ||
+         fn === ops.paintImageMaskXObject || fn === ops.paintImageXObjectRepeat) imageOps++;
+      else if(fn === ops.constructPath) pathOps++;
+    }
+  }
+  const graphics = imageOps >= 2 || pathOps >= 80;
+
+  const flat = [];
+  for(const it of items){
+    const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
+    const st = styles[it.fontName] || {};
+    flat.push({
+      str: it.str,
+      x: tx[4],
+      y: tx[5],
+      w: it.width || 0,
+      size: Math.hypot(tx[2], tx[3]) || it.height || 11,
+      font: it.fontName,
+      asc: (typeof st.ascent === "number" && st.ascent > 0) ? st.ascent : 0.9,
+      des: (typeof st.descent === "number" && st.descent < 0) ? -st.descent : 0.22
+    });
+  }
+  flat.sort((a,b)=> a.y - b.y || a.x - b.x);
+
+  const rows = [];
+  for(const it of flat){
+    const last = rows[rows.length-1];
+    if(last && Math.abs(it.y - last.y) <= 1.2) last.items.push(it);
+    else rows.push({y:it.y, items:[it]});
+  }
+
+  const pageLines = [];
+  for(const row of rows){
+    row.items.sort((a,b)=>a.x-b.x);
+    let text = readerJoinLine(row.items);
+    if(!text) continue;
+    if(/[\u0900-\u097F]/.test(text)) text = readerFixDevanagari(text);
+    let sizeSum = 0, charSum = 0;
+    const fonts = new Map();
+    for(const it of row.items){
+      const c = it.str.replace(/\s+/g,"").length || 1;
+      sizeSum += it.size * c;
+      charSum += c;
+      fonts.set(it.font, (fonts.get(it.font) || 0) + it.str.length);
+    }
+    const font = [...fonts.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+    pageLines.push({
+      y: row.y,
+      x0: Math.min(...row.items.map(i=>i.x)),
+      x1: Math.max(...row.items.map(i=>i.x + i.w)),
+      size: charSum ? sizeSum / charSum : 11,
+      font: font,
+      bold: !!boldMap[font],
+      text: text,
+      items: row.items
+    });
+  }
+  if(!pageLines.length) return {blocks:[], table:false, graphics:graphics, lines:0};
+
+  const pitch = readerPitch(pageLines);
+  const columnLeft = Math.min(...pageLines.map(l=>l.x0));
+  const columnRight = Math.max(...pageLines.map(l=>l.x1));
+  const shortCut = columnRight - Math.max(30, (columnRight - columnLeft) * 0.20);
+  const blocks = [];
+  let cur = null;
+  let prevLine = null;
+
+  for(const ln of pageLines){
+    const text = ln.text;
+    const devanagari = readerDevCount(text) >= 2;
+    const damaged = text.indexOf("\u0000") >= 0 || text.indexOf("\uFFFD") >= 0 || /[\uE000-\uF8FF]/.test(text);
+    const prevBlock = blocks[blocks.length-1];
+    /* Damaged lines are shown as a page crop. A clean Devanagari line that
+       continues a damaged verse joins that crop, so one broken glyph does
+       not split a shloka into an image plus garbled text. */
+    const visual = damaged ||
+      (devanagari && prevBlock && prevBlock.type === "verse" && (ln.y - prevBlock.lastY) <= pitch * 1.7);
+    const listMatch = /^(\d+[).]\s|•\s|[-–]\s)/.test(text);
+    const bullet = /^(\d+[).]\s|•\s)/.test(text);
+    const isHeading = !visual && !listMatch && ln.bold && text.length <= 92 && !/[.;।]$/.test(text);
+    const startsNew = !!(prevLine && prevLine.x1 < shortCut);
+    prevLine = ln;
+
+    /* a wrapped connector ("&" alone on its line) belongs to the block above */
+    const connector = /^[&+/,;:.–—-]{1,3}$/.test(text);
+    if(connector && prevBlock && prevBlock.type === "verse" && (ln.y - prevBlock.lastY) <= pitch * 1.7){
+      prevBlock.lines.push(ln);
+      prevBlock.text += " " + text;
+      prevBlock.lastY = ln.y;
+      cur = null;
+      continue;
+    }
+
+    if(visual){
+      const prev = blocks[blocks.length-1];
+      const canJoin = !bullet && prev && prev.type === "verse" && !prev.bullet && (ln.y - prev.lastY) <= pitch * 1.7;
+      if(canJoin){
+        prev.lines.push(ln);
+        prev.text += " " + text;
+        prev.lastY = ln.y;
+      }else{
+        blocks.push({type:"verse", lines:[ln], text:text, lastY:ln.y, bullet:bullet});
+      }
+      cur = null;
+      continue;
+    }
+
+    if(isHeading){
+      let level = 3;
+      if(n === 1 && ln.y < 130 && !/^\d+\.\d+\./.test(text)) level = 1;
+      else if(/^\d+\.\d+\./.test(text) || text === text.toUpperCase()) level = 2;
+      blocks.push({type:"h", level:level, text:text, lastY:ln.y});
+      cur = null;
+      continue;
+    }
+
+    if(listMatch){
+      cur = {type:"list", text:text, lastY:ln.y, size:ln.size};
+      blocks.push(cur);
+      continue;
+    }
+
+    const sizeChange = cur && Math.abs(ln.size - (cur.size || ln.size)) > 1.2;
+    if(cur && !startsNew && !sizeChange && (ln.y - cur.lastY) <= pitch * 1.55){
+      cur.text += " " + text;
+      cur.lastY = ln.y;
+    }else{
+      cur = {type:"p", text:text, lastY:ln.y, size:ln.size};
+      blocks.push(cur);
+    }
+  }
+
+  for(const b of blocks){
+    if(b.type !== "verse") continue;
+    b.crop = true;
+    b.box = readerVerseBox(b);
+    b.lastY = b.lines[b.lines.length-1].y;
+  }
+  return {blocks:blocks, table:readerLooksLikeTable(pageLines), graphics:graphics, lines:pageLines.length};
+}
+
+function readerLooksLikeTable(lines){
+  if(lines.length < 4) return false;
+  let rowsWithCells = 0;
+  const anchors = new Set();
+  for(const ln of lines){
+    const items = ln.items || [];
+    if(items.length < 2) continue;
+    let wideGaps = 0;
+    for(let i=1;i<items.length;i++){
+      const prev = items[i-1];
+      const gap = items[i].x - (prev.x + prev.w);
+      if(gap > Math.max(14, ln.size * 2.4)) wideGaps++;
+    }
+    if(wideGaps >= 1){
+      rowsWithCells++;
+      for(const it of items) anchors.add(Math.round(it.x / 16));
+    }
+  }
+  return rowsWithCells >= 3 && anchors.size >= 4;
+}
+
+function readerJoinLine(items){
+  let out = "";
+  let prevEnd = null;
+  for(const it of items){
+    if(!it.str) continue;
+    if(prevEnd !== null){
+      const gap = it.x - prevEnd;
+      if(gap > 1.2 && !/\s$/.test(out) && !/^\s/.test(it.str)) out += " ";
+    }
+    out += it.str;
+    prevEnd = it.x + it.w;
+  }
+  return out.replace(/\s+/g," ").trim();
+}
+function readerFixDevanagari(text){
+  return text
+    .replace(/\u094D\s+/g, "\u094D")
+    .replace(/\s+(?=[\u093A-\u094C\u0962\u0963])/g, "")
+    .replace(/\s+([।॥])/g, "$1");
+}
+function readerDevCount(text){
+  const m = text.match(/[\u0900-\u0963\u0966-\u097F]/g);
+  return m ? m.length : 0;
+}
+function readerPitch(lines){
+  const counts = new Map();
+  let prev = null;
+  for(const l of lines){
+    if(prev){
+      const d = l.y - prev.y;
+      if(d > 1.5 && d < 60){
+        const k = Math.round(d * 2) / 2;
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
+    }
+    prev = l;
+  }
+  let best = 14.5, bestCount = -1;
+  for(const [k,c] of counts){ if(c > bestCount){ bestCount = c; best = k; } }
+  return best;
+}
+function readerVerseBox(block){
+  let x0 = Infinity, x1 = -Infinity, top = Infinity, bottom = -Infinity, size = 0;
+  for(const ln of block.lines){
+    let asc = 0.9, des = 0.22;
+    for(const it of ln.items){ asc = Math.max(asc, it.asc); des = Math.max(des, it.des); }
+    x0 = Math.min(x0, ln.x0);
+    x1 = Math.max(x1, ln.x1);
+    top = Math.min(top, ln.y - asc * ln.size);
+    bottom = Math.max(bottom, ln.y + des * ln.size);
+    size = Math.max(size, ln.size);
+  }
+  return {x0:x0, x1:x1, top:top, bottom:bottom, size:size || 11};
+}
+
+/* Damaged or Devanagari lines are shown as a crop of the rendered page:
+   the PDF's glyphs are correct even where its ToUnicode map is not. */
+async function readerPaintCrops(pg, blocks, gen){
+  const targets = blocks.filter(b=>b.crop && !b.canvas);
+  if(!targets.length) return;
+  let full = null;
+  try{
+    const base = pg.getViewport({scale:1});
+    let dpr = Math.min(2.5, Math.max(1.75, window.devicePixelRatio || 2));
+    if(base.width * base.height * dpr * dpr > 3200000){
+      dpr = Math.max(1.5, Math.sqrt(3200000 / Math.max(1, base.width * base.height)));
+    }
+    const vp = pg.getViewport({scale:dpr});
+    const W = Math.ceil(vp.width), H = Math.ceil(vp.height);
+    full = document.createElement("canvas");
+    full.width = W; full.height = H;
+    const ctx = full.getContext("2d", {alpha:false});
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,W,H);
+    await pg.render({canvasContext:ctx, viewport:vp}).promise;
+    if(gen !== reader.gen) return;
+    const s = vp.scale;   /* viewport coords from getViewport({scale:1}) are already y-down */
+    for(const b of targets){
+      const padX = 4, padY = 4;
+      const sx = Math.max(0, (b.box.x0 - padX) * s);
+      const sy = Math.max(0, (b.box.top - padY) * s);
+      const sw = Math.min(W - sx, (b.box.x1 - b.box.x0 + padX * 2) * s);
+      const sh = Math.min(H - sy, (b.box.bottom - b.box.top + padY * 2) * s);
+      if(sw < 4 || sh < 4) continue;
+      const c = document.createElement("canvas");
+      c.width = Math.ceil(sw);
+      c.height = Math.ceil(sh);
+      const cc = c.getContext("2d", {alpha:false});
+      cc.fillStyle = "#fff";
+      cc.fillRect(0,0,c.width,c.height);
+      cc.drawImage(full, sx, sy, sw, sh, 0, 0, sw, sh);
+      b.canvas = c;
+      b.wPt = (b.box.x1 - b.box.x0) + padX * 2;
+      b.srcSize = b.box.size;
+    }
+  }catch(error){
+    console.error("Reading mode: shloka crop failed", error);
+  }finally{
+    if(full){ full.width = 0; full.height = 0; }
+  }
+}
+
+async function readerPageImage(pg, gen){
+  try{
+    const base = pg.getViewport({scale:1});
+    const colWidth = (reader.col && reader.col.clientWidth) || 360;
+    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    let scale = Math.min(2, Math.max(.9, (Math.min(colWidth, 900) * dpr) / base.width));
+    if(base.width * base.height * scale * scale > 3000000){
+      scale = Math.max(.6, Math.sqrt(3000000 / Math.max(1, base.width * base.height)));
+    }
+    const vp = pg.getViewport({scale:scale});
+    const c = document.createElement("canvas");
+    c.width = Math.ceil(vp.width);
+    c.height = Math.ceil(vp.height);
+    c.className = "rd-full";
+    c.setAttribute("role","img");
+    const ctx = c.getContext("2d", {alpha:false});
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,c.width,c.height);
+    await pg.render({canvasContext:ctx, viewport:vp}).promise;
+    if(gen !== reader.gen) return null;
+    return c;
+  }catch(error){
+    console.error("Reading mode: page image failed", error);
+    return null;
+  }
+}
+
+function readerBlockNode(b, n){
+  if(b.canvas){
+    const fig = document.createElement("figure");
+    fig.className = "rd-fig";
+    b.canvas.style.width = (b.wPt / (b.srcSize || 11)).toFixed(3) + "em";
+    b.canvas.setAttribute("role","img");
+    b.canvas.setAttribute("aria-label",
+      (readerDevCount(b.text || "") >= 2 ? "Original Sanskrit text" : "Original text image") + " on page " + n);
+    fig.appendChild(b.canvas);
+    return fig;
+  }
+  if(b.type === "image" && b.node) return b.node;
+  if(b.type === "note") return makeElement("p","rd-note",b.text);
+  if(b.type === "h"){
+    const h = document.createElement(b.level === 1 ? "h1" : (b.level === 2 ? "h2" : "h3"));
+    h.className = "rd-h" + b.level;
+    h.textContent = b.text;
+    return h;
+  }
+  if(b.type === "verse"){
+    const p = document.createElement("p");
+    p.className = "rd-p";
+    readerAppendText(p, b.text.replace(/[\u0000\uFFFD]/g, "\uFFFD"));
+    return p;
+  }
+  const p = document.createElement("p");
+  p.className = b.type === "list" ? "rd-p rd-li" : "rd-p";
+  readerAppendText(p, b.text);
+  return p;
+}
+
+/* PDF text is untrusted: build nodes only, never innerHTML. */
+function readerAppendText(el, text){
+  if(!viewer.matcher || !text){ el.textContent = text || ""; return; }
+  let re;
+  try{ re = new RegExp(viewer.matcher.source, "gi"); }
+  catch(e){ el.textContent = text; return; }
+  let last = 0, m;
+  while((m = re.exec(text)) !== null){
+    if(!m[0].length){ re.lastIndex++; continue; }
+    if(m.index > last) el.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const mark = document.createElement("mark");
+    mark.className = "hl-text";
+    mark.textContent = m[0];
+    el.appendChild(mark);
+    last = m.index + m[0].length;
+    if(last >= text.length) break;
+  }
+  if(last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
+}
+
+window.addEventListener("pagehide", readerSavePositionNow);
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "hidden") readerSavePositionNow();
+});
+
 document.addEventListener("keydown", e=>{
   const open = document.getElementById("pdfViewer").classList.contains("open");
   if(!open) return;
-  if(e.key === "Escape"){ e.preventDefault(); closePdfViewer(); return; }
+  if(e.key === "Escape"){
+    e.preventDefault();
+    const panel = document.getElementById("rdSettings");
+    if(panel && !panel.hidden){
+      readerToggleSettings(false);
+      document.getElementById("rdSizeBtn")?.focus();
+      return;
+    }
+    if(reader.on) closeReadingMode(); else closePdfViewer();
+    return;
+  }
   if(e.key === "Tab"){ trapFocus(e, document.getElementById("pdfViewer")); return; }
+  if(e.target && e.target.id === "rdPageInput"){
+    if(e.key === "Enter"){ e.preventDefault(); readerGoTo(e.target.value); }
+    return;
+  }
   if(e.target && e.target.id === "pvPageInput") return;
+  if(reader.on){
+    const settings = document.getElementById("rdSettings");
+    if(settings && settings.contains(e.target) &&
+       (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown")) return;
+    if(e.key === "ArrowRight" || e.key === "PageDown"){ e.preventDefault(); readerGo(1); }
+    else if(e.key === "ArrowLeft" || e.key === "PageUp"){ e.preventDefault(); readerGo(-1); }
+    else if(e.key === "+" || e.key === "="){ e.preventDefault(); readerStepFont(1); }
+    else if(e.key === "-"){ e.preventDefault(); readerStepFont(-1); }
+    return;
+  }
   if(e.key === "ArrowRight") viewerGo(1);
   if(e.key === "ArrowLeft") viewerGo(-1);
 });
 window.addEventListener("resize", ()=>{
+  if(reader.on){ requestAnimationFrame(readerUpdateProgress); return; }   /* the reader column reflows on its own */
   if(document.getElementById("pdfViewer").classList.contains("open") && viewer.pdf){
     clearTimeout(viewer.resizeTimer);
     viewer.resizeTimer = setTimeout(()=>viewerShowPage(viewer.page), 250);
   }
 });
+
 /* ================= CASE STUDIES (folder-wise photo library) ================= */
 let selectedCaseFolder = null; /* null = folder list, "unfiled" = pseudo folder, object = open folder */
 let lastCaseFolders = [];
