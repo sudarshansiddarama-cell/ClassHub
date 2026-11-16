@@ -3818,16 +3818,12 @@ async function readerExtractPage(pg, n, gen){
 
   for(const ln of pageLines){
     const text = ln.text;
-    const devanagari = readerDevCount(text) >= 2;
     const damaged = text.indexOf("\u0000") >= 0 || text.indexOf("\uFFFD") >= 0 || /[\uE000-\uF8FF]/.test(text);
     const prevBlock = blocks[blocks.length-1];
-    /* Every Devanagari line is shown as a page-image crop: the PDF's glyphs
-       are correct even where its ToUnicode map is not. Consecutive Devanagari
-       lines join into one verse block below. */
-    const visual = damaged || devanagari;
+    const visual = damaged;
     const listMatch = /^(\d+[).]\s|•\s|[-–]\s)/.test(text);
     const bullet = /^(\d+[).]\s|•\s)/.test(text);
-    const isHeading = !visual && !listMatch && ln.bold && text.length <= 92 && !/[.;।]$/.test(text);
+    const isHeading = !listMatch && ln.bold && text.length <= 92 && !/[.;।]$/.test(text);
     const startsNew = !!(prevLine && prevLine.x1 < shortCut);
     prevLine = ln;
 
