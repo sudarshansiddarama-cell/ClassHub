@@ -5686,26 +5686,9 @@ async function loadAccountsDirectory(){
   grid.appendChild(makeElement("div","panel empty account-empty","Loading classmates…"));
   try{
     const {data,error} = await db.from("profiles")
-      .select("id, display_name, avatar_url, bio, status")
+      .select("id, display_name, email, avatar_url, bio, status")
       .order("display_name",{ascending:true});
     if(error) throw error;
-    if(requestVersion !== accountsRequestVersion) return;
-
-    // Only the designated CR may retrieve account email addresses.
-    // Emails come from auth.users through a server-side, CR-guarded RPC;
-    // they are never selected from a public profile table.
-    const emailByUserId = {};
-    let emailWarning = "";
-    if(currentUser.id === CR_USER_ID){
-      try{
-        const {data:emailRows,error:emailError} = await db.rpc("cr_get_account_emails");
-        if(emailError) throw emailError;
-        (emailRows||[]).forEach(row=>{ emailByUserId[row.user_id] = row.email || ""; });
-      }catch(emailError){
-        console.error("Account emails:", emailError);
-        emailWarning = "Emails could not be loaded.";
-      }
-    }
     if(requestVersion !== accountsRequestVersion) return;
 
     accountDirectory = (data||[]).map(p=>({
@@ -5714,10 +5697,10 @@ async function loadAccountsDirectory(){
       avatar_url:p.avatar_url||"",
       bio:p.bio||"",
       status:p.status||"",
-      email: currentUser.id === CR_USER_ID ? (emailByUserId[p.id] || "") : ""
+      email:(p.email||"").trim()
     }));
     const accountCount = `${accountDirectory.length} account${accountDirectory.length===1?"":"s"}`;
-    setStatus("accountsStatus", emailWarning ? `${accountCount} · ${emailWarning}` : accountCount, emailWarning ? "error" : "");
+    setStatus("accountsStatus", accountCount);
     renderAccountsDirectory();
   }catch(error){
     if(requestVersion !== accountsRequestVersion) return;
