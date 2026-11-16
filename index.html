@@ -5732,8 +5732,7 @@ function renderAccountsDirectory(){
   if(!grid) return;
   const query = (document.getElementById("accountSearch")?.value||"").trim().toLowerCase();
   const matches = accountDirectory.filter(p=>[
-    p.display_name,p.status,p.bio,
-    currentUser && currentUser.id === CR_USER_ID ? p.email : ""
+    p.display_name,p.email,p.status,p.bio
   ].some(value=>(value||"").toLowerCase().includes(query)));
   grid.replaceChildren();
   if(!matches.length){
@@ -5744,10 +5743,10 @@ function renderAccountsDirectory(){
     const card = makeElement("article","account-card");
     const head = makeElement("div","account-card-head");
     const avatarWrap = makeElement("div","account-avatar-wrap");
-    const fallback = makeElement("div","account-avatar-fb",initials(p.display_name));
+    const fallback = makeElement("div","account-avatar-fb",initials(p.email || p.display_name));
     const avatar = document.createElement("img");
     avatar.className = "account-avatar";
-    avatar.alt = p.display_name + " profile photo";
+    avatar.alt = (p.email || p.display_name) + " profile photo";
     avatar.loading = "lazy";
     if(p.avatar_url){
       avatar.src = p.avatar_url;
@@ -5759,7 +5758,7 @@ function renderAccountsDirectory(){
     avatarWrap.append(avatar,fallback);
     const identity = makeElement("div");
     identity.style.minWidth = "0";
-    identity.appendChild(makeElement("h3","account-name",p.display_name));
+    identity.appendChild(makeElement("h3","account-name",p.email || p.display_name || "ClassHub student"));
     if(p.status) identity.appendChild(makeElement("div","account-status",p.status));
     head.append(avatarWrap,identity);
     card.appendChild(head);
