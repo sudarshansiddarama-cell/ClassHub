@@ -3816,6 +3816,17 @@ async function readerExtractPage(pg, n, gen){
   let cur = null;
   let prevLine = null;
 
+  /* Determine the body font size from the most common line size so headings
+     can be detected by size even when the PDF font isn't named "bold". */
+  const sizeCounts = new Map();
+  for(const ln of pageLines){
+    const s = Math.round(ln.size * 10) / 10;
+    sizeCounts.set(s, (sizeCounts.get(s) || 0) + 1);
+  }
+  let bodySize = 11;
+  let bodyCount = 0;
+  for(const [s,c] of sizeCounts){ if(c > bodyCount){ bodySize = s; bodyCount = c; } }
+
   for(const ln of pageLines){
     const text = ln.text;
     const damaged = text.indexOf("\u0000") >= 0 || text.indexOf("\uFFFD") >= 0 || /[\uE000-\uF8FF]/.test(text);
@@ -3823,7 +3834,9 @@ async function readerExtractPage(pg, n, gen){
     const visual = damaged;
     const listMatch = /^(\d+[).]\s|•\s|[-–]\s)/.test(text);
     const bullet = /^(\d+[).]\s|•\s)/.test(text);
-    const isHeading = !listMatch && ln.bold && text.length <= 92 && !/[.;।]$/.test(text);
+    const isBold = !!ln.bold;
+    const isLarger = ln.size > bodySize * 1.18;
+    const isHeading = !listMatch && (isBold || isLarger) && text.length <= 92 && !/[.;।]$/.test(text);
     const startsNew = !!(prevLine && prevLine.x1 < shortCut);
     prevLine = ln;
 
