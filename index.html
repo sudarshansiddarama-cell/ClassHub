@@ -831,6 +831,14 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
   .pv-read .pv-btn{min-width:37px;padding:0 8px}
   .rd-orig-btn{min-width:0;padding:0 7px}
 }
+/* ---------- READING FULLSCREEN (single tap toggle) ---------- */
+#pvRead.rd-fullscreen .rd-head,
+#pvRead.rd-fullscreen .rd-bar,
+#pvRead.rd-fullscreen .rd-settings,
+#pvRead.rd-fullscreen .rd-foot{
+  display:none !important;
+}
+#pvRead.rd-fullscreen .rd-col{padding-bottom:30px}
 
 /* ---------- MOBILE POLISH ---------- */
 @media (max-width:640px){
@@ -3239,6 +3247,7 @@ async function openReadingMode(startPage, options){
     scroll.removeEventListener("scroll", readerOnScroll);
     scroll.addEventListener("scroll", readerOnScroll, {passive:true});
     readerRefreshObservers();
+    readerAttachFullscreenTap();
     updateReaderChrome();
     readerUpdateProgress();
 
@@ -3293,6 +3302,8 @@ function closeReadingMode(skipViewerSync){
   reader.originalPages.clear();
   reader.sections = [];
   readerToggleSettings(false);
+  const pane = document.getElementById("pvRead");
+  if(pane) pane.classList.remove("rd-fullscreen");
 
   document.getElementById("pdfViewer").classList.remove("reading");
   document.getElementById("pvReadBtn").setAttribute("aria-pressed","false");
@@ -3530,6 +3541,25 @@ function readerToggleSettings(force){
   const btn = document.getElementById("rdSizeBtn");
   if(btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
   if(open) readerApplySettings();
+}
+function readerToggleFullscreen(){
+  if(!reader.on) return;
+  const pane = document.getElementById("pvRead");
+  if(!pane) return;
+  pane.classList.toggle("rd-fullscreen");
+}
+/* --- reading mode click-to-fullscreen (single tap on content area) --- */
+function readerAttachFullscreenTap(){
+  const scroll = document.getElementById("rdScroll");
+  if(!scroll || reader._fullscreenTapAttached) return;
+  scroll.addEventListener("click", e=>{
+    if(!reader.on) return;
+    /* Ignore taps on buttons/links/inputs/settings panel */
+    if(e.target.closest("button,a,input,select,textarea,[role=button]")) return;
+    if(e.target.closest("#rdSettings,#rdHead,#rdBar,#rdFoot")) return;
+    readerToggleFullscreen();
+  },{passive:true});
+  reader._fullscreenTapAttached = true;
 }
 function readerStepFont(delta){
   if(!reader.on) return;
