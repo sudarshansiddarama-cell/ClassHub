@@ -2955,7 +2955,10 @@ const reader = {
   on:false, opening:false, gen:0, page:1, total:0, settings:readerLoadSettings(),
   built:new Set(), failed:new Set(), sections:[], session:null,
   scroll:null, col:null, observer:null, posObserver:null, jumpAt:0,
-  scrollRaf:0, saveTimer:0, reflowTimer:0
+  scrollRaf:0, saveTimer:0, reflowTimer:0,
+  originalPages:new Set(),  // pages where user toggled "show original"
+  themeObserver:null,       // watches global theme changes
+  lastObservedPage:0        // for observer refresh throttling
 };
 
 /* --- per-book position, remembered across sessions --- */
@@ -3121,6 +3124,10 @@ async function readerBuildPageJob(n, s){
 
     if(autoOriginal && !imageOnly){
       await readerSetOriginal(n, true, {pg:pg, gen:gen, kind:info.table ? "table" : "graphics"});
+    }else if(!imageOnly && reader.originalPages.has(n)){
+      /* Page was rebuilt (after reflow/prune): restore the user's choice
+         to show the original page. */
+      await readerSetOriginal(n, true, {pg:pg, gen:gen});
     }
   }catch(error){
     console.error("Reading mode: page " + n + " failed", error);
@@ -3184,6 +3191,7 @@ async function openReadingMode(startPage, options){
   const targetPage = reader.page;
   reader.built.clear();
   reader.failed.clear();
+  reader.originalPages.clear();
   reader.sections = [];
   readerStartSession();
 
@@ -3205,6 +3213,15 @@ async function openReadingMode(startPage, options){
     reader.col = col;
     reader.scroll = scroll;
     readerApplySettings();
+    // Watch global theme changes if user hasn't set a reading theme
+    if(!reader.settings.theme && !reader.themeObserver){
+      reader.themeObserver = new MutationObserver(()=>{
+        if(reader.on && !reader.settings.theme){
+          readerApplySettings();
+        }
+      });
+      reader.themeObserver.observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+    }
     readerToggleSettings(false);
     col.replaceChildren();
     scroll.scrollTop = 0;
@@ -3265,6 +3282,7 @@ function closeReadingMode(skipViewerSync){
 
   if(reader.observer){ reader.observer.disconnect(); reader.observer = null; }
   if(reader.posObserver){ reader.posObserver.disconnect(); reader.posObserver = null; }
+  if(reader.themeObserver){ reader.themeObserver.disconnect(); reader.themeObserver = null; }
   if(reader.scroll) reader.scroll.removeEventListener("scroll", readerOnScroll);
   if(reader.scrollRaf){ cancelAnimationFrame(reader.scrollRaf); reader.scrollRaf = 0; }
   clearTimeout(reader.saveTimer);
@@ -3272,6 +3290,7 @@ function closeReadingMode(skipViewerSync){
   if(reader.col){ reader.col.replaceChildren(); reader.col.style.minHeight = ""; }
   reader.built.clear();
   reader.failed.clear();
+  reader.originalPages.clear();
   reader.sections = [];
   readerToggleSettings(false);
 
@@ -3370,6 +3389,12 @@ function updateReaderChrome(){
     orig.title = imageOnly ? "This page is already shown as the original image"
       : (showing ? "Hide the original page" : "Show the original page (tables, diagrams, damaged text)");
   }
+  /* Keep the "open in browser" link pointed at the page being read. */
+  const ext = document.getElementById("pvExternal");
+  if(ext && viewer.url){
+    const base = safeUrl(viewer.url);
+    if(base && base !== "#") ext.href = `${base}#page=${reader.page}`;
+  }
   readerUpdateProgress();
 }
 function readerUpdateProgress(){
@@ -3392,11 +3417,17 @@ function readerOnScroll(){
     reader.scrollRaf = 0;
     if(!reader.on) return;
     readerUpdateProgress();
+    /* The observer only watches a window around lastObservedPage; re-centre
+       it after a long jump (page input, End/Home, find, restore). */
+    if(Math.abs(reader.page - reader.lastObservedPage) > READER_KEEP_AHEAD + 3){
+      readerRefreshObservers();
+    }
     clearTimeout(reader.saveTimer);
     reader.saveTimer = setTimeout(()=>{
       if(!reader.on || reader.opening) return;
       readerSavePositionNow();
       readerPrune();
+      readerRefreshObservers();
     }, READER_SAVE_DELAY);
   });
 }
@@ -3413,9 +3444,12 @@ function readerPrune(){
     const sec = reader.sections[i];
     const h = Math.max(80, Math.round(sec.getBoundingClientRect().height));
     sec.style.minHeight = h + "px";
-    sec.dataset.original = "0";
+    // Preserve "show original" user choice
+    const wasOriginal = reader.originalPages.has(p);
     sec.replaceChildren(readerPlaceholder(p));
     reader.built.delete(p);
+    reader.failed.delete(p); // Allow retry if previously failed
+    if(wasOriginal) reader.originalPages.add(p); // Restore tracking
     removed++;
   }
 }
@@ -3448,10 +3482,18 @@ function readerRefreshObservers(){
     }
   }, {root:scroll, rootMargin:"-42% 0px -52% 0px"});
 
-  for(const sec of reader.sections){
-    reader.observer.observe(sec);
-    reader.posObserver.observe(sec);
+  // Only observe a window around current page for performance
+  const page = reader.page;
+  const observeStart = Math.max(1, page - READER_KEEP_BEHIND - 5);
+  const observeEnd = Math.min(reader.total, page + READER_KEEP_AHEAD + 5);
+  for(let i = observeStart - 1; i < observeEnd; i++){
+    const sec = reader.sections[i];
+    if(sec){
+      reader.observer.observe(sec);
+      reader.posObserver.observe(sec);
+    }
   }
+  reader.lastObservedPage = page;
 }
 
 /* --- display settings --- */
@@ -3534,13 +3576,16 @@ async function readerReflow(){
   const page = reader.page;
   const frac = readerReadFraction();
   const heights = reader.sections.map(sec=>Math.max(80, Math.round(sec.getBoundingClientRect().height)));
+  // Preserve "show original" state across reflow
+  const originalPages = new Set(reader.originalPages);
   readerStartSession();
   reader.built.clear();
   reader.failed.clear();
   reader.sections.forEach((sec, i)=>{
+    const p = i + 1;
     sec.style.minHeight = heights[i] + "px";
-    sec.dataset.original = "0";
-    sec.replaceChildren(readerPlaceholder(i + 1, (i + 1) === page));
+    // Don't reset dataset.original here; let rebuild handle it
+    sec.replaceChildren(readerPlaceholder(p, p === page));
   });
   reader.jumpAt = Date.now();
   const gen = reader.gen;
@@ -3550,6 +3595,15 @@ async function readerReflow(){
   const sec = reader.sections[page - 1];
   if(sec) sec.style.minHeight = "";
   readerScrollTo(page, frac, {build:false});
+  // Restore original page views for pages the user explicitly toggled
+  for(const p of originalPages){
+    if(p === page) continue;   // current page is rebuilt below
+    if(reader.sections[p - 1]) readerSetOriginal(p, true);
+  }
+  // The current page may also have had "show original" toggled by the user
+  if(sec && originalPages.has(page) && sec.dataset.original !== "page"){
+    readerSetOriginal(page, true);
+  }
 }
 
 /* --- original page fallback (tables, diagrams, damaged text) --- */
@@ -3570,9 +3624,13 @@ async function readerSetOriginal(n, show, options){
   if(!show){
     if(wrap) wrap.hidden = true;
     sec.dataset.original = "0";
+    reader.originalPages.delete(n); // Track user choice
     updateReaderChrome();
     return;
   }
+
+  // Track user's explicit choice to show original
+  reader.originalPages.add(n);
 
   const kind = options.kind || (wrap && wrap.dataset.kind) || "manual";
   if(wrap && wrap.dataset.ready === "1"){
@@ -3742,11 +3800,10 @@ async function readerExtractPage(pg, n, gen){
     const devanagari = readerDevCount(text) >= 2;
     const damaged = text.indexOf("\u0000") >= 0 || text.indexOf("\uFFFD") >= 0 || /[\uE000-\uF8FF]/.test(text);
     const prevBlock = blocks[blocks.length-1];
-    /* Damaged lines are shown as a page crop. A clean Devanagari line that
-       continues a damaged verse joins that crop, so one broken glyph does
-       not split a shloka into an image plus garbled text. */
-    const visual = damaged ||
-      (devanagari && prevBlock && prevBlock.type === "verse" && (ln.y - prevBlock.lastY) <= pitch * 1.7);
+    /* Every Devanagari line is shown as a page-image crop: the PDF's glyphs
+       are correct even where its ToUnicode map is not. Consecutive Devanagari
+       lines join into one verse block below. */
+    const visual = damaged || devanagari;
     const listMatch = /^(\d+[).]\s|•\s|[-–]\s)/.test(text);
     const bullet = /^(\d+[).]\s|•\s)/.test(text);
     const isHeading = !visual && !listMatch && ln.bold && text.length <= 92 && !/[.;।]$/.test(text);
@@ -3839,7 +3896,14 @@ function readerJoinLine(items){
     if(!it.str) continue;
     if(prevEnd !== null){
       const gap = it.x - prevEnd;
-      if(gap > 1.2 && !/\s$/.test(out) && !/^\s/.test(it.str)) out += " ";
+      const prevDev = /[\u0900-\u097F]$/.test(out);
+      const currDev = /^[\u0900-\u097F]/.test(it.str);
+      /* Devanagari conjuncts (क्ष्ण etc.) are split into separate glyph runs
+         by the PDF text layer; use a larger gap threshold so they don't get
+         spaced apart, while real inter-word gaps still insert a space. */
+      const devThreshold = 4.0;
+      const threshold = (prevDev && currDev) ? devThreshold : 1.2;
+      if(gap > threshold && !/\s$/.test(out) && !/^\s/.test(it.str)) out += " ";
     }
     out += it.str;
     prevEnd = it.x + it.w;
