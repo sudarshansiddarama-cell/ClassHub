@@ -2123,6 +2123,7 @@ async function uploadNotePDF(input,button){
   const subject = selectedNoteSubject;
   const subcategory = selectedNoteSubcategory;
   if(!subject){ setStatus("notesStatus","Choose a subject first.","error"); return; }
+
   const controller = startPdfJob("Uploading notes PDF");
   if(!controller) return;
   button.disabled = true;
@@ -2132,8 +2133,19 @@ async function uploadNotePDF(input,button){
   let path = null, saved = false;
   try{
     path = `notes/${Date.now()}_${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]/g,"_")}`;
+    /* ---- STORAGE UPLOAD (bucket: "pdfs") ---- */
     const {error:uploadError} = await db.storage.from("pdfs").upload(path,file,{cacheControl:"3600",upsert:false,contentType:"application/pdf"});
-    if(uploadError){ path = null; throw uploadError; }
+    if(uploadError){
+      /* Log the complete Supabase error object: message, statusCode, error, details, hint */
+      console.error("Notes storage upload error details:", {
+        message: uploadError && uploadError.message,
+        statusCode: uploadError && uploadError.statusCode,
+        error: uploadError && uploadError.error,
+        details: uploadError && uploadError.details,
+        hint: uploadError && uploadError.hint
+      });
+      throw new Error("Storage upload failed ("+(uploadError && uploadError.statusCode ? uploadError.statusCode : "unknown")+": "+(uploadError && (uploadError.message || uploadError.error || String(uploadError)))+")");
+    }
     throwIfAborted(controller.signal);
     const {data:urlData} = db.storage.from("pdfs").getPublicUrl(path);
     setStatus("notesStatus","Reading the whole book for topic search… (large books can take a minute)");
@@ -2143,13 +2155,23 @@ async function uploadNotePDF(input,button){
     }, controller.signal);
     setPdfProgress("Saving to your library…", 0.97);
     throwIfAborted(controller.signal);
+    /* ---- DATABASE INSERT (table: public.pdfs) ---- */
     const {error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:subject, subcategory:subcategory,
       collection_type:null, folder_id:null,
       content_text: content_text || null
     });
-    if(insertError) throw insertError;
+    if(insertError){
+      /* Log the complete Supabase error object: message, code, details, hint */
+      console.error("Notes database insert error details:", {
+        message: insertError && insertError.message,
+        code: insertError && insertError.code,
+        details: insertError && insertError.details,
+        hint: insertError && insertError.hint
+      });
+      throw new Error("Database save failed ("+(insertError && insertError.code ? insertError.code : "unknown")+": "+(insertError && (insertError.message || insertError.details || String(insertError)))+")");
+    }
     saved = true;
     input.value = "";
     setPdfProgress("Done", 1);
@@ -2173,7 +2195,9 @@ async function uploadNotePDF(input,button){
       showToast("Upload cancelled");
     }else{
       console.error("Notes upload failed:", error);
-      setStatus("notesStatus","Upload failed: "+friendlyError(error),"error");
+      /* Show the specific error message (storage vs database) instead of a generic fallback */
+      setStatus("notesStatus","Upload failed: "+error.message,"error");
+      showToast("Upload failed");
     }
   }finally{
     uploadsInFlight--;
