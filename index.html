@@ -392,6 +392,18 @@ label.f-label{
 .comment-compose input{flex:1;min-width:0;margin:0;padding:8px 10px;font-size:12px}
 .comment-compose button{padding:8px 12px;font-size:12px}
 
+/* ---------- COMPACT COMPOSER ---------- */
+.compose-panel{margin-bottom:16px}
+.compose-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;cursor:pointer;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);user-select:none;transition:background-color .12s,border-color .12s}
+.compose-head:hover{background:var(--surface-hover);border-color:var(--border-strong)}
+.compose-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.compose-label{font-size:13px;font-weight:500;color:var(--text)}
+.compose-arrow{font-size:11px;color:var(--muted2);flex-shrink:0}
+.compose-body{padding:0 14px 14px;border-top:1px solid var(--border);background:var(--surface);border-bottom-left-radius:var(--r-md);border-bottom-right-radius:var(--r-md)}
+.compose-row{display:flex;align-items:center;gap:12px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.privacy-row.compact{margin:0;font-size:11.5px}
+.char-count{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-left:auto}
+
 /* ---------- PROFILE ---------- */
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
@@ -1202,17 +1214,25 @@ body.sheet-open{overflow:hidden}
         <h1 class="page-title">Class Community</h1>
         <p class="page-sub">Share thoughts, ask questions and interact with classmates.</p>
       </div>
-      <div class="panel">
-        <h2 class="panel-title">Create a post</h2>
-        <textarea id="postContent" class="field" maxlength="3000" aria-label="Write a community post" placeholder="What's on your mind?"></textarea>
-        <label class="privacy-row">
-          <input id="anonymousPost" type="checkbox">
-          Post anonymously — your name stays hidden from classmates (the CR can still see it)
-        </label>
-        <button class="btn full" id="publishPostBtn" type="button" onclick="publishCommunityPost()">
-          <svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Post
-        </button>
-        <div id="communityStatus" class="status" aria-live="polite"></div>
+      <div class="panel compose-panel" id="composePanel">
+        <div class="compose-head" onclick="toggleComposer()" role="button" tabindex="0" aria-pressed="false" aria-expanded="false" aria-controls="composeBody">
+          <span class="compose-label">Create a post</span>
+          <span class="compose-arrow" id="composeArrow">▸</span>
+        </div>
+        <div class="compose-body" id="composeBody" style="display:none">
+          <textarea id="postContent" class="field" maxlength="3000" aria-label="Write a community post" placeholder="What's on your mind?" oninput="updateCharCount()"></textarea>
+          <div class="compose-row">
+            <label class="privacy-row compact">
+              <input id="anonymousPost" type="checkbox">
+              Anonymous
+            </label>
+            <span class="char-count" id="charCount">0/3000</span>
+          </div>
+          <button class="btn full" id="publishPostBtn" type="button" onclick="publishCommunityPost()">
+            <svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Post
+          </button>
+          <div id="communityStatus" class="status" aria-live="polite"></div>
+        </div>
       </div>
       <div id="communityPosts"><div class="panel empty">Community posts will appear here.</div></div>
     </section>
@@ -5244,6 +5264,30 @@ function communityHasDraft(){
     .some(input=>input.value.trim() || document.activeElement === input);
 }
 
+function toggleComposer(){
+  const body = document.getElementById("composeBody");
+  const arrow = document.getElementById("composeArrow");
+  const head = document.getElementById("composePanel")?.querySelector(".compose-head");
+  const expanded = body.style.display !== "none";
+  body.style.display = expanded ? "none" : "block";
+  arrow.textContent = expanded ? "▸" : "▾";
+  if(head){
+    head.setAttribute("aria-expanded", String(!expanded));
+    head.setAttribute("aria-pressed", String(!expanded));
+  }
+  if(!expanded){
+    document.getElementById("postContent")?.focus({preventScroll:true});
+  }
+}
+
+function updateCharCount(){
+  const ta = document.getElementById("postContent");
+  const counter = document.getElementById("charCount");
+  if(ta && counter){
+    counter.textContent = ta.value.length + "/3000";
+  }
+}
+
 window.loadCommunityPosts = async function(){
   const container = document.getElementById("communityPosts");
   if(!container) return;
@@ -5344,11 +5388,7 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
     strong.textContent = authorNames[post.author_id] || "Student";
   }
 
-  // YOU badge
-  if(currentUser && post.is_mine){
-    const you = makeElement("span","cr-badge","YOU");
-    strong.appendChild(you);
-  }
+  // (YOU badge removed — redundant; it's already your card)
 
   authorBlock.appendChild(strong);
   authorBlock.appendChild(makeElement("small","", post.created_at ? formatDate(post.created_at) : ""));
@@ -5395,7 +5435,7 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
   // Like button (optimistic)
   if(likesEnabled){
     const likeBtn = makeElement("button","post-action" + (liked ? " liked" : ""));
-    likeBtn.innerHTML = `<svg class="ic ic-sm" style="${liked ? "fill:currentColor" : ""}"><use href="#i-heart"/></svg> <span class="like-count">${likeCount || "Like"}</span>`;
+    likeBtn.innerHTML = `<svg class="ic ic-sm" style="${liked ? "fill:currentColor" : ""}"><use href="#i-heart"/></svg> <span class="like-count">${likeCount}</span>`;
     
     likeBtn.addEventListener("click", async () => {
       if(!currentUser) return;
@@ -5409,7 +5449,7 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
       const svg = likeBtn.querySelector("svg");
       if(svg) svg.style.fill = liked ? "currentColor" : "none";
       const countSpan = likeBtn.querySelector(".like-count");
-      if(countSpan) countSpan.textContent = likeCount > 0 ? likeCount : "Like";
+      if(countSpan) countSpan.textContent = likeCount;
 
       try {
         if(wasLiked){
@@ -5429,21 +5469,25 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
         likeCount += liked ? 1 : -1;
         likeBtn.classList.toggle("liked", liked);
         if(svg) svg.style.fill = liked ? "currentColor" : "none";
-        if(countSpan) countSpan.textContent = likeCount > 0 ? likeCount : "Like";
+        if(countSpan) countSpan.textContent = likeCount;
         showToast("Like failed");
       }
     });
     actions.appendChild(likeBtn);
   }
 
-  // Comment button
+  // Comment button — toggles the compose box open/closed
   if(commentsEnabled){
     const cCount = (commentMap[post.id] || []).length;
     const cBtn = makeElement("button","post-action");
-    cBtn.innerHTML = `<svg class="ic ic-sm"><use href="#i-chat"/></svg> <span class="comment-count">${cCount || "Comment"}</span>`;
+    cBtn.innerHTML = `<svg class="ic ic-sm"><use href="#i-chat"/></svg> <span class="comment-count">${cCount}</span>`;
     cBtn.addEventListener("click", () => {
       const list = card.querySelector(".comment-list");
-      if(list) list.style.display = list.style.display === "none" ? "block" : "none";
+      if(!list) return;
+      const open = list.style.display !== "none";
+      list.style.display = open ? "none" : "block";
+      const compose = card.querySelector(".comment-compose");
+      if(compose) compose.style.display = open ? "none" : "flex";
     });
     actions.appendChild(cBtn);
   }
@@ -5453,6 +5497,7 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
   /* ===== COMMENTS ===== */
   if(commentsEnabled){
     const cWrap = makeElement("div","comment-list");
+    cWrap.style.display = "none";
     const list = makeElement("div");
     list.className = "comment-items";
 
@@ -5467,11 +5512,12 @@ function buildPostCard(post, authorNames, likeCounts, myLikes, commentMap){
     cWrap.appendChild(list);
 
     const compose = makeElement("div","comment-compose");
+    compose.style.display = "none";
     const input = document.createElement("input");
     input.className = "field";
     input.maxLength = 500;
-    input.placeholder = "Write an anonymous comment…";
-    input.setAttribute("aria-label","Write an anonymous comment");
+    input.placeholder = "Write a comment…";
+    input.setAttribute("aria-label","Write a comment");
 
     const btn = makeButton("Post", async () => {
       const text = input.value.trim();
@@ -5544,7 +5590,10 @@ window.publishCommunityPost = async function(){
     if(error) throw error;
     contentBox.value = "";
     if(anonymousBox) anonymousBox.checked = false;
+    updateCharCount();
     setStatus("communityStatus","Post published.","success");
+    showToast("Post published");
+    toggleComposer();
     await window.loadCommunityPosts();
   }catch(error){
     console.error("Publish post:", error);
