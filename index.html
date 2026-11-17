@@ -404,7 +404,63 @@ label.f-label{
 .privacy-row.compact{margin:0;font-size:11.5px}
 .char-count{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-left:auto}
 
-/* ---------- PROFILE ---------- */
+/* ---------- MCQ PRACTICE ---------- */
+.mcq-grid{display:flex;flex-direction:column;gap:12px}
+.mcq-pdf-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s}
+.mcq-pdf-card:hover{background:var(--surface-hover);border-color:var(--border-strong)}
+.mcq-pdf-info{min-width:0;flex:1}
+.mcq-pdf-info strong{display:block;font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.mcq-pdf-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:10px;margin-top:2px}
+.mcq-pdf-meta{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
+.mcq-pdf-actions{display:flex;gap:6px;flex-shrink:0}
+.mcq-pdf-status{font-family:var(--font-mono);font-size:9.5px;padding:2px 7px;border-radius:99px;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.mcq-pdf-status.ready{color:var(--green);border-color:var(--green)}
+.mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
+.mcq-pdf-status.failed{color:var(--red);border-color:var(--red)}
+.mcq-pdf-status.none{color:var(--muted2);border-color:var(--border-strong)}
+.mcq-session-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface)}
+.mcq-session-info{min-width:0;flex:1}
+.mcq-session-info strong{display:block;font-size:13px;font-weight:500}
+.mcq-session-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:10px;margin-top:2px}
+.mcq-empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
+.mcq-empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
+
+.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px;color:var(--muted2)}
+.mcq-progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.mcq-progress-fill{height:100%;background:var(--accent);width:0%}
+.mcq-qtext{font-size:15px;line-height:1.5;margin:0 0 14px;font-weight:500;overflow-wrap:anywhere}
+.mcq-meta{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
+.mcq-meta .tag{border:1px solid var(--border);border-radius:6px;padding:2px 8px;background:transparent;color:var(--muted2)}
+.mcq-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mcq-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
+.mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface-hover)}
+.mcq-option input{appearance:none;width:18px;height:18px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;margin:0}
+.mcq-option input:checked{border-color:var(--accent);background:var(--accent)}
+.mcq-option.correct{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.mcq-option.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.mcq-option.locked{cursor:not-allowed}
+.mcq-option .ic{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.mcq-option.correct .ic{stroke:var(--green)}
+.mcq-option.wrong .ic{stroke:var(--red)}
+.mcq-explanation{margin-top:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text)}
+.mcq-explanation.correct{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
+.mcq-explanation.incorrect{color:var(--red);border-color:var(--red);background:rgba(255,107,94,.08)}
+.mcq-nav{display:flex;gap:8px;margin-top:16px}
+
+.mcq-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:22px;text-align:center;margin-bottom:16px}
+.mcq-score{font-size:42px;font-weight:600;letter-spacing:-.02em}
+.mcq-score.correct{color:var(--green)}
+.mcq-score.incorrect{color:var(--red)}
+.mcq-result-meta{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.mcq-review-list{display:flex;flex-direction:column;gap:10px}
+.mcq-review-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.mcq-review-q{font-size:13.5px;font-weight:500;margin:0 0 8px;overflow-wrap:anywhere}
+.mcq-review-ans{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px}
+.mcq-review-ans .tag{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:99px}
+.mcq-review-ans .tag.correct{color:var(--green);border:1px solid var(--green);background:rgba(91,211,139,.08)}
+.mcq-review-ans .tag.wrong{color:var(--red);border:1px solid var(--red);background:rgba(255,107,94,.08)}
+.mcq-review-expl{font-size:12px;color:var(--muted);margin-top:4px}
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
   width:56px;height:56px;border-radius:50%;object-fit:cover;padding:0;
@@ -984,6 +1040,7 @@ body.sheet-open{overflow:hidden}
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 4.9L18.7 9.7l-4.9 1.8L12 16.4l-1.8-4.9L5.3 9.7l4.9-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
   <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-mcq" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h2M7 11h2M7 14h2M7 17h2"/><path d="M12 8v4M12 14v2"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
@@ -1036,6 +1093,7 @@ body.sheet-open{overflow:hidden}
     <button class="side-link" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Class Chat</button>
     <button class="side-link" data-page="ai" onclick="openSection('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
     <button class="side-link" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+    <button class="side-link" data-page="mcq-practice" onclick="openSection('mcq-practice')"><svg class="ic"><use href="#i-mcq"/></svg>MCQ Practice</button>
     <button class="side-link" data-page="accounts" onclick="openSection('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
     <div class="side-label">Account</div>
     <button class="side-link" data-page="profile" onclick="openSection('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
@@ -1237,6 +1295,92 @@ body.sheet-open{overflow:hidden}
       <div id="communityPosts"><div class="panel empty">Community posts will appear here.</div></div>
     </section>
 
+    <!-- MCQ PRACTICE -->
+    <section id="mcq-practice" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">MCQ Practice</h1>
+        <p class="page-sub">Generate practice quizzes from your uploaded PDFs.</p>
+      </div>
+      <div id="mcqStatus" class="status" aria-live="polite"></div>
+
+      <!-- START VIEW -->
+      <div id="mcqViewStart">
+        <div class="panel">
+          <h2 class="panel-title">Start New Practice</h2>
+          <p class="muted">Choose an uploaded PDF. ClassHub reads it and generates multiple-choice questions from its content.</p>
+          <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">Previous Practice</h2>
+          <p class="muted">Resume an unfinished session or review a completed one.</p>
+          <div id="mcqSessionList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
+        </div>
+      </div>
+
+      <!-- GENERATING VIEW -->
+      <div id="mcqViewGenerating" style="display:none">
+        <div class="panel">
+          <h2 class="panel-title">Generating questions…</h2>
+          <p class="muted" id="mcqGenMsg">Reading the PDF and asking the AI to write questions.</p>
+          <div class="skeleton" style="height:100px;width:100%;margin-top:10px"></div>
+          <button class="btn secondary" onclick="cancelMcqGenerate()" style="margin-top:12px">Cancel</button>
+        </div>
+      </div>
+
+      <!-- PRACTICE VIEW -->
+      <div id="mcqViewPractice" style="display:none">
+        <div class="mcq-question-card">
+          <div class="mcq-progress">
+            <span id="mcqProgressText">1 / 10</span>
+            <div class="mcq-progress-bar"><div class="mcq-progress-fill" id="mcqProgressFill" style="width:0%"></div></div>
+          </div>
+          <div id="mcqQuestionMeta" class="mcq-meta"></div>
+          <h2 id="mcqQuestionText" class="mcq-qtext"></h2>
+          <div id="mcqOptions" class="mcq-options"></div>
+          <button class="btn full mcq-check" id="mcqCheckBtn" onclick="checkMcqAnswer()">Check Answer</button>
+          <div id="mcqExplanation" class="mcq-explanation"></div>
+          <div class="mcq-nav">
+            <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Previous</button>
+            <button class="btn" id="mcqNextBtn" onclick="mcqNextQuestion()" disabled>Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULT VIEW -->
+      <div id="mcqViewResult" style="display:none">
+        <div class="mcq-result-card">
+          <div id="mcqResultScore" class="mcq-score">0%</div>
+          <p id="mcqResultMessage" class="muted" style="margin-top:8px"></p>
+          <div class="mcq-result-meta">
+            <span><strong id="mcqResultCorrect">0</strong> correct</span>
+            <span><strong id="mcqResultIncorrect">0</strong> incorrect</span>
+            <span><strong id="mcqResultTotal">0</strong> questions</span>
+            <span id="mcqResultTime"><strong>0</strong>s</span>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn full" onclick="openMcqReview()">Review Answers</button>
+          <button class="btn secondary full" onclick="startMcqPractice(window.mcqState && window.mcqState.sessionId)">Retry Practice</button>
+          <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
+        </div>
+      </div>
+
+      <!-- REVIEW VIEW -->
+      <div id="mcqViewReview" style="display:none">
+        <div class="panel">
+          <h2 class="panel-title">Review Answers</h2>
+          <p class="muted">Your selected answer, the correct answer, and the explanation for each question.</p>
+          <div id="mcqReviewList" class="mcq-review-list"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn full" onclick="showMcqView('practice')">Back to Practice</button>
+          <button class="btn secondary full" onclick="startMcqPractice(window.mcqState && window.mcqState.sessionId)">Retry Practice</button>
+          <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
+        </div>
+      </div>
+    </section>
+
     <!-- PROFILE -->
     <section id="profile" class="page">
       <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
@@ -1367,6 +1511,7 @@ body.sheet-open{overflow:hidden}
       <button class="more-item" type="button" onclick="goFromMore('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
       <button class="more-item" type="button" onclick="goFromMore('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
       <button class="more-item" type="button" onclick="goFromMore('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
+      <button class="more-item" type="button" onclick="goFromMore('mcq-practice')"><svg class="ic"><use href="#i-mcq"/></svg>MCQ Practice</button>
       <button class="more-item" type="button" onclick="goFromMore('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
       <button class="more-item" type="button" onclick="goFromMore('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
     </div>
@@ -1625,7 +1770,7 @@ function setAvatar(imgId, fbId, url, name){
 }
 
 /* ================= NAVIGATION ================= */
-const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile"]);
+const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile","mcq-practice"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -1689,6 +1834,7 @@ function openSection(pageId){
   if(pageId==="profile") loadStudentProfile();
   if(pageId==="accounts") loadAccountsDirectory();
   if(pageId==="community") window.loadCommunityPosts();
+  if(pageId==="mcq-practice") window.loadMcqPractice();
   window.scrollTo({top:0, behavior:reduceMotion ? "auto" : "smooth"});
 }
 function updateBellBadge(){
@@ -5600,6 +5746,501 @@ window.publishCommunityPost = async function(){
     setStatus("communityStatus","Could not publish post: "+friendlyError(error),"error");
   }finally{ btn.disabled = false; }
 };
+
+/* ================= MCQ PRACTICE ================= */
+const MCQ_ENDPOINT = `${SUPABASE_URL}/functions/v1/mcq`;
+const MCQ_MAX_QUESTIONS = 10;
+
+let mcqState = {
+  sessionId: null,
+  session: null,
+  questions: [],
+  answers: {},
+  checked: {},
+  results: {},
+  currentIndex: 0,
+  attemptId: null,
+  generating: false,
+  finalResult: null,
+};
+
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function showMcqView(view){
+  ["start","generating","practice","result","review"].forEach(v=>{
+    const el = document.getElementById("mcqView"+v.charAt(0).toUpperCase()+v.slice(1));
+    if(el) el.style.display = v === view ? "" : "none";
+  });
+}
+
+function setMcqStatus(message, type=""){
+  const el = document.getElementById("mcqStatus");
+  if(el){
+    el.textContent = message || "";
+    el.className = "status" + (type ? " " + type : "");
+  }
+}
+
+async function mcqFetch(action, body){
+  if(!currentUser) throw new Error("Please sign in first.");
+  const {data: session} = await db.auth.getSession();
+  const token = session && session.session ? session.session.access_token : null;
+  if(!token) throw new Error("Please sign in again.");
+  const res = await fetch(MCQ_ENDPOINT, {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`,"apikey":SUPABASE_KEY},
+    body:JSON.stringify({...body, action})
+  });
+  if(!res.ok){
+    let payload = null;
+    try{ payload = await res.json(); }catch(e){}
+    throw new Error(payload && payload.error ? payload.error : `MCQ request failed (${res.status}).`);
+  }
+  return await res.json();
+}
+
+function mcqStatusLabel(status){
+  switch(status){
+    case "ready": return "Ready";
+    case "generating": return "Generating…";
+    case "failed": return "Failed";
+    default: return "Not generated";
+  }
+}
+function mcqStatusClass(status){
+  switch(status){
+    case "ready": return "ready";
+    case "generating": return "generating";
+    case "failed": return "failed";
+    default: return "none";
+  }
+}
+
+window.loadMcqPractice = async function(){
+  const pdfList = document.getElementById("mcqPdfList");
+  const sessionList = document.getElementById("mcqSessionList");
+  if(!pdfList) return;
+  showMcqView("start");
+  setMcqStatus("");
+  mcqState.generating = false;
+  if(!currentUser){
+    pdfList.replaceChildren(makeEmptyState("Sign in with Google to generate MCQ practice from your PDFs.","i-folder"));
+    sessionList.replaceChildren(makeEmptyState("Sign in to see your practice sessions.","i-history"));
+    return;
+  }
+  try{
+    const [pdfsRes, sessionsRes, attemptsRes] = await Promise.all([
+      db.from("pdfs").select("id,file_name,subject,content_text,created_at").order("created_at",{ascending:false}),
+      db.from("mcq_sessions").select("id,source_pdf_id,status,total_questions,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+      db.from("mcq_attempts").select("id,session_id,score,total,completed_at,time_taken_seconds,started_at").eq("user_id",currentUser.id).order("started_at",{ascending:false})
+    ]);
+    if(pdfsRes.error) throw pdfsRes.error;
+    if(sessionsRes.error) throw sessionsRes.error;
+    if(attemptsRes.error) throw attemptsRes.error;
+    const pdfs = pdfsRes.data || [];
+    const sessions = sessionsRes.data || [];
+    const attempts = attemptsRes.data || [];
+    const sessionByPdf = {};
+    for(const s of sessions){
+      if(!sessionByPdf[s.source_pdf_id] || new Date(s.created_at) > new Date(sessionByPdf[s.source_pdf_id].created_at)){
+        sessionByPdf[s.source_pdf_id] = s;
+      }
+    }
+    const attemptBySession = {};
+    for(const a of attempts){
+      if(!attemptBySession[a.session_id] || new Date(a.started_at) > new Date(attemptBySession[a.session_id].started_at)){
+        attemptBySession[a.session_id] = a;
+      }
+    }
+    renderMcqPdfList(pdfs, sessionByPdf);
+    renderMcqSessionList(sessions, attemptBySession);
+  }catch(error){
+    console.error("MCQ start:", error);
+    setMcqStatus(friendlyError(error,"Could not load MCQ practice."),"error");
+    pdfList.replaceChildren(makeEmptyState(friendlyError(error,"Could not load PDFs.")));
+    sessionList.replaceChildren(makeEmptyState(friendlyError(error,"Could not load sessions.")));
+  }
+};
+
+function renderMcqPdfList(pdfs, sessionByPdf){
+  const list = document.getElementById("mcqPdfList");
+  list.replaceChildren();
+  if(!pdfs.length){
+    list.appendChild(makeEmptyState("No PDFs uploaded yet. Upload notes or test papers first, then generate MCQs from them.","i-folder"));
+    return;
+  }
+  pdfs.forEach(pdf=>{
+    const card = makeElement("div","mcq-pdf-card");
+    const info = makeElement("div","mcq-pdf-info");
+    info.appendChild(makeElement("strong","",escapeHtml(pdf.file_name||"PDF document")));
+    const meta = [];
+    if(pdf.subject) meta.push(pdf.subject);
+    const session = sessionByPdf[pdf.id];
+    if(session){
+      const q = session.status === "ready" ? `${session.total_questions} questions` : mcqStatusLabel(session.status);
+      meta.push(q);
+    } else {
+      meta.push("Not generated");
+    }
+    info.appendChild(makeElement("small","",meta.join(" · ")));
+    card.appendChild(info);
+    const actions = makeElement("div","mcq-pdf-actions");
+    const status = makeElement("span","mcq-pdf-status "+mcqStatusClass(session ? session.status : "none"), mcqStatusLabel(session ? session.status : "none"));
+    actions.appendChild(status);
+    if(session && session.status === "ready"){
+      actions.appendChild(makeButton("Start Practice",()=>startMcqPractice(session.id),"btn"));
+    }else if(session && session.status === "failed"){
+      actions.appendChild(makeButton("Retry",()=>generateMcq(pdf.id),"btn"));
+    }else{
+      actions.appendChild(makeButton("Generate MCQs",()=>generateMcq(pdf.id),"btn"));
+    }
+    actions.querySelectorAll(".btn").forEach(b=>{ b.style.padding="6px 10px"; b.style.fontSize="12px"; });
+    if(session && session.status === "generating"){
+      const btn = actions.querySelector(".btn");
+      if(btn){ btn.disabled = true; btn.textContent = "Generating…"; }
+    }
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+}
+
+function renderMcqSessionList(sessions, attemptBySession){
+  const list = document.getElementById("mcqSessionList");
+  list.replaceChildren();
+  if(!sessions.length){
+    list.appendChild(makeEmptyState("No practice sessions yet. Generate MCQs from a PDF above.","i-history"));
+    return;
+  }
+  sessions.forEach(s=>{
+    const card = makeElement("div","mcq-session-card");
+    const info = makeElement("div","mcq-session-info");
+    info.appendChild(makeElement("strong","",escapeHtml(s.title||"MCQ Practice")));
+    const meta = [`${s.total_questions} questions`, mcqStatusLabel(s.status)];
+    const attempt = attemptBySession[s.id];
+    if(attempt && attempt.completed_at){
+      meta.push(`${attempt.score}/${attempt.total}`);
+    }
+    info.appendChild(makeElement("small","",meta.join(" · ")));
+    card.appendChild(info);
+    const actions = makeElement("div","mcq-pdf-actions");
+    const status = makeElement("span","mcq-pdf-status "+mcqStatusClass(s.status), mcqStatusLabel(s.status));
+    actions.appendChild(status);
+    if(s.status === "ready"){
+      actions.appendChild(makeButton("Start Practice",()=>startMcqPractice(s.id),"btn"));
+    } else {
+      const btn = makeButton(s.status === "generating" ? "Generating…" : "Retry", s.status === "generating" ? null : ()=>generateMcqBySession(s.id));
+      btn.disabled = s.status === "generating";
+      actions.appendChild(btn);
+    }
+    actions.querySelectorAll(".btn").forEach(b=>{ b.style.padding="6px 10px"; b.style.fontSize="12px"; });
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+}
+
+async function generateMcqBySession(sessionId){
+  const {data:s,error:se} = await db.from("mcq_sessions").select("source_pdf_id,status").eq("id",sessionId).maybeSingle();
+  if(se) throw se;
+  if(s && s.status !== "failed"){ setMcqStatus("Cannot regenerate this session.","error"); return; }
+  if(!s){ setMcqStatus("Session not found.","error"); return; }
+  await generateMcq(s.source_pdf_id);
+}
+
+window.generateMcq = async function(pdfId){
+  if(mcqState.generating) return;
+  mcqState.generating = true;
+  showMcqView("generating");
+  document.getElementById("mcqGenMsg").textContent = "Reading the PDF and asking the AI to write questions…";
+  try{
+    const result = await mcqFetch("generate",{pdf_id:pdfId});
+    // result: {session_id, title, total_questions, questions:[{id, order_index, question_text, options, subject_topic, source_page, difficulty}]}
+    mcqState.sessionId = result.session_id;
+    mcqState.session = { id: result.session_id, title: result.title, total_questions: result.total_questions, source_pdf_id: pdfId, status: "ready" };
+    mcqState.questions = (result.questions || []).map((q,i)=>({
+      id: q.id, order_index: q.order_index, question_text: q.question_text,
+      options: q.options, subject_topic: q.subject_topic, source_page: q.source_page, difficulty: q.difficulty
+    }));
+    mcqState.answers = {}; mcqState.checked = {}; mcqState.results = {}; mcqState.currentIndex = 0; mcqState.attemptId = null; mcqState.finalResult = null;
+    if(!mcqState.questions.length){
+      setMcqStatus("No questions were generated from this PDF.","error");
+      showMcqView("start");
+      await loadMcqPractice();
+      return;
+    }
+    // Create an attempt and start practising right away.
+    const {data:a,error:ae} = await db.from("mcq_attempts").insert({session_id:result.session_id,user_id:currentUser.id,score:0,total:0}).select("id").single();
+    if(ae) throw ae;
+    mcqState.attemptId = a.id;
+    showMcqView("practice");
+    renderMcqPractice();
+  }catch(error){
+    console.error("MCQ generate:", error);
+    setMcqStatus(friendlyError(error,"Could not generate questions. Please try again."),"error");
+    showMcqView("start");
+  }finally{
+    mcqState.generating = false;
+  }
+};
+
+window.startMcqPractice = async function(sessionId){
+  if(!currentUser){ setMcqStatus("Please sign in first.","error"); return; }
+  setMcqStatus("");
+  let session = (mcqState.session && mcqState.session.id === sessionId) ? mcqState.session : null;
+  let questions = (mcqState.sessionId === sessionId && mcqState.questions.length) ? mcqState.questions : null;
+  if(!session || !questions){
+    try{
+      const {data:s,error:se} = await db.from("mcq_sessions").select("*").eq("id",sessionId).maybeSingle();
+      if(se) throw se;
+      if(!s){ setMcqStatus("Session not found.","error"); return; }
+      session = s;
+      const {data:qs,error:qe} = await db.from("mcq_questions").select("id,question_text,options,subject_topic,source_page,difficulty,order_index").eq("session_id",sessionId).order("order_index",{ascending:true});
+      if(qe) throw qe;
+      questions = (qs||[]).map(q=>({
+        id:q.id, order_index:q.order_index, question_text:q.question_text,
+        options:q.options, subject_topic:q.subject_topic, source_page:q.source_page, difficulty:q.difficulty
+      }));
+    }catch(error){
+      setMcqStatus(friendlyError(error,"Could not load session.","error"));
+      return;
+    }
+  }
+  mcqState.sessionId = sessionId;
+  mcqState.session = session;
+  mcqState.questions = questions;
+  mcqState.currentIndex = 0;
+  mcqState.answers = {}; mcqState.checked = {}; mcqState.results = {}; mcqState.finalResult = null;
+  try{
+    let attempt = null;
+    const {data:inc,error:ie} = await db.from("mcq_attempts").select("*").eq("session_id",sessionId).eq("user_id",currentUser.id).is("completed_at",null).order("started_at",{ascending:false}).limit(1).maybeSingle();
+    if(ie) throw ie;
+    attempt = inc;
+    if(attempt){
+      mcqState.attemptId = attempt.id;
+      const {data:rs,error:re} = await db.from("mcq_responses").select("question_id,selected_option_index,is_correct").eq("attempt_id",attempt.id);
+      if(re) throw re;
+      for(const r of (rs||[])){
+        mcqState.answers[r.question_id] = r.selected_option_index;
+        mcqState.checked[r.question_id] = true;
+        mcqState.results[r.question_id] = { is_correct: r.is_correct, selected_option_index: r.selected_option_index };
+      }
+      while(mcqState.currentIndex < questions.length && mcqState.checked[questions[mcqState.currentIndex].id]){
+        mcqState.currentIndex++;
+      }
+      if(mcqState.currentIndex >= questions.length){
+        await finishMcqPractice();
+        return;
+      }
+    }else{
+      const {data:a,error:ae} = await db.from("mcq_attempts").insert({session_id:sessionId,user_id:currentUser.id,score:0,total:0}).select("id").single();
+      if(ae) throw ae;
+      mcqState.attemptId = a.id;
+    }
+  }catch(error){
+    setMcqStatus(friendlyError(error,"Could not start the session.","error"));
+    return;
+  }
+  showMcqView("practice");
+  renderMcqPractice();
+};
+
+function renderMcqPractice(){
+  const q = mcqState.questions[mcqState.currentIndex];
+  if(!q) return;
+  document.getElementById("mcqProgressText").textContent = `${mcqState.currentIndex + 1} / ${mcqState.questions.length}`;
+  document.getElementById("mcqProgressFill").style.width = `${Math.round((mcqState.currentIndex / Math.max(1,mcqState.questions.length)) * 100)}%`;
+  const meta = [];
+  if(q.subject_topic) meta.push(escapeHtml(q.subject_topic));
+  if(q.source_page) meta.push(`Page ${escapeHtml(q.source_page)}`);
+  meta.push(escapeHtml(q.difficulty || "medium"));
+  document.getElementById("mcqQuestionMeta").innerHTML = meta.map(m=>`<span class="tag">${m}</span>`).join("");
+  document.getElementById("mcqQuestionText").textContent = q.question_text;
+  const optsBox = document.getElementById("mcqOptions");
+  optsBox.replaceChildren();
+  const locked = mcqState.checked[q.id] === true;
+  const res = mcqState.results[q.id];
+  // Determine which option is the correct one for highlighting.
+  let correctIndex = -1;
+  if(res){
+    correctIndex = res.is_correct ? (mcqState.answers[q.id] != null ? mcqState.answers[q.id] : -1)
+      : (res.correct_option_index != null ? res.correct_option_index : -1);
+  }
+  (q.options || []).forEach(opt=>{
+    const checked = mcqState.answers[q.id] === opt.index;
+    const isCorrect = locked && res && res.is_correct && opt.index === correctIndex;
+    const isWrong = locked && res && !res.is_correct && opt.index === mcqState.answers[q.id];
+    const cls = ["mcq-option"];
+    if(locked) cls.push("locked");
+    if(isWrong) cls.push("wrong");
+    if(isCorrect) cls.push("correct");
+    const label = makeElement("label",cls.join(" "));
+    const input = document.createElement("input");
+    input.type = "radio"; input.name = "mcqOption"; input.value = String(opt.index);
+    input.disabled = locked; input.checked = checked;
+    input.onchange = ()=> selectMcqOption(q.id, opt.index);
+    const span = makeElement("span","mcq-option-label",opt.text);
+    label.appendChild(input); label.appendChild(span);
+    optsBox.appendChild(label);
+  });
+  const checkBtn = document.getElementById("mcqCheckBtn");
+  const expl = document.getElementById("mcqExplanation");
+  const nextBtn = document.getElementById("mcqNextBtn");
+  const prevBtn = document.getElementById("mcqPrevBtn");
+  prevBtn.disabled = mcqState.currentIndex === 0;
+  const isLast = mcqState.currentIndex >= mcqState.questions.length - 1;
+  checkBtn.disabled = locked || mcqState.answers[q.id] == null;
+  checkBtn.textContent = locked ? "Answer checked" : "Check Answer";
+  if(locked && res){
+    expl.className = "mcq-explanation " + (res.is_correct ? "correct" : "incorrect");
+    let html = `<strong>${res.is_correct ? "Correct" : "Incorrect"}.</strong> ${escapeHtml(res.explanation)}`;
+    if(!res.is_correct && res.correct_option_index != null){
+      html += `<br><strong>Correct answer:</strong> Option ${res.correct_option_index + 1}.`;
+    }
+    expl.innerHTML = html;
+    expl.style.display = "block";
+  } else {
+    expl.style.display = "none";
+  }
+  if(locked){
+    if(isLast){
+      nextBtn.textContent = "Finish & Review";
+      nextBtn.onclick = finishMcqPractice;
+      nextBtn.disabled = false;
+    } else {
+      nextBtn.textContent = "Next";
+      nextBtn.onclick = mcqNextQuestion;
+      nextBtn.disabled = false;
+    }
+  } else {
+    nextBtn.textContent = "Next";
+    nextBtn.onclick = mcqNextQuestion;
+    nextBtn.disabled = true;
+  }
+}
+
+function selectMcqOption(qId, optionIndex){
+  if(mcqState.checked[qId]) return;
+  mcqState.answers[qId] = optionIndex;
+  renderMcqPractice();
+}
+
+async function checkMcqAnswer(){
+  const q = mcqState.questions[mcqState.currentIndex];
+  if(!q) return;
+  if(mcqState.checked[q.id]) return;
+  if(mcqState.answers[q.id] == null){
+    setMcqStatus("Please select an answer first.","error");
+    return;
+  }
+  setMcqStatus("");
+  try{
+    const result = await mcqFetch("validate",{
+      attempt_id: mcqState.attemptId,
+      responses:[{ question_id: q.id, selected_option_index: mcqState.answers[q.id] }],
+      finalize:false
+    });
+    // result.results[0] holds this question's outcome
+    const outcome = (result.results && result.results[0]) || {};
+    mcqState.checked[q.id] = true;
+    mcqState.results[q.id] = {
+      is_correct: outcome.is_correct === true,
+      selected_option_index: mcqState.answers[q.id],
+      correct_option_index: outcome.correct_option_index,
+      explanation: outcome.explanation || ""
+    };
+    renderMcqPractice();
+  }catch(error){
+    console.error("MCQ check:", error);
+    setMcqStatus(friendlyError(error,"Could not check your answer. Please try again."),"error");
+  }
+}
+
+function mcqNextQuestion(){
+  if(mcqState.checked[mcqState.questions[mcqState.currentIndex].id] !== true) return;
+  if(mcqState.currentIndex < mcqState.questions.length - 1){
+    mcqState.currentIndex++;
+    renderMcqPractice();
+  }
+}
+
+function mcqPrevQuestion(){
+  if(mcqState.currentIndex > 0){
+    mcqState.currentIndex--;
+    renderMcqPractice();
+  }
+}
+
+async function finishMcqPractice(){
+  const responses = mcqState.questions.map(q=>({
+    question_id: q.id,
+    selected_option_index: mcqState.answers[q.id] == null ? -1 : mcqState.answers[q.id]
+  }));
+  try{
+    const result = await mcqFetch("validate",{
+      attempt_id: mcqState.attemptId,
+      responses: responses,
+      finalize:true
+    });
+    mcqState.finalResult = result;
+    showResultView();
+  }catch(error){
+    console.error("MCQ finish:", error);
+    setMcqStatus(friendlyError(error,"Could not finish the session.","error"));
+  }
+}
+
+function showResultView(){
+  const r = mcqState.finalResult;
+  if(!r) return;
+  document.getElementById("mcqResultScore").textContent = r.accuracy + "%";
+  document.getElementById("mcqResultScore").className = "mcq-score " + (r.accuracy >= 60 ? "correct" : "incorrect");
+  document.getElementById("mcqResultMessage").textContent = r.accuracy >= 60 ? "Well done!" : "Keep practising — you'll get there.";
+  document.getElementById("mcqResultCorrect").textContent = r.correct;
+  document.getElementById("mcqResultIncorrect").textContent = r.incorrect;
+  document.getElementById("mcqResultTotal").textContent = r.total;
+  document.getElementById("mcqResultTime").textContent = (r.time_taken_seconds || 0) + "s";
+  showMcqView("result");
+}
+
+window.openMcqReview = function(){
+  const list = document.getElementById("mcqReviewList");
+  list.replaceChildren();
+  if(!mcqState.questions.length){
+    list.appendChild(makeEmptyState("No questions to review.","i-file"));
+    showMcqView("review");
+    return;
+  }
+  mcqState.questions.forEach((q,i)=>{
+    const item = makeElement("div","mcq-review-item");
+    item.appendChild(makeElement("h3","mcq-review-q",`Q${i + 1}. ${escapeHtml(q.question_text)}`));
+    const ans = makeElement("div","mcq-review-ans");
+    const selected = mcqState.answers[q.id];
+    const res = mcqState.results[q.id];
+    const correctIndex = res && res.correct_option_index != null ? res.correct_option_index : -1;
+    const selectedText = selected != null && q.options && q.options[selected] ? q.options[selected].text : "Not answered";
+    const correctText = correctIndex != null && q.options && q.options[correctIndex] ? q.options[correctIndex].text : "";
+    const selTag = makeElement("span","tag " + (res && res.is_correct ? "correct" : (selected != null ? "wrong" : "")), selected != null ? `You: ${escapeHtml(selectedText)}` : "You: Not answered");
+    ans.appendChild(selTag);
+    if(!res.is_correct && correctText){
+      const corrTag = makeElement("span","tag correct",`Correct: ${escapeHtml(correctText)}`);
+      ans.appendChild(corrTag);
+    }
+    item.appendChild(ans);
+    if(res && res.explanation){
+      const expl = makeElement("p","mcq-review-expl", escapeHtml(res.explanation));
+      item.appendChild(expl);
+    }
+    list.appendChild(item);
+  });
+  showMcqView("review");
+}
+
+function cancelMcqGenerate(){
+  mcqState.generating = false;
+  showMcqView("start");
+}
+
 /* ================= REALTIME ================= */
 async function refreshActivePDFViews(){
   if(currentPage==="notes" && selectedNoteSubject) await loadCategorizedNotePDFs();
