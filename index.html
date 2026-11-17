@@ -433,16 +433,19 @@ label.f-label{
 .mcq-meta{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
 .mcq-meta .tag{border:1px solid var(--border);border-radius:6px;padding:2px 8px;background:transparent;color:var(--muted2)}
 .mcq-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mcq-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
+.mcq-option{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
 .mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface-hover)}
-.mcq-option input{appearance:none;width:18px;height:18px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;margin:0}
-.mcq-option input:checked{border-color:var(--accent);background:var(--accent)}
+.mcq-option input{appearance:none;width:18px;height:18px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;margin:0;flex-shrink:0}
+.mcq-option input:checked{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--surface)}
 .mcq-option.correct{background:var(--green-soft);border-color:var(--green);color:var(--green)}
 .mcq-option.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
 .mcq-option.locked{cursor:not-allowed}
+.mcq-option-mark{margin-left:auto;font-weight:700;flex-shrink:0}
 .mcq-option .ic{width:16px;height:16px;stroke-width:2;flex-shrink:0}
 .mcq-option.correct .ic{stroke:var(--green)}
 .mcq-option.wrong .ic{stroke:var(--red)}
+.mcq-check{margin-top:14px}
+.mcq-gen-progress{font-family:var(--font-mono);font-size:11px;color:var(--muted2);margin:6px 0 0;min-height:16px}
 .mcq-explanation{margin-top:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text)}
 .mcq-explanation.correct{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
 .mcq-explanation.incorrect{color:var(--red);border-color:var(--red);background:rgba(255,107,94,.08)}
@@ -456,11 +459,20 @@ label.f-label{
 .mcq-review-list{display:flex;flex-direction:column;gap:10px}
 .mcq-review-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
 .mcq-review-q{font-size:13.5px;font-weight:500;margin:0 0 8px;overflow-wrap:anywhere}
-.mcq-review-ans{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px}
+.mcq-review-ans{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px;font-size:12px}
+.mcq-review-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:0 0 6px}
 .mcq-review-ans .tag{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:99px}
 .mcq-review-ans .tag.correct{color:var(--green);border:1px solid var(--green);background:rgba(91,211,139,.08)}
 .mcq-review-ans .tag.wrong{color:var(--red);border:1px solid var(--red);background:rgba(255,107,94,.08)}
 .mcq-review-expl{font-size:12px;color:var(--muted);margin-top:4px}
+@media (max-width:640px){
+  .mcq-pdf-card,.mcq-session-card{flex-wrap:wrap}
+  .mcq-pdf-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .mcq-options{grid-template-columns:1fr}
+  .mcq-result-meta{flex-wrap:wrap;gap:8px 14px}
+  .mcq-nav{flex-wrap:wrap}
+  .mcq-nav .btn{flex:1 1 auto}
+}
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
   width:56px;height:56px;border-radius:50%;object-fit:cover;padding:0;
@@ -1321,8 +1333,9 @@ body.sheet-open{overflow:hidden}
       <!-- GENERATING VIEW -->
       <div id="mcqViewGenerating" style="display:none">
         <div class="panel">
-          <h2 class="panel-title">Generating questions…</h2>
+          <h2 class="panel-title" id="mcqGenTitle">Generating questions…</h2>
           <p class="muted" id="mcqGenMsg">Reading the PDF and asking the AI to write questions.</p>
+          <p class="mcq-gen-progress" id="mcqGenProgress" aria-live="polite"></p>
           <div class="skeleton" style="height:100px;width:100%;margin-top:10px"></div>
           <button class="btn secondary" onclick="cancelMcqGenerate()" style="margin-top:12px">Cancel</button>
         </div>
@@ -1339,10 +1352,11 @@ body.sheet-open{overflow:hidden}
           <h2 id="mcqQuestionText" class="mcq-qtext"></h2>
           <div id="mcqOptions" class="mcq-options"></div>
           <button class="btn full mcq-check" id="mcqCheckBtn" onclick="checkMcqAnswer()">Check Answer</button>
-          <div id="mcqExplanation" class="mcq-explanation"></div>
+          <div id="mcqExplanation" class="mcq-explanation" aria-live="polite"></div>
           <div class="mcq-nav">
             <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Previous</button>
             <button class="btn" id="mcqNextBtn" onclick="mcqNextQuestion()" disabled>Next</button>
+            <button class="btn secondary" id="mcqFinishBtn" onclick="finishMcqPractice()" style="display:none">Finish &amp; Review</button>
           </div>
         </div>
       </div>
@@ -1355,13 +1369,14 @@ body.sheet-open{overflow:hidden}
           <div class="mcq-result-meta">
             <span><strong id="mcqResultCorrect">0</strong> correct</span>
             <span><strong id="mcqResultIncorrect">0</strong> incorrect</span>
+            <span id="mcqResultUnansweredWrap" style="display:none"><strong id="mcqResultUnanswered">0</strong> unanswered</span>
             <span><strong id="mcqResultTotal">0</strong> questions</span>
             <span id="mcqResultTime"><strong>0</strong>s</span>
           </div>
         </div>
         <div class="btn-row">
           <button class="btn full" onclick="openMcqReview()">Review Answers</button>
-          <button class="btn secondary full" onclick="startMcqPractice(window.mcqState && window.mcqState.sessionId)">Retry Practice</button>
+          <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
           <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
         </div>
       </div>
@@ -1374,8 +1389,8 @@ body.sheet-open{overflow:hidden}
           <div id="mcqReviewList" class="mcq-review-list"></div>
         </div>
         <div class="btn-row">
-          <button class="btn full" onclick="showMcqView('practice')">Back to Practice</button>
-          <button class="btn secondary full" onclick="startMcqPractice(window.mcqState && window.mcqState.sessionId)">Retry Practice</button>
+          <button class="btn full" onclick="showMcqView('result')">Back to Results</button>
+          <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
           <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
         </div>
       </div>
@@ -5749,7 +5764,7 @@ window.publishCommunityPost = async function(){
 
 /* ================= MCQ PRACTICE ================= */
 const MCQ_ENDPOINT = `${SUPABASE_URL}/functions/v1/mcq`;
-const MCQ_MAX_QUESTIONS = 10;
+const MCQ_REQUEST_TIMEOUT_MS = 180000;
 
 let mcqState = {
   sessionId: null,
@@ -5761,11 +5776,14 @@ let mcqState = {
   currentIndex: 0,
   attemptId: null,
   generating: false,
+  checking: false,
+  finishing: false,
   finalResult: null,
 };
+let mcqGenController = null;
 
 function escapeHtml(s){
-  return String(s ?? "").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  return String(s ?? "").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
 
 function showMcqView(view){
@@ -5783,22 +5801,106 @@ function setMcqStatus(message, type=""){
   }
 }
 
-async function mcqFetch(action, body){
+function setMcqGenProgress(title, detail, progress){
+  const titleEl = document.getElementById("mcqGenTitle");
+  const msgEl = document.getElementById("mcqGenMsg");
+  const progEl = document.getElementById("mcqGenProgress");
+  if(titleEl) titleEl.textContent = title;
+  if(msgEl) msgEl.textContent = detail;
+  if(progEl) progEl.textContent = progress || "";
+}
+
+function formatMcqTime(seconds){
+  const total = Math.max(0, Math.round(seconds || 0));
+  if(total < 60) return total + "s";
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  if(mins < 60) return mins + "m " + String(secs).padStart(2, "0") + "s";
+  return Math.floor(mins / 60) + "h " + String(mins % 60).padStart(2, "0") + "m";
+}
+
+function mcqOptionText(question, index){
+  const option = (question && question.options ? question.options : []).find(o=>o.index === index);
+  return option ? option.text : "";
+}
+
+async function mcqFetch(action, body, signal){
   if(!currentUser) throw new Error("Please sign in first.");
-  const {data: session} = await db.auth.getSession();
-  const token = session && session.session ? session.session.access_token : null;
+  const {data} = await db.auth.getSession();
+  const token = data && data.session ? data.session.access_token : null;
   if(!token) throw new Error("Please sign in again.");
-  const res = await fetch(MCQ_ENDPOINT, {
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`,"apikey":SUPABASE_KEY},
-    body:JSON.stringify({...body, action})
-  });
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(()=>{
+    timedOut = true;
+    controller.abort();
+  }, MCQ_REQUEST_TIMEOUT_MS);
+  const forwardAbort = ()=>{ controller.abort(); };
+  if(signal){
+    if(signal.aborted) controller.abort();
+    else signal.addEventListener("abort", forwardAbort, {once:true});
+  }
+
+  let res;
+  try{
+    res = await fetch(MCQ_ENDPOINT, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${token}`,
+        "apikey":SUPABASE_KEY
+      },
+      body:JSON.stringify({...body, action}),
+      signal:controller.signal
+    });
+  }catch(error){
+    if(isAbortError(error)){
+      if(timedOut){
+        const timeoutError = new Error("The AI took too long to respond. Please try again.");
+        timeoutError.code = "AI_TIMEOUT";
+        throw timeoutError;
+      }
+      const cancelled = new Error("Cancelled.");
+      cancelled.code = "CANCELLED";
+      throw cancelled;
+    }
+    const networkError = new Error("Can't reach the AI service. Check your connection and try again.");
+    networkError.code = "NETWORK";
+    throw networkError;
+  }finally{
+    clearTimeout(timer);
+    if(signal) signal.removeEventListener("abort", forwardAbort);
+  }
+
   if(!res.ok){
     let payload = null;
-    try{ payload = await res.json(); }catch(e){}
-    throw new Error(payload && payload.error ? payload.error : `MCQ request failed (${res.status}).`);
+    try{ payload = await res.json(); }catch(error){}
+    const requestError = new Error(payload && payload.error ? payload.error : `MCQ request failed (${res.status}).`);
+    requestError.code = payload && payload.code ? payload.code : `HTTP_${res.status}`;
+    requestError.status = res.status;
+    throw requestError;
   }
-  return await res.json();
+
+  try{
+    return await res.json();
+  }catch(error){
+    throw new Error("The server returned an unreadable response. Please try again.");
+  }
+}
+
+/* Server-provided messages for these codes are already written for students. */
+const MCQ_SAFE_ERROR_CODES = new Set([
+  "NO_EXTRACTABLE_TEXT","NO_READABLE_TEXT","NO_QUESTIONS_GENERATED","NO_VALID_QUESTIONS",
+  "AI_BUSY","AI_TIMEOUT","AI_NETWORK_ERROR","AI_UNAVAILABLE","AI_ERROR","AI_BAD_FORMAT","AI_EMPTY",
+  "RATE_LIMITED","PDF_NOT_FOUND","NETWORK","CANCELLED"
+]);
+
+function mcqErrorMessage(error, fallback){
+  if(error && error.code && MCQ_SAFE_ERROR_CODES.has(error.code) && error.message){
+    return error.message;
+  }
+  return friendlyError(error, fallback);
 }
 
 function mcqStatusLabel(status){
@@ -5809,6 +5911,7 @@ function mcqStatusLabel(status){
     default: return "Not generated";
   }
 }
+
 function mcqStatusClass(status){
   switch(status){
     case "ready": return "ready";
@@ -5821,86 +5924,99 @@ function mcqStatusClass(status){
 window.loadMcqPractice = async function(){
   const pdfList = document.getElementById("mcqPdfList");
   const sessionList = document.getElementById("mcqSessionList");
-  if(!pdfList) return;
-  showMcqView("start");
-  setMcqStatus("");
-  mcqState.generating = false;
+  if(!pdfList || !sessionList) return;
+
   if(!currentUser){
+    showMcqView("start");
     pdfList.replaceChildren(makeEmptyState("Sign in with Google to generate MCQ practice from your PDFs.","i-folder"));
     sessionList.replaceChildren(makeEmptyState("Sign in to see your practice sessions.","i-history"));
     return;
   }
+
   try{
     const [pdfsRes, sessionsRes, attemptsRes] = await Promise.all([
-      db.from("pdfs").select("id,file_name,subject,content_text,created_at").order("created_at",{ascending:false}),
-      db.from("mcq_sessions").select("id,source_pdf_id,status,total_questions,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
-      db.from("mcq_attempts").select("id,session_id,score,total,completed_at,time_taken_seconds,started_at").eq("user_id",currentUser.id).order("started_at",{ascending:false})
+      db.from("pdfs").select("id,file_name,subject,subcategory,file_url,created_at").order("created_at",{ascending:false}),
+      db.from("mcq_sessions").select("id,source_pdf_id,title,status,total_questions,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+      db.from("mcq_attempts").select("id,session_id,score,total,completed_at,started_at").eq("user_id",currentUser.id).order("started_at",{ascending:false})
     ]);
     if(pdfsRes.error) throw pdfsRes.error;
     if(sessionsRes.error) throw sessionsRes.error;
     if(attemptsRes.error) throw attemptsRes.error;
+
     const pdfs = pdfsRes.data || [];
     const sessions = sessionsRes.data || [];
     const attempts = attemptsRes.data || [];
+
     const sessionByPdf = {};
-    for(const s of sessions){
-      if(!sessionByPdf[s.source_pdf_id] || new Date(s.created_at) > new Date(sessionByPdf[s.source_pdf_id].created_at)){
-        sessionByPdf[s.source_pdf_id] = s;
+    for(const session of sessions){
+      const current = sessionByPdf[session.source_pdf_id];
+      if(!current || new Date(session.created_at) > new Date(current.created_at)){
+        sessionByPdf[session.source_pdf_id] = session;
       }
     }
+
     const attemptBySession = {};
-    for(const a of attempts){
-      if(!attemptBySession[a.session_id] || new Date(a.started_at) > new Date(attemptBySession[a.session_id].started_at)){
-        attemptBySession[a.session_id] = a;
+    for(const attempt of attempts){
+      const current = attemptBySession[attempt.session_id];
+      if(!current || new Date(attempt.started_at) > new Date(current.started_at)){
+        attemptBySession[attempt.session_id] = attempt;
       }
     }
+
     renderMcqPdfList(pdfs, sessionByPdf);
     renderMcqSessionList(sessions, attemptBySession);
+    showMcqView("start");
   }catch(error){
     console.error("MCQ start:", error);
-    setMcqStatus(friendlyError(error,"Could not load MCQ practice."),"error");
-    pdfList.replaceChildren(makeEmptyState(friendlyError(error,"Could not load PDFs.")));
-    sessionList.replaceChildren(makeEmptyState(friendlyError(error,"Could not load sessions.")));
+    const message = mcqErrorMessage(error,"Could not load MCQ practice.");
+    setMcqStatus(message,"error");
+    pdfList.replaceChildren(makeEmptyState(message,"i-folder"));
+    sessionList.replaceChildren(makeEmptyState(message,"i-history"));
   }
 };
 
 function renderMcqPdfList(pdfs, sessionByPdf){
   const list = document.getElementById("mcqPdfList");
+  if(!list) return;
   list.replaceChildren();
   if(!pdfs.length){
     list.appendChild(makeEmptyState("No PDFs uploaded yet. Upload notes or test papers first, then generate MCQs from them.","i-folder"));
     return;
   }
+
   pdfs.forEach(pdf=>{
+    const session = sessionByPdf[pdf.id];
     const card = makeElement("div","mcq-pdf-card");
+
     const info = makeElement("div","mcq-pdf-info");
-    info.appendChild(makeElement("strong","",escapeHtml(pdf.file_name||"PDF document")));
+    info.appendChild(makeElement("strong","",pdf.file_name || "PDF document"));
     const meta = [];
     if(pdf.subject) meta.push(pdf.subject);
-    const session = sessionByPdf[pdf.id];
-    if(session){
-      const q = session.status === "ready" ? `${session.total_questions} questions` : mcqStatusLabel(session.status);
-      meta.push(q);
-    } else {
-      meta.push("Not generated");
-    }
+    if(pdf.subcategory) meta.push(pdf.subcategory);
+    if(session && session.status === "ready") meta.push(`${session.total_questions} questions`);
+    else meta.push(mcqStatusLabel(session ? session.status : "none"));
     info.appendChild(makeElement("small","",meta.join(" · ")));
     card.appendChild(info);
+
     const actions = makeElement("div","mcq-pdf-actions");
-    const status = makeElement("span","mcq-pdf-status "+mcqStatusClass(session ? session.status : "none"), mcqStatusLabel(session ? session.status : "none"));
-    actions.appendChild(status);
+    actions.appendChild(makeElement(
+      "span",
+      "mcq-pdf-status " + mcqStatusClass(session ? session.status : "none"),
+      session && session.status === "ready" ? `${session.total_questions} Qs` : mcqStatusLabel(session ? session.status : "none")
+    ));
+
+    let button;
     if(session && session.status === "ready"){
-      actions.appendChild(makeButton("Start Practice",()=>startMcqPractice(session.id),"btn"));
-    }else if(session && session.status === "failed"){
-      actions.appendChild(makeButton("Retry",()=>generateMcq(pdf.id),"btn"));
+      button = makeButton("Start Practice",()=>startMcqPractice(session.id),"btn");
+    }else if(session && session.status === "generating"){
+      button = makeButton("Generating…",()=>{},"btn");
+      button.disabled = true;
     }else{
-      actions.appendChild(makeButton("Generate MCQs",()=>generateMcq(pdf.id),"btn"));
+      button = makeButton(session && session.status === "failed" ? "Retry" : "Generate MCQs",()=>generateMcq(pdf.id),"btn");
     }
-    actions.querySelectorAll(".btn").forEach(b=>{ b.style.padding="6px 10px"; b.style.fontSize="12px"; });
-    if(session && session.status === "generating"){
-      const btn = actions.querySelector(".btn");
-      if(btn){ btn.disabled = true; btn.textContent = "Generating…"; }
-    }
+    button.style.padding = "6px 10px";
+    button.style.fontSize = "12px";
+    actions.appendChild(button);
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -5908,259 +6024,407 @@ function renderMcqPdfList(pdfs, sessionByPdf){
 
 function renderMcqSessionList(sessions, attemptBySession){
   const list = document.getElementById("mcqSessionList");
+  if(!list) return;
   list.replaceChildren();
   if(!sessions.length){
     list.appendChild(makeEmptyState("No practice sessions yet. Generate MCQs from a PDF above.","i-history"));
     return;
   }
-  sessions.forEach(s=>{
+
+  sessions.forEach(session=>{
+    const attempt = attemptBySession[session.id];
     const card = makeElement("div","mcq-session-card");
+
     const info = makeElement("div","mcq-session-info");
-    info.appendChild(makeElement("strong","",escapeHtml(s.title||"MCQ Practice")));
-    const meta = [`${s.total_questions} questions`, mcqStatusLabel(s.status)];
-    const attempt = attemptBySession[s.id];
-    if(attempt && attempt.completed_at){
-      meta.push(`${attempt.score}/${attempt.total}`);
-    }
+    info.appendChild(makeElement("strong","",session.title || "MCQ Practice"));
+    const meta = [`${session.total_questions} questions`, formatDate(session.created_at)];
+    if(attempt && attempt.completed_at) meta.push(`Score ${attempt.score}/${attempt.total}`);
+    else if(attempt) meta.push("In progress");
     info.appendChild(makeElement("small","",meta.join(" · ")));
     card.appendChild(info);
+
     const actions = makeElement("div","mcq-pdf-actions");
-    const status = makeElement("span","mcq-pdf-status "+mcqStatusClass(s.status), mcqStatusLabel(s.status));
-    actions.appendChild(status);
-    if(s.status === "ready"){
-      actions.appendChild(makeButton("Start Practice",()=>startMcqPractice(s.id),"btn"));
-    } else {
-      const btn = makeButton(s.status === "generating" ? "Generating…" : "Retry", s.status === "generating" ? null : ()=>generateMcqBySession(s.id));
-      btn.disabled = s.status === "generating";
-      actions.appendChild(btn);
+    const inProgress = !!attempt && !attempt.completed_at;
+    actions.appendChild(makeElement(
+      "span",
+      "mcq-pdf-status " + (inProgress ? "generating" : mcqStatusClass(session.status)),
+      inProgress ? "In progress" : mcqStatusLabel(session.status)
+    ));
+
+    let button;
+    if(session.status === "ready"){
+      const label = inProgress ? "Resume" : (attempt && attempt.completed_at ? "Practice Again" : "Start Practice");
+      button = makeButton(label,()=>startMcqPractice(session.id),"btn");
+    }else if(session.status === "generating"){
+      button = makeButton("Generating…",()=>{},"btn");
+      button.disabled = true;
+    }else{
+      button = makeButton("Retry",()=>generateMcq(session.source_pdf_id),"btn");
     }
-    actions.querySelectorAll(".btn").forEach(b=>{ b.style.padding="6px 10px"; b.style.fontSize="12px"; });
+    button.style.padding = "6px 10px";
+    button.style.fontSize = "12px";
+    actions.appendChild(button);
     card.appendChild(actions);
     list.appendChild(card);
   });
 }
 
-async function generateMcqBySession(sessionId){
-  const {data:s,error:se} = await db.from("mcq_sessions").select("source_pdf_id,status").eq("id",sessionId).maybeSingle();
-  if(se) throw se;
-  if(s && s.status !== "failed"){ setMcqStatus("Cannot regenerate this session.","error"); return; }
-  if(!s){ setMcqStatus("Session not found.","error"); return; }
-  await generateMcq(s.source_pdf_id);
+async function ensurePdfTextForMcq(pdfId){
+  const {data:pdf, error} = await db.from("pdfs").select("id,file_name,file_url").eq("id",pdfId).maybeSingle();
+  if(error) throw error;
+  if(!pdf || !pdf.file_url) throw new Error("This PDF has no file to read.");
+
+  setMcqGenProgress("Reading the PDF…", "ClassHub is reading the PDF text now. Scanned pages use OCR, so large books can take a few minutes.", "");
+  const signal = mcqGenController ? mcqGenController.signal : undefined;
+  const res = await fetch(pdf.file_url, {signal});
+  if(!res.ok) throw new Error("Could not download the PDF (" + res.status + ").");
+  const blob = await res.blob();
+
+  const rawText = await extractPdfText(blob, (message)=>{
+    const detail = String(message || "Extracting text…");
+    setMcqGenProgress("Reading the PDF…", detail, detail);
+  }, signal);
+
+  /* PostgreSQL rejects NUL bytes (\u0000) with 22P05, and OCR often emits them. */
+  const text = rawText ? String(rawText).replace(/\u0000/g, "") : "";
+  if(!text || !hasSearchableText(text)){
+    const noText = new Error("This PDF is scanned images with no readable text, so ClassHub cannot build questions from it.");
+    noText.code = "NO_READABLE_TEXT";
+    throw noText;
+  }
+
+  const {data:updated, error:updateError} = await db.from("pdfs")
+    .update({content_text:text, rescanned:true})
+    .eq("id",pdfId)
+    .select("id");
+  if(updateError) throw updateError;
+  if(!updated || !updated.length) throw new Error("You don't have permission to prepare this PDF.");
+  showToast("PDF text ready");
 }
 
 window.generateMcq = async function(pdfId){
   if(mcqState.generating) return;
   mcqState.generating = true;
+  mcqGenController = new AbortController();
   showMcqView("generating");
-  document.getElementById("mcqGenMsg").textContent = "Reading the PDF and asking the AI to write questions…";
+  setMcqStatus("");
+  setMcqGenProgress("Generating questions…", "Reading the PDF and asking the AI to write questions from its content…", "");
+
   try{
-    const result = await mcqFetch("generate",{pdf_id:pdfId});
-    // result: {session_id, title, total_questions, questions:[{id, order_index, question_text, options, subject_topic, source_page, difficulty}]}
-    mcqState.sessionId = result.session_id;
-    mcqState.session = { id: result.session_id, title: result.title, total_questions: result.total_questions, source_pdf_id: pdfId, status: "ready" };
-    mcqState.questions = (result.questions || []).map((q,i)=>({
-      id: q.id, order_index: q.order_index, question_text: q.question_text,
-      options: q.options, subject_topic: q.subject_topic, source_page: q.source_page, difficulty: q.difficulty
-    }));
-    mcqState.answers = {}; mcqState.checked = {}; mcqState.results = {}; mcqState.currentIndex = 0; mcqState.attemptId = null; mcqState.finalResult = null;
-    if(!mcqState.questions.length){
-      setMcqStatus("No questions were generated from this PDF.","error");
-      showMcqView("start");
-      await loadMcqPractice();
-      return;
+    let result;
+    try{
+      result = await mcqFetch("generate",{pdf_id:pdfId}, mcqGenController.signal);
+    }catch(error){
+      if(error.code !== "NO_EXTRACTABLE_TEXT") throw error;
+      await ensurePdfTextForMcq(pdfId);
+      throwIfAborted(mcqGenController.signal);
+      showMcqView("generating");
+      setMcqGenProgress("Writing questions…", "The PDF text is ready. Asking the AI to write questions…", "");
+      result = await mcqFetch("generate",{pdf_id:pdfId}, mcqGenController.signal);
     }
-    // Create an attempt and start practising right away.
-    const {data:a,error:ae} = await db.from("mcq_attempts").insert({session_id:result.session_id,user_id:currentUser.id,score:0,total:0}).select("id").single();
-    if(ae) throw ae;
-    mcqState.attemptId = a.id;
-    showMcqView("practice");
-    renderMcqPractice();
+
+    const questions = (result.questions || []).map((q)=>({
+      id: q.id,
+      order_index: q.order_index,
+      question_text: q.question_text,
+      options: q.options || [],
+      subject_topic: q.subject_topic,
+      source_page: q.source_page,
+      difficulty: q.difficulty
+    }));
+
+    if(!questions.length) throw new Error("No questions were generated from this PDF. Try another PDF.");
+    if(questions.some(q=>!q.id)) throw new Error("The AI response was incomplete. Please try again.");
+
+    const {data:attempt, error:attemptError} = await db.from("mcq_attempts")
+      .insert({session_id:result.session_id, user_id:currentUser.id, score:0, total:0})
+      .select("id")
+      .single();
+    if(attemptError) throw attemptError;
+
+    mcqState = {
+      sessionId: result.session_id,
+      session: {id:result.session_id, title:result.title, total_questions:result.total_questions, status:"ready"},
+      questions,
+      answers: {},
+      checked: {},
+      results: {},
+      currentIndex: 0,
+      attemptId: attempt.id,
+      generating: false,
+      checking: false,
+      finishing: false,
+      finalResult: null
+    };
+
+    if(document.getElementById("mcq-practice")?.classList.contains("active")){
+      showMcqView("practice");
+      renderMcqPractice();
+    }
   }catch(error){
     console.error("MCQ generate:", error);
-    setMcqStatus(friendlyError(error,"Could not generate questions. Please try again."),"error");
+    if(error.code === "CANCELLED"){
+      setMcqStatus("");
+      showMcqView("start");
+      await window.loadMcqPractice();
+      return;
+    }
+    setMcqStatus(mcqErrorMessage(error,"Could not generate questions. Please try again."),"error");
     showMcqView("start");
+    await window.loadMcqPractice();
   }finally{
     mcqState.generating = false;
+    mcqGenController = null;
   }
 };
 
 window.startMcqPractice = async function(sessionId){
+  if(!sessionId){ setMcqStatus("Choose a practice session first.","error"); return; }
   if(!currentUser){ setMcqStatus("Please sign in first.","error"); return; }
-  setMcqStatus("");
-  let session = (mcqState.session && mcqState.session.id === sessionId) ? mcqState.session : null;
-  let questions = (mcqState.sessionId === sessionId && mcqState.questions.length) ? mcqState.questions : null;
-  if(!session || !questions){
-    try{
-      const {data:s,error:se} = await db.from("mcq_sessions").select("*").eq("id",sessionId).maybeSingle();
-      if(se) throw se;
-      if(!s){ setMcqStatus("Session not found.","error"); return; }
-      session = s;
-      const {data:qs,error:qe} = await db.from("mcq_questions").select("id,question_text,options,subject_topic,source_page,difficulty,order_index").eq("session_id",sessionId).order("order_index",{ascending:true});
-      if(qe) throw qe;
-      questions = (qs||[]).map(q=>({
-        id:q.id, order_index:q.order_index, question_text:q.question_text,
-        options:q.options, subject_topic:q.subject_topic, source_page:q.source_page, difficulty:q.difficulty
-      }));
-    }catch(error){
-      setMcqStatus(friendlyError(error,"Could not load session.","error"));
-      return;
-    }
-  }
-  mcqState.sessionId = sessionId;
-  mcqState.session = session;
-  mcqState.questions = questions;
-  mcqState.currentIndex = 0;
-  mcqState.answers = {}; mcqState.checked = {}; mcqState.results = {}; mcqState.finalResult = null;
+  setMcqStatus("Loading session…");
+
   try{
-    let attempt = null;
-    const {data:inc,error:ie} = await db.from("mcq_attempts").select("*").eq("session_id",sessionId).eq("user_id",currentUser.id).is("completed_at",null).order("started_at",{ascending:false}).limit(1).maybeSingle();
-    if(ie) throw ie;
-    attempt = inc;
-    if(attempt){
-      mcqState.attemptId = attempt.id;
-      const {data:rs,error:re} = await db.from("mcq_responses").select("question_id,selected_option_index,is_correct").eq("attempt_id",attempt.id);
-      if(re) throw re;
-      for(const r of (rs||[])){
-        mcqState.answers[r.question_id] = r.selected_option_index;
-        mcqState.checked[r.question_id] = true;
-        mcqState.results[r.question_id] = { is_correct: r.is_correct, selected_option_index: r.selected_option_index };
+    const {data:session, error:sessionError} = await db.from("mcq_sessions")
+      .select("id,title,source_pdf_id,status,total_questions")
+      .eq("id",sessionId)
+      .maybeSingle();
+    if(sessionError) throw sessionError;
+    if(!session) throw new Error("This practice session was not found.");
+    if(session.status !== "ready") throw new Error("This session is not ready yet.");
+
+    const {data:questionRows, error:questionsError} = await db.from("mcq_questions")
+      .select("id,question_text,options,subject_topic,source_page,difficulty,order_index")
+      .eq("session_id",sessionId)
+      .order("order_index",{ascending:true});
+    if(questionsError) throw questionsError;
+
+    const questions = (questionRows || []).map(q=>({
+      id:q.id,
+      order_index:q.order_index,
+      question_text:q.question_text,
+      options:q.options || [],
+      subject_topic:q.subject_topic,
+      source_page:q.source_page,
+      difficulty:q.difficulty
+    }));
+    if(!questions.length) throw new Error("This session has no questions.");
+
+    const {data:openAttempts, error:attemptError} = await db.from("mcq_attempts")
+      .select("id,started_at")
+      .eq("session_id",sessionId)
+      .eq("user_id",currentUser.id)
+      .is("completed_at",null)
+      .order("started_at",{ascending:false})
+      .limit(1);
+    if(attemptError) throw attemptError;
+
+    mcqState = {
+      sessionId,
+      session,
+      questions,
+      answers: {},
+      checked: {},
+      results: {},
+      currentIndex: 0,
+      attemptId: null,
+      generating: false,
+      checking: false,
+      finishing: false,
+      finalResult: null
+    };
+
+    const openAttempt = openAttempts && openAttempts[0];
+    if(openAttempt){
+      mcqState.attemptId = openAttempt.id;
+
+      const {data:saved, error:savedError} = await db.from("mcq_responses")
+        .select("question_id,selected_option_index,is_correct")
+        .eq("attempt_id",openAttempt.id);
+      if(savedError) throw savedError;
+      for(const row of (saved || [])){
+        mcqState.answers[row.question_id] = row.selected_option_index;
+        mcqState.checked[row.question_id] = true;
+        mcqState.results[row.question_id] = {
+          question_id: row.question_id,
+          selected_option_index: row.selected_option_index,
+          is_correct: row.is_correct
+        };
       }
-      while(mcqState.currentIndex < questions.length && mcqState.checked[questions[mcqState.currentIndex].id]){
-        mcqState.currentIndex++;
+
+      try{
+        const feedback = await mcqFetch("feedback",{attempt_id:openAttempt.id});
+        for(const row of (feedback.results || [])){
+          mcqState.answers[row.question_id] = row.selected_option_index;
+          mcqState.checked[row.question_id] = true;
+          mcqState.results[row.question_id] = row;
+        }
+      }catch(error){
+        console.warn("MCQ feedback:", error);
       }
-      if(mcqState.currentIndex >= questions.length){
-        await finishMcqPractice();
-        return;
-      }
+
+      const firstUnchecked = questions.findIndex(q=>!mcqState.checked[q.id]);
+      mcqState.currentIndex = firstUnchecked === -1 ? questions.length - 1 : firstUnchecked;
     }else{
-      const {data:a,error:ae} = await db.from("mcq_attempts").insert({session_id:sessionId,user_id:currentUser.id,score:0,total:0}).select("id").single();
-      if(ae) throw ae;
-      mcqState.attemptId = a.id;
+      const {data:attempt, error:createError} = await db.from("mcq_attempts")
+        .insert({session_id:sessionId, user_id:currentUser.id, score:0, total:0})
+        .select("id")
+        .single();
+      if(createError) throw createError;
+      mcqState.attemptId = attempt.id;
     }
+
+    setMcqStatus("");
+    showMcqView("practice");
+    renderMcqPractice();
   }catch(error){
-    setMcqStatus(friendlyError(error,"Could not start the session.","error"));
-    return;
+    console.error("MCQ start session:", error);
+    setMcqStatus(mcqErrorMessage(error,"Could not start this practice session."),"error");
   }
-  showMcqView("practice");
-  renderMcqPractice();
 };
 
 function renderMcqPractice(){
-  const q = mcqState.questions[mcqState.currentIndex];
-  if(!q) return;
-  document.getElementById("mcqProgressText").textContent = `${mcqState.currentIndex + 1} / ${mcqState.questions.length}`;
-  document.getElementById("mcqProgressFill").style.width = `${Math.round((mcqState.currentIndex / Math.max(1,mcqState.questions.length)) * 100)}%`;
+  const question = mcqState.questions[mcqState.currentIndex];
+  if(!question) return;
+
+  const total = mcqState.questions.length;
+  const checkedCount = mcqState.questions.filter(q=>mcqState.checked[q.id]).length;
+
+  document.getElementById("mcqProgressText").textContent = `${mcqState.currentIndex + 1} / ${total}`;
+  document.getElementById("mcqProgressFill").style.width = `${Math.round((checkedCount / Math.max(1,total)) * 100)}%`;
+
+  const metaBox = document.getElementById("mcqQuestionMeta");
+  metaBox.replaceChildren();
   const meta = [];
-  if(q.subject_topic) meta.push(escapeHtml(q.subject_topic));
-  if(q.source_page) meta.push(`Page ${escapeHtml(q.source_page)}`);
-  meta.push(escapeHtml(q.difficulty || "medium"));
-  document.getElementById("mcqQuestionMeta").innerHTML = meta.map(m=>`<span class="tag">${m}</span>`).join("");
-  document.getElementById("mcqQuestionText").textContent = q.question_text;
-  const optsBox = document.getElementById("mcqOptions");
-  optsBox.replaceChildren();
-  const locked = mcqState.checked[q.id] === true;
-  const res = mcqState.results[q.id];
-  // Determine which option is the correct one for highlighting.
+  if(question.subject_topic) meta.push(question.subject_topic);
+  if(question.source_page) meta.push("Page " + question.source_page);
+  meta.push(question.difficulty || "medium");
+  meta.forEach(text=>metaBox.appendChild(makeElement("span","tag",text)));
+
+  document.getElementById("mcqQuestionText").textContent = question.question_text;
+
+  const locked = mcqState.checked[question.id] === true;
+  const result = mcqState.results[question.id];
   let correctIndex = -1;
-  if(res){
-    correctIndex = res.is_correct ? (mcqState.answers[q.id] != null ? mcqState.answers[q.id] : -1)
-      : (res.correct_option_index != null ? res.correct_option_index : -1);
+  if(locked && result){
+    if(result.is_correct) correctIndex = mcqState.answers[question.id];
+    else if(typeof result.correct_option_index === "number") correctIndex = result.correct_option_index;
   }
-  (q.options || []).forEach(opt=>{
-    const checked = mcqState.answers[q.id] === opt.index;
-    const isCorrect = locked && res && res.is_correct && opt.index === correctIndex;
-    const isWrong = locked && res && !res.is_correct && opt.index === mcqState.answers[q.id];
-    const cls = ["mcq-option"];
-    if(locked) cls.push("locked");
-    if(isWrong) cls.push("wrong");
-    if(isCorrect) cls.push("correct");
-    const label = makeElement("label",cls.join(" "));
+
+  const optionsBox = document.getElementById("mcqOptions");
+  optionsBox.replaceChildren();
+  (question.options || []).forEach(option=>{
+    const selected = mcqState.answers[question.id] === option.index;
+    const isCorrect = locked && option.index === correctIndex;
+    const isWrong = locked && !result.is_correct && selected;
+
+    const label = makeElement("label","mcq-option" + (locked ? " locked" : "") + (isCorrect ? " correct" : "") + (isWrong ? " wrong" : ""));
     const input = document.createElement("input");
-    input.type = "radio"; input.name = "mcqOption"; input.value = String(opt.index);
-    input.disabled = locked; input.checked = checked;
-    input.onchange = ()=> selectMcqOption(q.id, opt.index);
-    const span = makeElement("span","mcq-option-label",opt.text);
-    label.appendChild(input); label.appendChild(span);
-    optsBox.appendChild(label);
+    input.type = "radio";
+    input.name = "mcqOption";
+    input.value = String(option.index);
+    input.checked = selected;
+    input.disabled = locked;
+    input.addEventListener("change",()=>selectMcqOption(question.id,option.index));
+    label.appendChild(input);
+    label.appendChild(makeElement("span","mcq-option-label",option.text));
+    if(isCorrect || isWrong){
+      label.appendChild(makeElement("span","mcq-option-mark",isCorrect ? "✓" : "✕"));
+    }
+    optionsBox.appendChild(label);
   });
-  const checkBtn = document.getElementById("mcqCheckBtn");
-  const expl = document.getElementById("mcqExplanation");
-  const nextBtn = document.getElementById("mcqNextBtn");
-  const prevBtn = document.getElementById("mcqPrevBtn");
-  prevBtn.disabled = mcqState.currentIndex === 0;
-  const isLast = mcqState.currentIndex >= mcqState.questions.length - 1;
-  checkBtn.disabled = locked || mcqState.answers[q.id] == null;
-  checkBtn.textContent = locked ? "Answer checked" : "Check Answer";
-  if(locked && res){
-    expl.className = "mcq-explanation " + (res.is_correct ? "correct" : "incorrect");
-    let html = `<strong>${res.is_correct ? "Correct" : "Incorrect"}.</strong> ${escapeHtml(res.explanation)}`;
-    if(!res.is_correct && res.correct_option_index != null){
-      html += `<br><strong>Correct answer:</strong> Option ${res.correct_option_index + 1}.`;
+
+  const explanation = document.getElementById("mcqExplanation");
+  if(locked && result){
+    const wasCorrect = result.is_correct === true;
+    explanation.className = "mcq-explanation " + (wasCorrect ? "correct" : "incorrect");
+    explanation.replaceChildren();
+    explanation.appendChild(makeElement("strong","",wasCorrect ? "✓ Correct!" : "✕ Incorrect."));
+    explanation.appendChild(document.createTextNode(" " + (result.explanation || "")));
+    if(!wasCorrect){
+      const correctText = mcqOptionText(question,correctIndex);
+      if(correctText){
+        explanation.appendChild(document.createElement("br"));
+        explanation.appendChild(makeElement("strong","","Correct answer: "));
+        explanation.appendChild(document.createTextNode(correctText));
+      }
     }
-    expl.innerHTML = html;
-    expl.style.display = "block";
-  } else {
-    expl.style.display = "none";
+    explanation.style.display = "block";
+  }else{
+    explanation.style.display = "none";
+    explanation.replaceChildren();
   }
-  if(locked){
-    if(isLast){
-      nextBtn.textContent = "Finish & Review";
-      nextBtn.onclick = finishMcqPractice;
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.textContent = "Next";
-      nextBtn.onclick = mcqNextQuestion;
-      nextBtn.disabled = false;
-    }
-  } else {
-    nextBtn.textContent = "Next";
-    nextBtn.onclick = mcqNextQuestion;
-    nextBtn.disabled = true;
+
+  const checkButton = document.getElementById("mcqCheckBtn");
+  checkButton.disabled = locked || mcqState.answers[question.id] == null;
+  checkButton.textContent = locked ? "Answer checked" : "Check Answer";
+
+  const prevButton = document.getElementById("mcqPrevBtn");
+  const nextButton = document.getElementById("mcqNextBtn");
+  const finishButton = document.getElementById("mcqFinishBtn");
+
+  prevButton.disabled = mcqState.currentIndex === 0;
+
+  const isLast = mcqState.currentIndex >= total - 1;
+  if(isLast){
+    nextButton.style.display = "none";
+    nextButton.disabled = true;
+  }else{
+    nextButton.style.display = "";
+    /* Students may skip a question and come back to it later. */
+    nextButton.disabled = false;
   }
+
+  /* Always reachable so a session can be submitted with unanswered questions. */
+  finishButton.style.display = "";
+  finishButton.disabled = !!mcqState.checking || !!mcqState.finishing;
 }
 
-function selectMcqOption(qId, optionIndex){
-  if(mcqState.checked[qId]) return;
-  mcqState.answers[qId] = optionIndex;
+function selectMcqOption(questionId, optionIndex){
+  if(mcqState.checked[questionId]) return;
+  mcqState.answers[questionId] = optionIndex;
   renderMcqPractice();
 }
 
 async function checkMcqAnswer(){
-  const q = mcqState.questions[mcqState.currentIndex];
-  if(!q) return;
-  if(mcqState.checked[q.id]) return;
-  if(mcqState.answers[q.id] == null){
-    setMcqStatus("Please select an answer first.","error");
+  const question = mcqState.questions[mcqState.currentIndex];
+  if(!question || mcqState.checked[question.id] || mcqState.checking) return;
+  if(mcqState.answers[question.id] == null){
+    setMcqStatus("Choose an answer first.","error");
     return;
   }
+
+  mcqState.checking = true;
+  const checkButton = document.getElementById("mcqCheckBtn");
+  checkButton.disabled = true;
+  checkButton.textContent = "Checking…";
   setMcqStatus("");
+
   try{
-    const result = await mcqFetch("validate",{
+    const response = await mcqFetch("validate",{
       attempt_id: mcqState.attemptId,
-      responses:[{ question_id: q.id, selected_option_index: mcqState.answers[q.id] }],
-      finalize:false
+      responses:[{
+        question_id: question.id,
+        selected_option_index: mcqState.answers[question.id]
+      }]
     });
-    // result.results[0] holds this question's outcome
-    const outcome = (result.results && result.results[0]) || {};
-    mcqState.checked[q.id] = true;
-    mcqState.results[q.id] = {
-      is_correct: outcome.is_correct === true,
-      selected_option_index: mcqState.answers[q.id],
-      correct_option_index: outcome.correct_option_index,
-      explanation: outcome.explanation || ""
-    };
-    renderMcqPractice();
+    const outcome = response.results && response.results[0];
+    if(!outcome) throw new Error("The server did not return feedback. Please try again.");
+    mcqState.checked[question.id] = true;
+    mcqState.results[question.id] = outcome;
   }catch(error){
     console.error("MCQ check:", error);
-    setMcqStatus(friendlyError(error,"Could not check your answer. Please try again."),"error");
+    setMcqStatus(mcqErrorMessage(error,"Could not check your answer. Please try again."),"error");
+  }finally{
+    mcqState.checking = false;
+    renderMcqPractice();
   }
 }
 
 function mcqNextQuestion(){
-  if(mcqState.checked[mcqState.questions[mcqState.currentIndex].id] !== true) return;
   if(mcqState.currentIndex < mcqState.questions.length - 1){
     mcqState.currentIndex++;
     renderMcqPractice();
+    window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
   }
 }
 
@@ -6168,80 +6432,144 @@ function mcqPrevQuestion(){
   if(mcqState.currentIndex > 0){
     mcqState.currentIndex--;
     renderMcqPractice();
+    window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
   }
 }
 
 async function finishMcqPractice(){
-  const responses = mcqState.questions.map(q=>({
-    question_id: q.id,
-    selected_option_index: mcqState.answers[q.id] == null ? -1 : mcqState.answers[q.id]
-  }));
+  if(mcqState.finishing || mcqState.checking) return;
+  if(!mcqState.attemptId){ setMcqStatus("Start a practice session first.","error"); return; }
+
+  const allChecked = mcqState.questions.every(q=>mcqState.checked[q.id]);
+  if(!allChecked && !confirm("Some questions are unanswered. Submit this practice anyway?")) return;
+
+  mcqState.finishing = true;
+  const finishButton = document.getElementById("mcqFinishBtn");
+  if(finishButton) finishButton.disabled = true;
+  setMcqStatus("Submitting your answers…");
+
   try{
+    const responses = mcqState.questions.map(q=>({
+      question_id:q.id,
+      selected_option_index: mcqState.answers[q.id] == null ? -1 : mcqState.answers[q.id]
+    }));
     const result = await mcqFetch("validate",{
-      attempt_id: mcqState.attemptId,
-      responses: responses,
+      attempt_id:mcqState.attemptId,
+      responses,
       finalize:true
     });
+
+    for(const row of (result.results || [])){
+      mcqState.answers[row.question_id] = row.selected_option_index;
+      mcqState.checked[row.question_id] = true;
+      mcqState.results[row.question_id] = row;
+    }
     mcqState.finalResult = result;
+    setMcqStatus("");
     showResultView();
   }catch(error){
     console.error("MCQ finish:", error);
-    setMcqStatus(friendlyError(error,"Could not finish the session.","error"));
+    setMcqStatus(mcqErrorMessage(error,"Could not submit this practice session."),"error");
+  }finally{
+    mcqState.finishing = false;
+    if(finishButton) finishButton.disabled = false;
   }
 }
 
 function showResultView(){
-  const r = mcqState.finalResult;
-  if(!r) return;
-  document.getElementById("mcqResultScore").textContent = r.accuracy + "%";
-  document.getElementById("mcqResultScore").className = "mcq-score " + (r.accuracy >= 60 ? "correct" : "incorrect");
-  document.getElementById("mcqResultMessage").textContent = r.accuracy >= 60 ? "Well done!" : "Keep practising — you'll get there.";
-  document.getElementById("mcqResultCorrect").textContent = r.correct;
-  document.getElementById("mcqResultIncorrect").textContent = r.incorrect;
-  document.getElementById("mcqResultTotal").textContent = r.total;
-  document.getElementById("mcqResultTime").textContent = (r.time_taken_seconds || 0) + "s";
+  const result = mcqState.finalResult;
+  if(!result) return;
+
+  const scoreEl = document.getElementById("mcqResultScore");
+  scoreEl.textContent = result.accuracy + "%";
+  scoreEl.className = "mcq-score " + (result.accuracy >= 60 ? "correct" : "incorrect");
+
+  document.getElementById("mcqResultMessage").textContent =
+    result.accuracy >= 80 ? "Excellent — you know this material well." :
+    result.accuracy >= 60 ? "Well done. Review the explanations to lock it in." :
+    "Keep practising. Read the explanations, then try the session again.";
+
+  document.getElementById("mcqResultCorrect").textContent = result.correct;
+  document.getElementById("mcqResultIncorrect").textContent = result.incorrect;
+  document.getElementById("mcqResultTotal").textContent = result.total;
+  document.getElementById("mcqResultTime").textContent = formatMcqTime(result.time_taken_seconds);
+
+  const unansweredWrap = document.getElementById("mcqResultUnansweredWrap");
+  if(unansweredWrap){
+    unansweredWrap.style.display = result.unanswered > 0 ? "" : "none";
+    document.getElementById("mcqResultUnanswered").textContent = result.unanswered || 0;
+  }
+
   showMcqView("result");
+  window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
 }
 
 window.openMcqReview = function(){
   const list = document.getElementById("mcqReviewList");
+  if(!list) return;
   list.replaceChildren();
+
   if(!mcqState.questions.length){
     list.appendChild(makeEmptyState("No questions to review.","i-file"));
     showMcqView("review");
     return;
   }
-  mcqState.questions.forEach((q,i)=>{
+
+  mcqState.questions.forEach((question,index)=>{
+    const result = mcqState.results[question.id] || {};
+    const selected = mcqState.answers[question.id];
+    const correctIndex = typeof result.correct_option_index === "number"
+      ? result.correct_option_index
+      : (result.is_correct ? selected : -1);
+
     const item = makeElement("div","mcq-review-item");
-    item.appendChild(makeElement("h3","mcq-review-q",`Q${i + 1}. ${escapeHtml(q.question_text)}`));
-    const ans = makeElement("div","mcq-review-ans");
-    const selected = mcqState.answers[q.id];
-    const res = mcqState.results[q.id];
-    const correctIndex = res && res.correct_option_index != null ? res.correct_option_index : -1;
-    const selectedText = selected != null && q.options && q.options[selected] ? q.options[selected].text : "Not answered";
-    const correctText = correctIndex != null && q.options && q.options[correctIndex] ? q.options[correctIndex].text : "";
-    const selTag = makeElement("span","tag " + (res && res.is_correct ? "correct" : (selected != null ? "wrong" : "")), selected != null ? `You: ${escapeHtml(selectedText)}` : "You: Not answered");
-    ans.appendChild(selTag);
-    if(!res.is_correct && correctText){
-      const corrTag = makeElement("span","tag correct",`Correct: ${escapeHtml(correctText)}`);
-      ans.appendChild(corrTag);
+    item.appendChild(makeElement("h3","mcq-review-q",`Q${index + 1}. ${question.question_text}`));
+
+    const meta = [];
+    if(question.subject_topic) meta.push(question.subject_topic);
+    if(question.source_page) meta.push("Page " + question.source_page);
+    if(question.difficulty) meta.push(question.difficulty);
+    if(meta.length) item.appendChild(makeElement("p","mcq-review-meta",meta.join(" · ")));
+
+    const answers = makeElement("div","mcq-review-ans");
+    if(selected == null || selected < 0){
+      answers.appendChild(makeElement("span","tag wrong","✕ Your answer: Not answered"));
+    }else{
+      const selectedText = mcqOptionText(question,selected);
+      answers.appendChild(makeElement(
+        "span",
+        "tag " + (result.is_correct ? "correct" : "wrong"),
+        (result.is_correct ? "✓" : "✕") + " Your answer: " + selectedText
+      ));
     }
-    item.appendChild(ans);
-    if(res && res.explanation){
-      const expl = makeElement("p","mcq-review-expl", escapeHtml(res.explanation));
-      item.appendChild(expl);
+
+    if(result.is_correct !== true){
+      const correctText = mcqOptionText(question,correctIndex);
+      if(correctText) answers.appendChild(makeElement("span","tag correct","✓ Correct answer: " + correctText));
+    }
+    item.appendChild(answers);
+
+    if(result.explanation){
+      item.appendChild(makeElement("p","mcq-review-expl",result.explanation));
     }
     list.appendChild(item);
   });
+
   showMcqView("review");
+  window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
+};
+
+function retryMcqPractice(){
+  if(mcqState.sessionId) startMcqPractice(mcqState.sessionId);
+  else setMcqStatus("Open a practice session first.","error");
 }
 
 function cancelMcqGenerate(){
-  mcqState.generating = false;
-  showMcqView("start");
+  if(mcqGenController) mcqGenController.abort();
 }
 
 /* ================= REALTIME ================= */
+
 async function refreshActivePDFViews(){
   if(currentPage==="notes" && selectedNoteSubject) await loadCategorizedNotePDFs();
   if(currentPage==="pdfs"){

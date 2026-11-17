@@ -11,11 +11,14 @@
  * the user, checks PDF access, and performs privileged writes with the service
  * role so answer keys stay server-side.
  *
+ * Actions:
+ *   { action: "generate", pdf_id }
+ *   { action: "validate", attempt_id, responses: [{ question_id, selected_option_index }], finalize? }
+ *   { action: "feedback", attempt_id }
+ *
  * Required secrets:
- *   GROQ_API_KEY          (same provider as ai-chat)
- *   SUPABASE_SERVICE_ROLE_KEY
- * Optional:
- *   GROQ_MODEL (defaults to openai/gpt-oss-120b)
+ *   GROQ_API_KEY                 (same provider as ai-chat)
+ *   SUPABASE_SERVICE_ROLE_KEY    (provided by the Edge Runtime)
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -27,8 +30,11 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
 const GROQ_MODEL = Deno.env.get("GROQ_MODEL") || "openai/gpt-oss-120b";
-const GROQ_TIMEOUT_MS = 120_000;
-const GROQ_MAX_COMPLETION_TOKENS = 4096;
+const GROQ_TIMEOUT_MS = 45_000;
+const MAX_QUESTIONS = 10;
+const MIN_TEXT_CHARS = 200;
+const MAX_CONTEXT_CHARS = 14_000;
+const MAX_GENERATIONS_PER_HOUR = 20;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,128 +66,172 @@ function parseJsonSafe(value: string): unknown {
   }
 }
 
-async function readErrorBody(response: Response): Promise<unknown> {
-  try {
-    return await response.clone().json();
-  } catch {
-    try {
-      return await response.clone().text();
-    } catch {
-      return null;
-    }
-  }
-}
-
 function isTimeoutError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
-    return /timed? ?out/i.test(String(error ?? ""));
-  }
-  const name = "name" in error ? String((error as { name?: unknown }).name ?? "") : "";
+  const name = error && typeof error === "object" && "name" in error
+    ? String((error as { name?: unknown }).name ?? "")
+    : "";
   return name === "TimeoutError" || name === "AbortError" ||
-    /timed? ?out/i.test(String(error));
-}
-
-async function callGroq(messages: { role: string; content: string }[]): Promise<Response> {
-  return await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages,
-      stream: false,
-      max_completion_tokens: GROQ_MAX_COMPLETION_TOKENS,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-    }),
-    signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
-  });
-}
-
-function groqErrorResponse(status: number, detail: unknown): Response {
-  if (status === 401 || status === 403) {
-    return json(503, { error: "The AI assistant is not configured correctly.", code: "AI_AUTH_ERROR" });
-  }
-  if (status === 429 || status === 498) {
-    return json(503, { error: "The AI is busy right now. Please wait a few seconds and try again.", code: "AI_BUSY" }, { "Retry-After": "5" });
-  }
-  if (status === 413) {
-    return json(413, { error: "The AI request was too large. Try a shorter document.", code: "AI_CONTEXT_TOO_LARGE" });
-  }
-  if (status >= 500) {
-    return json(503, { error: "The AI service is temporarily unavailable. Please try again shortly.", code: "AI_UNAVAILABLE" });
-  }
-  return json(502, { error: "The AI could not process that request. Please try again.", code: "AI_ERROR" });
+    /timed? ?out|aborted/i.test(String(error ?? ""));
 }
 
 /* ------------------------------------------------------------------ */
-/* Question-shape validation                                          */
+/* Groq                                                               */
+/* ------------------------------------------------------------------ */
+
+class AiError extends Error {
+  status: number;
+  code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a careful academic question writer. Return only valid JSON matching the requested schema. No markdown fences, no extra prose.",
+          },
+          { role: "user", content: prompt },
+        ],
+        stream: false,
+        max_completion_tokens: 3000,
+        temperature,
+        response_format: { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw new AiError(504, "AI_TIMEOUT", "The AI took too long to generate questions. Please try again.");
+    }
+    throw new AiError(502, "AI_NETWORK_ERROR", "Could not reach the AI service. Check your connection and try again.");
+  }
+
+  if (!response.ok) {
+    // Drain the body so the connection can be reused, but never log secrets.
+    try { await response.text(); } catch { /* ignore */ }
+    if (response.status === 401 || response.status === 403) {
+      throw new AiError(503, "AI_AUTH_ERROR", "The AI service is not configured correctly.");
+    }
+    if (response.status === 429) {
+      throw new AiError(503, "AI_BUSY", "The AI is busy right now. Please wait a few seconds and try again.");
+    }
+    if (response.status === 413) {
+      throw new AiError(413, "AI_CONTEXT_TOO_LARGE", "The PDF content is too large for the AI. Try a shorter document.");
+    }
+    if (response.status >= 500) {
+      throw new AiError(503, "AI_UNAVAILABLE", "The AI service is temporarily unavailable. Please try again shortly.");
+    }
+    throw new AiError(502, "AI_ERROR", "The AI could not process that request. Please try again.");
+  }
+
+  let payload: any;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new AiError(502, "AI_BAD_FORMAT", "The AI returned an unreadable response. Please try again.");
+  }
+
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new AiError(502, "AI_EMPTY", "The AI returned an empty response. Please try again.");
+  }
+  return content;
+}
+
+/* ------------------------------------------------------------------ */
+/* Question validation                                                */
 /* ------------------------------------------------------------------ */
 
 type McqQuestion = {
   question: string;
-  options: string[];        // exactly 4
+  options: string[];        // exactly 4, distinct
   correct_index: number;    // 0-3
   explanation: string;
-  subject_topic?: string;
-  source_page?: string;
-  difficulty?: "easy" | "medium" | "hard";
+  subject_topic: string | null;
+  source_page: string | null;
+  difficulty: "easy" | "medium" | "hard";
 };
 
-function validateQuestionShape(value: unknown): value is McqQuestion {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const r = value as Record<string, unknown>;
-  if (typeof r.question !== "string" || !r.question.trim()) return false;
-  if (!Array.isArray(r.options) || r.options.length !== 4) return false;
-  if (!r.options.every((o) => typeof o === "string" && o.trim())) return false;
+function cleanText(value: unknown, max: number): string {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/\[\[PAGE\s+\d+\]\]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function normaliseQuestion(raw: unknown, seen: Set<string>): McqQuestion | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+
+  const question = cleanText(r.question, 1200);
+  if (question.length < 12) return null;
+
+  // Reject question shapes that cannot have exactly one correct option.
+  const badShape =
+    /\b(what are|list|enumerate|name the|select all|choose all|which of the following are|except|not one of|is not|are not|which is false|which is incorrect|true or false)\b/i;
+  if (badShape.test(question)) return null;
+
+  if (!Array.isArray(r.options) || r.options.length !== 4) return null;
+  const options = r.options.map((o) => cleanText(o, 500));
+  if (options.some((o) => !o)) return null;
+  if (options.some((o) => /^(all|none)\s+of\s+(the\s+)?(above|these)$|^both\s+[a-d]\s+and\s+[a-d]$/i.test(o))) return null;
+  const distinct = new Set(options.map((o) => o.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()));
+  if (distinct.size !== 4) return null;
+
   if (typeof r.correct_index !== "number" || !Number.isInteger(r.correct_index) ||
-    r.correct_index < 0 || r.correct_index > 3) return false;
-  if (typeof r.explanation !== "string" || !r.explanation.trim()) return false;
-  if (r.subject_topic !== undefined && typeof r.subject_topic !== "string") return false;
-  if (r.source_page !== undefined && typeof r.source_page !== "string") return false;
-  if (r.difficulty !== undefined && !["easy","medium","hard"].includes(r.difficulty)) return false;
-  return true;
-}
+    r.correct_index < 0 || r.correct_index > 3) return null;
 
-/* Build a strict prompt that asks Groq for JSON-only output. */
-function buildGenerationPrompt(pdfTitle: string, text: string, count: number): string {
-  const excerpt = text.slice(0, 12000);   // bound the prompt size
-  return `You are an expert academic question writer for ClassHub (Ayurveda students).
+  const explanation = cleanText(r.explanation, 900);
+  if (explanation.length < 8) return null;
 
-TASK
-Read the source material below (extracted from a PDF titled "${pdfTitle}") and write exactly ${count} single-correct multiple-choice questions grounded ONLY in that material.
+  // Soft safety net: the explanation must mention at least one of the four
+  // options. This catches questions whose real answer is missing from the
+  // options (e.g. "Kashaya" asked with only Bitter/Sweet/Sour/Salty).
+  const explanationLower = explanation.toLowerCase();
+  const mentionsAnOption = options.some((option) => {
+    if (explanationLower.includes(option.toLowerCase())) return true;
+    return option.toLowerCase().split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word.length >= 4)
+      .some((word) => explanationLower.includes(word));
+  });
+  if (!mentionsAnOption) return null;
 
-OUTPUT FORMAT
-Return ONLY a single JSON object with this shape and nothing else:
-{
-  "questions": [
-    {
-      "question": "<question text>",
-      "options": ["<option A>", "<option B>", "<option C>", "<option D>"],
-      "correct_index": <0|1|2|3>,
-      "explanation": "<one or two sentences explaining why the correct option is correct, based on the source>",
-      "subject_topic": "<topic or subject, or null>",
-      "source_page": "<page reference or null>",
-      "difficulty": "<easy|medium|hard>"
-    }
-  ]
-}
+  const difficulty = r.difficulty === "easy" || r.difficulty === "hard" ? r.difficulty : "medium";
 
-QUALITY RULES (mandatory)
-1. Every question and answer must be answerable from the source material. Do not invent facts.
-2. Exactly one correct option. All four options must be present and distinct.
-3. No ambiguous or double-negative questions.
-4. No duplicate questions.
-5. The correct_index must match the explanation and the source material.
-6. difficulty is one of: easy, medium, hard.
-7. If the source contains too little usable text to write ${count} good questions, write as many as possible (minimum 1) rather than padding.
+  const key = question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  if (seen.has(key)) return null;
+  seen.add(key);
 
-SOURCE MATERIAL:
----
-${excerpt}
----`;
+  return {
+    question,
+    options,
+    correct_index: r.correct_index,
+    explanation,
+    subject_topic: cleanText(r.subject_topic, 120) || null,
+    source_page: cleanText(r.source_page, 40) || null,
+    difficulty,
+  };
 }
 
 function extractJsonObject(text: string): unknown {
@@ -191,20 +241,165 @@ function extractJsonObject(text: string): unknown {
   return parseJsonSafe(text.slice(start, end + 1));
 }
 
+function parseGeneratedQuestions(content: string): McqQuestion[] {
+  const parsed = extractJsonObject(content);
+  if (!parsed || typeof parsed !== "object") return [];
+  const list = Array.isArray((parsed as any).questions) ? (parsed as any).questions : [];
+  const seen = new Set<string>();
+  const questions: McqQuestion[] = [];
+  for (const raw of list) {
+    const q = normaliseQuestion(raw, seen);
+    if (q) questions.push(q);
+    if (questions.length >= MAX_QUESTIONS) break;
+  }
+  return questions;
+}
+
+function buildGenerationPrompt(pdfTitle: string, text: string, count: number): string {
+  return `You are an expert academic question writer for ClassHub (Ayurveda students).
+
+TASK
+Read the source material below (extracted from a PDF titled "${pdfTitle}") and write up to ${count} single-correct multiple-choice questions grounded ONLY in that material.
+
+OUTPUT FORMAT
+Return ONLY a single JSON object with this shape and nothing else:
+{
+  "questions": [
+    {
+      "question": "<question text>",
+      "options": ["<option A>", "<option B>", "<option C>", "<option D>"],
+      "correct_index": <0|1|2|3>,
+      "explanation": "<one or two short sentences explaining why the correct option is correct, based on the source>",
+      "subject_topic": "<topic or subject, or null>",
+      "source_page": "<page number from the [[PAGE n]] marker, or null>",
+      "difficulty": "<easy|medium|hard>"
+    }
+  ]
+}
+
+QUALITY RULES (mandatory)
+1. Every question and answer must be answerable from the source material. Do not invent facts.
+2. Exactly one correct option. All four options must be present and distinct.
+3. Every distractor must be clearly wrong to an expert. Never use an option that is also correct.
+4. Never ask the student to list, name, enumerate, or pick multiple items.
+   BAD: "What are the four types of Ayu?" with Hitayu / Ahitayu / Sukhayu / Duhkhayu as options — all four are correct.
+   GOOD: "According to the source, what does Ayu mean?" with one correct definition and three wrong definitions.
+5. Avoid negative or tricky wording: no NOT, EXCEPT, FALSE, "which is incorrect", or double negatives.
+6. Never use "All of the above", "None of the above", or "Both A and B" as an option.
+7. No ambiguous questions and no duplicate or near-duplicate questions.
+8. correct_index must match the explanation and the source material.
+9. The source contains [[PAGE n]] markers. When a question comes from a specific page, set source_page to that number as a string.
+10. If the source contains too little usable material for ${count} good questions, return fewer (at least 1) instead of padding.
+
+SOURCE MATERIAL:
+---
+${text}
+---`;
+}
+
+/* Second pass: audit every question for single-correctness and grounding.
+   Returns the indices the auditor considers safe, or null when the audit
+   itself could not be parsed (callers then keep the shape-valid questions). */
+function buildReviewPrompt(pdfTitle: string, text: string, questions: McqQuestion[]): string {
+  const payload = questions.map((q, index) => ({
+    index,
+    question: q.question,
+    options: q.options,
+    correct_index: q.correct_index,
+    explanation: q.explanation,
+  }));
+  return `You are auditing multiple-choice questions for a study app. Use ONLY the source material below (from the PDF "${pdfTitle}") to decide which questions are safe to show students.
+
+A question is VALID unless it has a clear violation:
+- Two or more options are correct according to the source.
+- The question asks for a list of items instead of one item.
+- correct_index clearly contradicts the explanation or the source.
+- The question uses NOT / EXCEPT / FALSE / "all of the above" tricks.
+
+Do not reject a question merely because its explanation is short or paraphrased.
+When you are unsure, keep the question.
+
+OUTPUT FORMAT (JSON only):
+{"valid_indices":[0,2,3],"rejected":[{"index":1,"reason":"short reason"}]}
+
+QUESTIONS:
+${JSON.stringify(payload)}
+
+SOURCE MATERIAL:
+---
+${text}
+---`;
+}
+
+async function auditQuestions(
+  pdfTitle: string,
+  text: string,
+  questions: McqQuestion[],
+): Promise<McqQuestion[] | null> {
+  try {
+    let content: string;
+    try {
+      content = await callGroq(buildReviewPrompt(pdfTitle, text, questions), 0);
+    } catch (error) {
+      if (error instanceof AiError && error.code === "AI_BUSY") {
+        await sleep(2500);
+        content = await callGroq(buildReviewPrompt(pdfTitle, text, questions), 0);
+      } else {
+        throw error;
+      }
+    }
+    const parsed = extractJsonObject(content) as any;
+    if (!parsed || !Array.isArray(parsed.valid_indices)) {
+      return null;
+    }
+    const valid = new Set<number>();
+    for (const value of parsed.valid_indices) {
+      if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value < questions.length) {
+        valid.add(value);
+      }
+    }
+    return questions.filter((_, index) => valid.has(index));
+  } catch (error) {
+    console.warn("mcq: audit skipped", String(error).slice(0, 200));
+    return null;
+  }
+}
+
 /* ------------------------------------------------------------------ */
-/* Handlers                                                           */
+/* Generate                                                           */
 /* ------------------------------------------------------------------ */
 
-async function handleGenerate(supabase: any, user: any, body: any): Promise<Response> {
-  const pdfId = body && typeof body.pdf_id === "string" ? body.pdf_id : null;
-  if (!pdfId) {
+async function handleGenerate(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const rawId = body?.pdf_id;
+  const pdfId = typeof rawId === "number" ? String(rawId)
+    : typeof rawId === "string" ? rawId.trim()
+    : "";
+  if (!/^\d+$/.test(pdfId)) {
     return json(400, { error: "A PDF is required.", code: "MISSING_PDF" });
+  }
+
+  // Basic abuse guard: generation is expensive.
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  try {
+    const { count } = await supabase
+      .from("mcq_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", hourAgo);
+    if (typeof count === "number" && count >= MAX_GENERATIONS_PER_HOUR) {
+      return json(429, {
+        error: `You have generated ${MAX_GENERATIONS_PER_HOUR} quizzes this hour. Please try again later.`,
+        code: "RATE_LIMITED",
+      });
+    }
+  } catch (error) {
+    console.warn("mcq: rate-limit check skipped", String(error));
   }
 
   // Verify the student can read this PDF and that it has extractable text.
   const { data: pdf, error: pdfError } = await supabase
     .from("pdfs")
-    .select("id, file_name, subject, content_text")
+    .select("id, file_name, subject, subcategory, content_text")
     .eq("id", pdfId)
     .maybeSingle();
 
@@ -215,69 +410,63 @@ async function handleGenerate(supabase: any, user: any, body: any): Promise<Resp
   if (!pdf) {
     return json(404, { error: "PDF not found or you do not have access to it.", code: "PDF_NOT_FOUND" });
   }
-  const contentText = (pdf.content_text || "").trim();
-  if (!contentText || contentText.length < 200) {
-    return json(400, {
-      error: "This PDF has no extractable text (it may be a scanned image without OCR). Upload a text-based PDF or re-scan it so ClassHub can read it.",
+
+  const contentText = String(pdf.content_text || "").trim();
+  if (contentText.length < MIN_TEXT_CHARS) {
+    return json(422, {
+      error: "This PDF has no extractable text yet (it may be a scanned image). ClassHub can try to read it with OCR first.",
       code: "NO_EXTRACTABLE_TEXT",
     });
   }
 
-  // Ask the AI to generate questions.
-  let groqResponse: Response;
-  try {
-    groqResponse = await callGroq([
-      {
-        role: "system",
-        content: "You are a careful academic question writer. Return only valid JSON matching the requested schema. Do not include markdown fences or extra prose.",
-      },
-      { role: "user", content: buildGenerationPrompt(pdf.file_name || "PDF", contentText, 10) },
-    ]);
-  } catch (error) {
-    console.error("mcq: Groq fetch failed", error);
-    const timedOut = isTimeoutError(error);
-    return json(timedOut ? 504 : 502, {
-      error: timedOut ? "The AI took too long to generate questions. Please try again." : "Could not reach the AI service.",
-      code: "AI_NETWORK_ERROR",
-    });
-  }
+  const context = contentText.slice(0, MAX_CONTEXT_CHARS);
+  const count = context.length > 4000 ? MAX_QUESTIONS + 2 : 6;
+  const prompt = buildGenerationPrompt(pdf.file_name || "PDF", context, count);
 
-  if (!groqResponse.ok) {
-    const detail = await readErrorBody(groqResponse);
-    return groqErrorResponse(groqResponse.status, detail);
+  // Ask the AI, validating the output; retry once when fewer than five good
+  // questions came back (the extra request also compensates for strict filters).
+  const collected = new Map<string, McqQuestion>();
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 2 && collected.size < 5; attempt++) {
+    try {
+      const content = await callGroq(prompt);
+      for (const question of parseGeneratedQuestions(content)) {
+        const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+        if (!collected.has(key)) collected.set(key, question);
+      }
+      if (!collected.size) {
+        console.warn(`mcq: AI produced no valid questions (attempt ${attempt + 1})`);
+      }
+    } catch (error) {
+      lastError = error;
+      if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
+      if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
+    }
   }
+  const drafted = [...collected.values()].slice(0, MAX_QUESTIONS);
 
-  let bodyText = "";
-  try { bodyText = await groqResponse.text(); } catch {
-    return json(502, { error: "The AI returned an empty response.", code: "AI_EMPTY" });
-  }
-
-  const parsed = extractJsonObject(bodyText);
-  if (!parsed || typeof parsed !== "object") {
-    console.error("mcq: AI did not return JSON", bodyText.slice(0, 500));
-    return json(502, { error: "The AI returned an unreadable response. Please try again.", code: "AI_BAD_FORMAT" });
-  }
-
-  const rawQuestions = Array.isArray((parsed as any).questions) ? (parsed as any).questions : [];
-  const questions: McqQuestion[] = [];
-  for (const q of rawQuestions) {
-    if (validateQuestionShape(q)) questions.push(q);
-    if (questions.length >= 10) break;
-  }
-
-  if (questions.length === 0) {
-    return json(400, {
-      error: "The AI could not generate usable questions from this PDF. The content may be too short or unstructured.",
+  if (!drafted.length) {
+    if (lastError instanceof AiError) {
+      return json(lastError.status, { error: lastError.message, code: lastError.code });
+    }
+    return json(422, {
+      error: "The AI could not generate usable questions from this PDF. The content may be too short, scanned, or unstructured. Try another PDF.",
       code: "NO_QUESTIONS_GENERATED",
     });
   }
 
-  // Persist server-side with the service role (answer keys never touch the client).
-  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  // Audit the draft against the source; keep the draft when the auditor errors.
+  const audited = await auditQuestions(pdf.file_name || "PDF", context, drafted);
+  if (audited && audited.length === 0) {
+    return json(422, {
+      error: "The AI's draft questions did not pass the quality check. Please try again, or choose a PDF with clearer academic text.",
+      code: "NO_VALID_QUESTIONS",
+    });
+  }
+  const questions = audited && audited.length ? audited : drafted;
 
-  const title = `${pdf.file_name || "PDF"} · MCQ Practice`;
+  // Persist server-side with the service role (answer keys never touch the client).
+  const title = `${String(pdf.file_name || "PDF").slice(0, 170)} · MCQ Practice`.slice(0, 200);
   const { data: session, error: sessionError } = await admin
     .from("mcq_sessions")
     .insert({
@@ -295,51 +484,52 @@ async function handleGenerate(supabase: any, user: any, body: any): Promise<Resp
     return json(500, { error: "Could not save the quiz session.", code: "SESSION_SAVE_FAILED" });
   }
 
-  const questionRows = questions.map((q, i) => ({
+  const questionRows = questions.map((q, index) => ({
     session_id: session.id,
     question_text: q.question,
-    options: q.options.map((t, idx) => ({ index: idx, text: t })),
-    subject_topic: q.subject_topic || null,
-    source_page: q.source_page || null,
-    difficulty: q.difficulty || "medium",
-    order_index: i,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    subject_topic: q.subject_topic,
+    source_page: q.source_page,
+    difficulty: q.difficulty,
+    order_index: index,
   }));
 
-  const { data: insertedQuestions, error: questionsError } = await admin
+  const { data: inserted, error: questionsError } = await admin
     .from("mcq_questions")
     .insert(questionRows)
     .select("id, order_index");
 
-  if (questionsError) {
-    console.error("mcq: questions insert failed", questionsError.message);
+  if (questionsError || !inserted) {
+    console.error("mcq: questions insert failed", questionsError?.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
     return json(500, { error: "Could not save the generated questions.", code: "QUESTIONS_SAVE_FAILED" });
   }
 
-  const insertedByOrder = new Map((insertedQuestions || []).map((iq: any) => [iq.order_index, iq.id]));
-  const finalKeyRows = questions.map((q, i) => ({
-    question_id: insertedByOrder.get(i),
-    correct_option_index: q.correct_index,
-    explanation: q.explanation,
-  })).filter((r) => r.question_id != null);
+  const insertedByOrder = new Map((inserted as any[]).map((row) => [row.order_index, row.id]));
+  const keyRows = questions
+    .map((q, index) => ({
+      question_id: insertedByOrder.get(index),
+      correct_option_index: q.correct_index,
+      explanation: q.explanation,
+    }))
+    .filter((row) => row.question_id);
 
-  const { error: keysError } = await admin
-    .from("mcq_answer_keys")
-    .insert(finalKeyRows);
-
+  const { error: keysError } = await admin.from("mcq_answer_keys").insert(keyRows);
   if (keysError) {
     console.error("mcq: answer keys insert failed", keysError.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
     return json(500, { error: "Could not save the answer keys.", code: "KEYS_SAVE_FAILED" });
   }
 
   // Sanitised questions for the client: no correct_index, no explanation.
-  const sanitised = (insertedQuestions || []).map((iq: any, i: number) => ({
-    id: iq.id,
-    order_index: iq.order_index,
-    question_text: questions[i]?.question,
-    options: questions[i]?.options.map((t, idx) => ({ index: idx, text: t })),
-    subject_topic: questions[i]?.subject_topic || null,
-    source_page: questions[i]?.source_page || null,
-    difficulty: questions[i]?.difficulty || "medium",
+  const sanitised = questions.map((q, index) => ({
+    id: insertedByOrder.get(index),
+    order_index: index,
+    question_text: q.question,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    subject_topic: q.subject_topic,
+    source_page: q.source_page,
+    difficulty: q.difficulty,
   }));
 
   return json(200, {
@@ -350,18 +540,280 @@ async function handleGenerate(supabase: any, user: any, body: any): Promise<Resp
   });
 }
 
-async function handleValidate(supabase: any, user: any, admin: any, body: any): Promise<Response> {
-  const attemptId = body && typeof body.attempt_id === "string" ? body.attempt_id : null;
-  const responses = Array.isArray(body?.responses) ? body.responses : [];
-  const finalize = body && body.finalize === true;
-  if (!attemptId || !responses.length) {
-    return json(400, { error: "Attempt and responses are required.", code: "MISSING_INPUT" });
+/* ------------------------------------------------------------------ */
+/* Validate / feedback                                                */
+/* ------------------------------------------------------------------ */
+
+type KeyRow = { question_id: string; correct_option_index: number; explanation: string };
+type QuestionRow = { id: string; order_index: number; question_text: string; options: any };
+
+function selectionOrNull(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isInteger(value)) return null;
+  return value >= 0 && value <= 3 ? value : null;
+}
+
+function feedbackFor(
+  questionId: string,
+  selected: number,
+  key: KeyRow,
+  revealCorrect: boolean,
+  locked: boolean,
+) {
+  const isCorrect = selected >= 0 && key.correct_option_index === selected;
+  return {
+    question_id: questionId,
+    selected_option_index: selected,
+    is_correct: isCorrect,
+    ...(revealCorrect || !isCorrect ? { correct_option_index: key.correct_option_index } : {}),
+    explanation: key.explanation,
+    locked,
+  };
+}
+
+function summaryFrom(params: {
+  attemptId: string;
+  questions: QuestionRow[];
+  keys: Map<string, KeyRow>;
+  selections: Map<string, number>;
+  startedAt: string | null;
+  completedAt: string | null;
+}) {
+  const { attemptId, questions, keys, selections, startedAt, completedAt } = params;
+  const results = questions.map((q) => {
+    const selected = selections.has(q.id) ? (selections.get(q.id) as number) : -1;
+    const key = keys.get(q.id) ?? { question_id: q.id, correct_option_index: -1, explanation: "" };
+    const isCorrect = selected >= 0 && key.correct_option_index === selected;
+    return {
+      question_id: q.id,
+      selected_option_index: selected,
+      is_correct: isCorrect,
+      correct_option_index: key.correct_option_index,
+      explanation: key.explanation,
+      locked: true,
+    };
+  });
+
+  const correct = results.filter((r) => r.is_correct).length;
+  const unanswered = results.filter((r) => r.selected_option_index < 0).length;
+  const total = results.length;
+  const incorrect = total - correct - unanswered;
+  const ended = completedAt ? new Date(completedAt).getTime() : Date.now();
+  const started = startedAt ? new Date(startedAt).getTime() : ended;
+  const timeTaken = Math.max(0, Math.round((ended - started) / 1000));
+
+  return {
+    attempt_id: attemptId,
+    score: correct,
+    total,
+    correct,
+    incorrect,
+    unanswered,
+    accuracy: total ? Math.round((correct / total) * 100) : 0,
+    time_taken_seconds: timeTaken,
+    results,
+  };
+}
+
+async function loadAttemptData(admin: any, attemptId: string, sessionId: string) {
+  const { data: questions, error: questionsError } = await admin
+    .from("mcq_questions")
+    .select("id, order_index, question_text, options")
+    .eq("session_id", sessionId)
+    .order("order_index", { ascending: true });
+
+  if (questionsError || !questions) {
+    throw new Error("Could not load the questions.");
   }
 
-  // Verify the attempt belongs to this student and is not already completed.
+  const ids = (questions as QuestionRow[]).map((q) => q.id);
+  const { data: keyRows, error: keysError } = await admin
+    .from("mcq_answer_keys")
+    .select("question_id, correct_option_index, explanation")
+    .in("question_id", ids);
+
+  if (keysError) throw new Error("Could not load the answer keys.");
+
+  const { data: responseRows } = await admin
+    .from("mcq_responses")
+    .select("question_id, selected_option_index, is_correct")
+    .eq("attempt_id", attemptId);
+
+  const keys = new Map<string, KeyRow>();
+  for (const row of (keyRows as KeyRow[]) || []) keys.set(row.question_id, row);
+
+  const selections = new Map<string, number>();
+  for (const row of (responseRows as any[]) || []) {
+    selections.set(row.question_id, row.selected_option_index);
+  }
+
+  return { questions: questions as QuestionRow[], keys, selections };
+}
+
+async function handleValidate(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const attemptId = typeof body?.attempt_id === "string" ? body.attempt_id : null;
+  const responses = Array.isArray(body?.responses) ? body.responses : [];
+  const finalize = body?.finalize === true;
+  if (!attemptId) {
+    return json(400, { error: "Attempt is required.", code: "MISSING_INPUT" });
+  }
+
+  // The user-scoped client enforces "own attempts only".
   const { data: attempt, error: attemptError } = await supabase
     .from("mcq_attempts")
-    .select("id, session_id, score, total, started_at, completed_at")
+    .select("id, session_id, started_at, completed_at")
+    .eq("id", attemptId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (attemptError) {
+    console.error("mcq: attempt lookup failed", attemptError.message);
+    return json(500, { error: "Could not load the attempt.", code: "ATTEMPT_LOOKUP_FAILED" });
+  }
+  if (!attempt) {
+    return json(404, { error: "Attempt not found.", code: "ATTEMPT_NOT_FOUND" });
+  }
+
+  let data;
+  try {
+    data = await loadAttemptData(admin, attemptId, attempt.session_id);
+  } catch (error) {
+    console.error("mcq:", error);
+    return json(500, { error: "Could not validate answers.", code: "VALIDATION_FAILED" });
+  }
+  const { questions, keys, selections } = data;
+  const questionIds = new Set(questions.map((q) => q.id));
+
+  // Re-submitting a completed attempt is safe and idempotent.
+  if (attempt.completed_at) {
+    const summary = summaryFrom({
+      attemptId,
+      questions,
+      keys,
+      selections,
+      startedAt: attempt.started_at,
+      completedAt: attempt.completed_at,
+    });
+    return json(200, { ...summary, already_completed: true });
+  }
+
+  if (!finalize) {
+    if (!responses.length) {
+      return json(400, { error: "Select an answer first.", code: "MISSING_INPUT" });
+    }
+
+    const results = [];
+    const rowsToInsert = [];
+
+    for (const raw of responses) {
+      const questionId = typeof raw?.question_id === "string" ? raw.question_id : "";
+      if (!questionIds.has(questionId)) {
+        return json(400, { error: "That question does not belong to this practice session.", code: "INVALID_QUESTION" });
+      }
+      const key = keys.get(questionId);
+      if (!key) {
+        return json(500, { error: "The answer key for this question is missing.", code: "KEY_MISSING" });
+      }
+
+      // Answers are locked after the first check.
+      if (selections.has(questionId)) {
+        results.push(feedbackFor(questionId, selections.get(questionId) as number, key, false, true));
+        continue;
+      }
+
+      const selected = selectionOrNull(raw?.selected_option_index);
+      if (selected === null) {
+        return json(400, { error: "Choose one of the four options.", code: "INVALID_OPTION" });
+      }
+
+      const isCorrect = key.correct_option_index === selected;
+      rowsToInsert.push({
+        attempt_id: attemptId,
+        question_id: questionId,
+        selected_option_index: selected,
+        is_correct: isCorrect,
+      });
+      results.push(feedbackFor(questionId, selected, key, false, false));
+    }
+
+    if (rowsToInsert.length) {
+      const { error: insertError } = await admin.from("mcq_responses").insert(rowsToInsert);
+      if (insertError) {
+        console.error("mcq: responses insert failed", insertError.message);
+        return json(500, { error: "Could not save your answer.", code: "RESPONSES_SAVE_FAILED" });
+      }
+    }
+
+    return json(200, { attempt_id: attemptId, results });
+  }
+
+  /* Final submission: all questions of the session are scored, not just the
+     ones present in the request. Existing checked answers are never changed. */
+  const pending = new Map<string, number>();
+  for (const raw of responses) {
+    const questionId = typeof raw?.question_id === "string" ? raw.question_id : "";
+    if (!questionIds.has(questionId) || selections.has(questionId) || pending.has(questionId)) continue;
+    const selected = selectionOrNull(raw?.selected_option_index);
+    pending.set(questionId, selected === null ? -1 : selected);
+  }
+
+  const rowsToInsert = [];
+  for (const q of questions) {
+    if (selections.has(q.id)) continue;
+    const selected = pending.has(q.id) ? (pending.get(q.id) as number) : -1;
+    const key = keys.get(q.id);
+    rowsToInsert.push({
+      attempt_id: attemptId,
+      question_id: q.id,
+      selected_option_index: selected,
+      is_correct: !!key && selected >= 0 && key.correct_option_index === selected,
+    });
+    selections.set(q.id, selected);
+  }
+
+  if (rowsToInsert.length) {
+    const { error: insertError } = await admin.from("mcq_responses").insert(rowsToInsert);
+    if (insertError) {
+      console.error("mcq: final responses insert failed", insertError.message);
+      return json(500, { error: "Could not save your answers.", code: "RESPONSES_SAVE_FAILED" });
+    }
+  }
+
+  const summary = summaryFrom({
+    attemptId,
+    questions,
+    keys,
+    selections,
+    startedAt: attempt.started_at,
+    completedAt: null,
+  });
+
+  const { error: updateError } = await admin
+    .from("mcq_attempts")
+    .update({
+      score: summary.correct,
+      total: summary.total,
+      completed_at: new Date().toISOString(),
+      time_taken_seconds: summary.time_taken_seconds,
+    })
+    .eq("id", attemptId);
+
+  if (updateError) {
+    console.error("mcq: attempt update failed", updateError.message);
+    return json(500, { error: "Could not finalise the attempt.", code: "ATTEMPT_FINALISE_FAILED" });
+  }
+
+  return json(200, summary);
+}
+
+async function handleFeedback(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const attemptId = typeof body?.attempt_id === "string" ? body.attempt_id : null;
+  if (!attemptId) {
+    return json(400, { error: "Attempt is required.", code: "MISSING_INPUT" });
+  }
+
+  const { data: attempt, error: attemptError } = await supabase
+    .from("mcq_attempts")
+    .select("id, session_id, started_at, completed_at")
     .eq("id", attemptId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -372,100 +824,31 @@ async function handleValidate(supabase: any, user: any, admin: any, body: any): 
   if (!attempt) {
     return json(404, { error: "Attempt not found.", code: "ATTEMPT_NOT_FOUND" });
   }
-  if (attempt.completed_at) {
-    return json(400, { error: "This attempt has already been submitted.", code: "ALREADY_COMPLETED" });
+
+  let data;
+  try {
+    data = await loadAttemptData(admin, attemptId, attempt.session_id);
+  } catch (error) {
+    console.error("mcq:", error);
+    return json(500, { error: "Could not load feedback.", code: "FEEDBACK_FAILED" });
   }
 
-  // Fetch the answer keys server-side (service role bypasses RLS; client can never read them).
-  const questionIds = [...new Set(responses.map((r: any) => r.question_id).filter(Boolean))];
-  const { data: keys, error: keysError } = await admin
-    .from("mcq_answer_keys")
-    .select("question_id, correct_option_index, explanation")
-    .in("question_id", questionIds);
-
-  if (keysError) {
-    console.error("mcq: answer key lookup failed", keysError.message);
-    return json(500, { error: "Could not validate answers.", code: "VALIDATION_FAILED" });
-  }
-  const keyMap = new Map((keys || []).map((k: any) => [k.question_id, k]));
-
-  const results: Array<{
-    question_id: string;
-    selected_option_index: number;
-    is_correct: boolean;
-    correct_option_index?: number;   // only when wrong
-    explanation: string;
-  }> = [];
-
-  for (const r of responses) {
-    const key = keyMap.get(r.question_id);
-    const selected = typeof r.selected_option_index === "number" ? r.selected_option_index : -1;
-    const isCorrect = key ? key.correct_option_index === selected : false;
-    results.push({
-      question_id: r.question_id,
-      selected_option_index: selected,
-      is_correct: isCorrect,
-      ...(isCorrect ? {} : { correct_option_index: key ? key.correct_option_index : -1 }),
-      explanation: key ? key.explanation : "No explanation available.",
-    });
+  // Only answered questions are returned, so retrying a session reveals nothing new.
+  const results = [];
+  for (const q of data.questions) {
+    if (!data.selections.has(q.id)) continue;
+    const key = data.keys.get(q.id);
+    if (!key) continue;
+    const selected = data.selections.get(q.id) as number;
+    results.push(feedbackFor(q.id, selected, key, false, true));
   }
 
-  // Persist responses server-side (upsert: re-checking the same question is idempotent).
-  const responseRows = results.map((r) => ({
-    attempt_id: attemptId,
-    question_id: r.question_id,
-    selected_option_index: r.selected_option_index,
-    is_correct: r.is_correct,
-  }));
-
-  const { error: responsesError } = await admin
-    .from("mcq_responses")
-    .upsert(responseRows, { onConflict: "attempt_id, question_id" });
-
-  if (responsesError) {
-    console.error("mcq: responses upsert failed", responsesError.message);
-    return json(500, { error: "Could not save your answers.", code: "RESPONSES_SAVE_FAILED" });
-  }
-
-  // Mid-quiz check: return feedback only, do not complete the attempt.
-  if (!finalize) {
-    return json(200, {
-      attempt_id: attemptId,
-      results,
-    });
-  }
-
-  // Final submission: compute score from answer keys, mark attempt complete.
-  let score = 0;
-  for (const r of results) {
-    if (r.is_correct) score += 1;
-  }
-  const total = results.length;
-  const startedAt = attempt.started_at ? new Date(attempt.started_at).getTime() : Date.now();
-  const timeTaken = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
-
-  const { error: attemptError2 } = await admin
-    .from("mcq_attempts")
-    .update({ score, total, completed_at: new Date().toISOString(), time_taken_seconds: timeTaken })
-    .eq("id", attemptId);
-
-  if (attemptError2) {
-    console.error("mcq: attempt update failed", attemptError2.message);
-    return json(500, { error: "Could not finalise the attempt.", code: "ATTEMPT_FINALISE_FAILED" });
-  }
-
-  const accuracy = total ? Math.round((score / total) * 100) : 0;
-  return json(200, {
-    attempt_id: attemptId,
-    score,
-    total,
-    correct: score,
-    incorrect: total - score,
-    accuracy,
-    time_taken_seconds: timeTaken,
-    results,
-  });
+  return json(200, { attempt_id: attemptId, results, completed: !!attempt.completed_at });
 }
+
+/* ------------------------------------------------------------------ */
+/* Entry point                                                        */
+/* ------------------------------------------------------------------ */
 
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
@@ -475,45 +858,46 @@ Deno.serve(async (request: Request) => {
     return json(405, { error: "Method not allowed." });
   }
   if (!GROQ_API_KEY) {
-    return json(503, { error: "The MCQ service is not configured yet." });
+    return json(503, { error: "The MCQ service is not configured yet.", code: "NOT_CONFIGURED" });
   }
   if (!SUPABASE_SERVICE_ROLE_KEY) {
-    return json(503, { error: "The MCQ service is not configured yet." });
+    return json(503, { error: "The MCQ service is not configured yet.", code: "NOT_CONFIGURED" });
   }
 
   const authHeader = request.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
-    return json(401, { error: "Please sign in to use MCQ practice." });
+    return json(401, { error: "Please sign in to use MCQ practice.", code: "UNAUTHENTICATED" });
   }
 
-  const supabase = createClient(SUPABASE_URL, request.headers.get("apikey") || SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createClient(
+    SUPABASE_URL,
+    request.headers.get("apikey") || SUPABASE_ANON_KEY,
+    {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    },
+  );
 
   const { data: authData, error: authError } = await supabase.auth.getUser();
   const user = authData?.user;
   if (authError || !user) {
-    return json(401, { error: "Please sign in again." });
+    return json(401, { error: "Please sign in again.", code: "UNAUTHENTICATED" });
+  }
+
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return json(400, { error: "Invalid request.", code: "BAD_REQUEST" });
   }
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return json(400, { error: "Invalid request." });
-  }
-
-  const action = body && typeof body.action === "string" ? body.action : null;
-  if (action === "generate") {
-    return handleGenerate(supabase, user, body);
-  }
-  if (action === "validate") {
-    return handleValidate(supabase, user, admin, body);
-  }
+  const action = typeof body?.action === "string" ? body.action : "";
+  if (action === "generate") return handleGenerate(supabase, admin, user, body);
+  if (action === "validate") return handleValidate(supabase, admin, user, body);
+  if (action === "feedback") return handleFeedback(supabase, admin, user, body);
   return json(400, { error: "Unknown action.", code: "UNKNOWN_ACTION" });
 });
