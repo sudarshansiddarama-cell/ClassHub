@@ -194,9 +194,14 @@ function normaliseQuestion(raw: unknown, seen: Set<string>): McqQuestion | null 
     /\b(what are|list|enumerate|name the|select all|choose all|which of the following are|except|not one of|is not|are not|which is false|which is incorrect|true or false)\b/i;
   if (badShape.test(question)) return null;
 
+  // Never leak source-attribution phrasing into what the student sees.
+  const sourceAttribution = /\b(as per|according to|based on|per the|from the|per|per this|from this)\s+(source|material|pdf|document|text|content|extract)\b/i;
+  if (sourceAttribution.test(question)) return null;
+
   if (!Array.isArray(r.options) || r.options.length !== 4) return null;
   const options = r.options.map((o) => cleanText(o, 500));
   if (options.some((o) => !o)) return null;
+  if (options.some((o) => sourceAttribution.test(o))) return null;
   if (options.some((o) => /^(all|none)\s+of\s+(the\s+)?(above|these)$|^both\s+[a-d]\s+and\s+[a-d]$/i.test(o))) return null;
   const distinct = new Set(options.map((o) => o.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()));
   if (distinct.size !== 4) return null;
@@ -206,6 +211,7 @@ function normaliseQuestion(raw: unknown, seen: Set<string>): McqQuestion | null 
 
   const explanation = cleanText(r.explanation, 900);
   if (explanation.length < 8) return null;
+  if (sourceAttribution.test(explanation)) return null;
 
   // Soft safety net: the explanation must mention at least one of the four
   // options. This catches questions whose real answer is missing from the
@@ -433,11 +439,12 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
   const count = resolveMcqCount(body);
   const prompt = buildGenerationPrompt(pdf.file_name || "PDF", context, count);
 
-  // Ask the AI, validating the output; retry once when fewer good questions
-  // came back than requested (the extra request also compensates for strict filters).
+  // Ask the AI, validating the output; retry a few times until we collect the
+  // requested number of good questions (each attempt also compensates for
+  // strict quality filters dropping some drafts).
   const collected = new Map<string, McqQuestion>();
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
+  for (let attempt = 0; attempt < 4 && collected.size < count; attempt++) {
     try {
       const content = await callGroq(prompt);
       for (const question of parseGeneratedQuestions(content)) {
