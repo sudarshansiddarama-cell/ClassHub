@@ -15,7 +15,7 @@ export interface KnowledgeChunk {
   source: string;
 }
 
-export const KNOWLEDGE_VERSION = "dc62dad5222f";
+export const KNOWLEDGE_VERSION = "12486fa92c1b";
 export const KNOWLEDGE_CHUNK_COUNT = 164;
 
 export const KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
@@ -92,7 +92,7 @@ export const KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
       "navigation",
       "features"
     ],
-    "text": "Available sections\n\nClassHub has eleven sections: Home, Topic Search, Notes, Test Papers, Case Studies, Notices, Class Community, Student Profile, Accounts, Class Chat, and ClassHub AI. The main navigation also includes a More sheet on mobile and a top bar with notices, theme, and account controls.\n\nThe page IDs are `home`, `search`, `notes`, `pdfs`, `photos`, `notices`, `community`, `profile`, `accounts`, `chat`, and `ai`. The `pdfs` page is Test Papers; the `photos` page is Case Studies.",
+    "text": "Available sections\n\nClassHub has twelve sections: Home, Topic Search, Notes, Test Papers, Case Studies, Notices, Class Community, Student Profile, Accounts, Class Chat, ClassHub AI, and MCQ Practice. The main navigation also includes a More sheet on mobile and a top bar with notices, theme, and account controls.\n\nThe page IDs are `home`, `search`, `notes`, `pdfs`, `photos`, `notices`, `community`, `profile`, `accounts`, `chat`, `ai`, and `mcq-practice`. The `pdfs` page is Test Papers; the `photos` page is Case Studies.",
     "source": "knowledge/classhub/02-sections.md"
   },
   {
@@ -102,7 +102,7 @@ export const KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
     "title": "Home",
     "status": "verified",
     "keywords": [],
-    "text": "Home\n\nHome is the launcher. It shows a personalised greeting when signed in, a large search button that opens Topic Search, featured actions for Topic Search and AI Assistant, and a numbered action list for Notes, Test Papers, Notices, Class Chat, Community, Case Studies, and Accounts.\n\nHome does not show a dashboard of recent content or unread counts beyond the notices bell badge in the top bar.",
+    "text": "Home\n\nHome is the launcher. It shows a personalised greeting when signed in, a large search button that opens Topic Search, featured actions for Topic Search and AI Assistant, and a numbered action list for Notes, Test Papers, Notices, Class Chat, Community, Case Studies, Accounts, and MCQ Practice.\n\nHome does not show a dashboard of recent content or unread counts beyond the notices bell badge in the top bar.",
     "source": "knowledge/classhub/02-sections.md"
   },
   {

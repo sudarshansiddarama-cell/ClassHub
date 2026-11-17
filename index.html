@@ -425,6 +425,16 @@ label.f-label{
 .mcq-empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .mcq-empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
 
+.mcq-count-pick{display:flex;align-items:center;gap:10px;margin:10px 0 6px;flex-wrap:wrap}
+.mcq-count-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin:0}
+.mcq-count-btn{width:34px;height:30px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,border-color .12s,color .12s}
+.mcq-count-btn:hover:not(.active){border-color:var(--border-strong);background:var(--surface-hover)}
+.mcq-count-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.mcq-count-hint{font-size:11px;color:var(--muted2);font-family:var(--font-mono);margin-left:auto}
+@media (max-width:560px){
+  .mcq-count-hint{margin-left:8px}
+}
+
 .mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
 .mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px;color:var(--muted2)}
 .mcq-progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
@@ -1196,6 +1206,12 @@ body.sheet-open{overflow:hidden}
           <span class="action-copy"><strong>Accounts</strong><small>Discover classmates' profiles</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
+        <button class="action-row" type="button" onclick="openSection('mcq-practice')">
+          <span class="action-index">10</span>
+          <span class="action-icon"><svg class="ic"><use href="#i-mcq"/></svg></span>
+          <span class="action-copy"><strong>MCQ Practice</strong><small>Generate quizzes from your PDFs</small></span>
+          <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
+        </button>
       </div>
     </section>
 
@@ -1321,6 +1337,14 @@ body.sheet-open{overflow:hidden}
         <div class="panel">
           <h2 class="panel-title">Start New Practice</h2>
           <p class="muted">Choose an uploaded PDF. ClassHub reads it and generates multiple-choice questions from its content.</p>
+          <div class="mcq-count-pick">
+            <label class="mcq-count-label">Questions</label>
+            <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
+            <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
+          </div>
           <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
         </div>
         <div class="panel">
@@ -5781,6 +5805,16 @@ let mcqState = {
   finalResult: null,
 };
 let mcqGenController = null;
+let mcqGenerateCount = 10;
+
+window.setMcqCount = function(count){
+  mcqGenerateCount = count;
+  document.querySelectorAll(".mcq-count-btn").forEach(btn=>{
+    btn.classList.toggle("active", String(btn.textContent.trim()) === String(count));
+  });
+  const hint = document.getElementById("mcqCountHint");
+  if(hint) hint.textContent = count + " questions";
+};
 
 function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
@@ -6102,25 +6136,26 @@ async function ensurePdfTextForMcq(pdfId){
   showToast("PDF text ready");
 }
 
-window.generateMcq = async function(pdfId){
+window.generateMcq = async function(pdfId, count){
   if(mcqState.generating) return;
   mcqState.generating = true;
   mcqGenController = new AbortController();
+  const questionsCount = count && [10,20,30,50].includes(Number(count)) ? Number(count) : mcqGenerateCount;
   showMcqView("generating");
   setMcqStatus("");
-  setMcqGenProgress("Generating questions…", "Reading the PDF and asking the AI to write questions from its content…", "");
+  setMcqGenProgress("Generating questions…", "Reading the PDF and asking the AI to write " + questionsCount + " questions from its content…", "");
 
   try{
     let result;
     try{
-      result = await mcqFetch("generate",{pdf_id:pdfId}, mcqGenController.signal);
+      result = await mcqFetch("generate",{pdf_id:pdfId, count:questionsCount}, mcqGenController.signal);
     }catch(error){
       if(error.code !== "NO_EXTRACTABLE_TEXT") throw error;
       await ensurePdfTextForMcq(pdfId);
       throwIfAborted(mcqGenController.signal);
       showMcqView("generating");
-      setMcqGenProgress("Writing questions…", "The PDF text is ready. Asking the AI to write questions…", "");
-      result = await mcqFetch("generate",{pdf_id:pdfId}, mcqGenController.signal);
+      setMcqGenProgress("Writing questions…", "The PDF text is ready. Asking the AI to write " + questionsCount + " questions…", "");
+      result = await mcqFetch("generate",{pdf_id:pdfId, count:questionsCount}, mcqGenController.signal);
     }
 
     const questions = (result.questions || []).map((q)=>({

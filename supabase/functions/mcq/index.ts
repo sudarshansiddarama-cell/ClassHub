@@ -31,8 +31,10 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
 const GROQ_MODEL = Deno.env.get("GROQ_MODEL") || "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 45_000;
-const MAX_QUESTIONS = 10;
+const MAX_QUESTIONS = 50;
 const MIN_TEXT_CHARS = 200;
+const ALLOWED_COUNTS = [10, 20, 30, 50];
+const DEFAULT_COUNT = 10;
 const MAX_CONTEXT_CHARS = 14_000;
 const MAX_GENERATIONS_PER_HOUR = 20;
 
@@ -278,7 +280,7 @@ Return ONLY a single JSON object with this shape and nothing else:
 }
 
 QUALITY RULES (mandatory)
-1. Every question and answer must be answerable from the source material. Do not invent facts.
+1. Every question and answer must be answerable from the source material. Do not invent facts. Do not write "as per source", "according to the source", "based on the material", or any similar source-attribution phrase in the question text, options, or explanation.
 2. Exactly one correct option. All four options must be present and distinct.
 3. Every distractor must be clearly wrong to an expert. Never use an option that is also correct.
 4. Never ask the student to list, name, enumerate, or pick multiple items.
@@ -369,6 +371,14 @@ async function auditQuestions(
 /* Generate                                                           */
 /* ------------------------------------------------------------------ */
 
+function resolveMcqCount(body: any): number {
+  const raw = body?.count;
+  if (raw == null) return DEFAULT_COUNT;
+  const parsed = typeof raw === "number" ? raw : Number(raw);
+  if (Number.isFinite(parsed) && ALLOWED_COUNTS.includes(parsed)) return parsed;
+  return DEFAULT_COUNT;
+}
+
 async function handleGenerate(supabase: any, admin: any, user: any, body: any): Promise<Response> {
   const rawId = body?.pdf_id;
   const pdfId = typeof rawId === "number" ? String(rawId)
@@ -420,14 +430,14 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
   }
 
   const context = contentText.slice(0, MAX_CONTEXT_CHARS);
-  const count = context.length > 4000 ? MAX_QUESTIONS + 2 : 6;
+  const count = resolveMcqCount(body);
   const prompt = buildGenerationPrompt(pdf.file_name || "PDF", context, count);
 
-  // Ask the AI, validating the output; retry once when fewer than five good
-  // questions came back (the extra request also compensates for strict filters).
+  // Ask the AI, validating the output; retry once when fewer good questions
+  // came back than requested (the extra request also compensates for strict filters).
   const collected = new Map<string, McqQuestion>();
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 2 && collected.size < 5; attempt++) {
+  for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
     try {
       const content = await callGroq(prompt);
       for (const question of parseGeneratedQuestions(content)) {
@@ -443,7 +453,7 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
       if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
     }
   }
-  const drafted = [...collected.values()].slice(0, MAX_QUESTIONS);
+  const drafted = [...collected.values()].slice(0, count);
 
   if (!drafted.length) {
     if (lastError instanceof AiError) {

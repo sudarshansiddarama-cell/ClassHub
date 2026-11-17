@@ -8,13 +8,13 @@ keywords: sections, pages, navigation, home, topic search, notes, test papers, c
 ## Available sections
 <!-- keywords: what sections are available, list of sections, pages, navigation, features -->
 
-ClassHub has eleven sections: Home, Topic Search, Notes, Test Papers, Case Studies, Notices, Class Community, Student Profile, Accounts, Class Chat, and ClassHub AI. The main navigation also includes a More sheet on mobile and a top bar with notices, theme, and account controls.
+ClassHub has twelve sections: Home, Topic Search, Notes, Test Papers, Case Studies, Notices, Class Community, Student Profile, Accounts, Class Chat, ClassHub AI, and MCQ Practice. The main navigation also includes a More sheet on mobile and a top bar with notices, theme, and account controls.
 
-The page IDs are `home`, `search`, `notes`, `pdfs`, `photos`, `notices`, `community`, `profile`, `accounts`, `chat`, and `ai`. The `pdfs` page is Test Papers; the `photos` page is Case Studies.
+The page IDs are `home`, `search`, `notes`, `pdfs`, `photos`, `notices`, `community`, `profile`, `accounts`, `chat`, `ai`, and `mcq-practice`. The `pdfs` page is Test Papers; the `photos` page is Case Studies.
 
 ## Home
 
-Home is the launcher. It shows a personalised greeting when signed in, a large search button that opens Topic Search, featured actions for Topic Search and AI Assistant, and a numbered action list for Notes, Test Papers, Notices, Class Chat, Community, Case Studies, and Accounts.
+Home is the launcher. It shows a personalised greeting when signed in, a large search button that opens Topic Search, featured actions for Topic Search and AI Assistant, and a numbered action list for Notes, Test Papers, Notices, Class Chat, Community, Case Studies, Accounts, and MCQ Practice.
 
 Home does not show a dashboard of recent content or unread counts beyond the notices bell badge in the top bar.
 
