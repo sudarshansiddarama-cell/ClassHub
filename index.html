@@ -5960,6 +5960,10 @@ window.loadMcqPractice = async function(){
   const sessionList = document.getElementById("mcqSessionList");
   if(!pdfList || !sessionList) return;
 
+  // Clear any stuck generation state from a previous failed attempt.
+  mcqState.generating = false;
+  mcqGenController = null;
+
   if(!currentUser){
     showMcqView("start");
     pdfList.replaceChildren(makeEmptyState("Sign in with Google to generate MCQ practice from your PDFs.","i-folder"));
