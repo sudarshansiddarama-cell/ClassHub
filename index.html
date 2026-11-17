@@ -2155,12 +2155,15 @@ async function uploadNotePDF(input,button){
     }, controller.signal);
     setPdfProgress("Saving to your library…", 0.97);
     throwIfAborted(controller.signal);
+    /* PostgreSQL rejects NUL bytes (\u0000) with 22P05 "unsupported Unicode escape sequence" */
+    const safeContentText = content_text ? String(content_text).replace(/\u0000/g, "") : null;
     /* ---- DATABASE INSERT (table: public.pdfs) ---- */
     const {error:insertError} = await db.from("pdfs").insert({
-      file_name:file.name, file_url:urlData.publicUrl,
+      file_name:String(file.name || "PDF").replace(/\u0000/g, ""),
+      file_url:urlData.publicUrl,
       subject:subject, subcategory:subcategory,
       collection_type:null, folder_id:null,
-      content_text: content_text || null
+      content_text: safeContentText
     });
     if(insertError){
       /* Log the complete Supabase error object: message, code, details, hint */
