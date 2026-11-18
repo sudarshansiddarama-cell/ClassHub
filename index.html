@@ -6044,7 +6044,7 @@ window.loadMcqPractice = async function(){
     if(sessionsRes.error) throw sessionsRes.error;
     if(attemptsRes.error) throw attemptsRes.error;
 
-    const pdfs = pdfsRes.data || [];
+    const pdfs = (pdfsRes.data || []).filter(p=>p.file_name !== "__TOPIC_BASED_MCQS__");
     const sessions = sessionsRes.data || [];
     const attempts = attemptsRes.data || [];
 
