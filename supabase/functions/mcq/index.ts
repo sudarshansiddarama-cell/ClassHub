@@ -487,7 +487,8 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
       .from("mcq_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .gte("created_at", hourAgo);
+      .gte("created_at", hourAgo)
+      .not("title", "ilike", `${UPLOAD_TITLE_PREFIX}%`);
     if (typeof count === "number" && count >= MAX_GENERATIONS_PER_HOUR) {
       return json(429, {
         error: `You have generated ${MAX_GENERATIONS_PER_HOUR} quizzes this hour. Please try again later.`,
@@ -651,6 +652,174 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
 /* Generate from topic                                                */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* Shared session storage                                             */
+/* ------------------------------------------------------------------ */
+
+const UPLOAD_TITLE_PREFIX = "Uploaded MCQs · ";
+
+/** Topic/upload sessions need a source_pdf_id, so they share one hidden row. */
+async function getOrCreatePlaceholderPdf(admin: any): Promise<number | null> {
+  const { data: placeholder } = await admin
+    .from("pdfs")
+    .select("id")
+    .eq("file_name", "__TOPIC_BASED_MCQS__")
+    .maybeSingle();
+  if (placeholder?.id) return placeholder.id as number;
+
+  const { data: created, error: createError } = await admin
+    .from("pdfs")
+    .insert({
+      file_name: "__TOPIC_BASED_MCQS__",
+      file_url: "",
+      subject: "Topic-Based MCQs",
+      content_text: "",
+    })
+    .select("id")
+    .single();
+  if (createError || !created) {
+    console.error("mcq: placeholder pdf create failed", createError?.message);
+    return null;
+  }
+  return created.id as number;
+}
+
+/** Saves a ready session with its questions and server-only answer keys. */
+async function saveSessionWithQuestions(
+  admin: any,
+  userId: string,
+  pdfId: number,
+  title: string,
+  questions: McqQuestion[],
+): Promise<Response | { sessionId: string; sanitised: any[] }> {
+  const { data: session, error: sessionError } = await admin
+    .from("mcq_sessions")
+    .insert({
+      user_id: userId,
+      source_pdf_id: pdfId,
+      title: title.slice(0, 200),
+      status: "ready",
+      total_questions: questions.length,
+    })
+    .select("id")
+    .single();
+
+  if (sessionError || !session) {
+    console.error("mcq: session insert failed", sessionError?.message);
+    return json(500, { error: "Could not save the quiz session.", code: "SESSION_SAVE_FAILED" });
+  }
+
+  const questionRows = questions.map((q, index) => ({
+    session_id: session.id,
+    question_text: q.question,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    subject_topic: q.subject_topic,
+    source_page: q.source_page,
+    difficulty: q.difficulty,
+    order_index: index,
+  }));
+
+  const { data: inserted, error: questionsError } = await admin
+    .from("mcq_questions")
+    .insert(questionRows)
+    .select("id, order_index");
+
+  if (questionsError || !inserted) {
+    console.error("mcq: questions insert failed", questionsError?.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
+    return json(500, { error: "Could not save the questions.", code: "QUESTIONS_SAVE_FAILED" });
+  }
+
+  const insertedByOrder = new Map((inserted as any[]).map((row) => [row.order_index, row.id]));
+  const keyRows = questions
+    .map((q, index) => ({
+      question_id: insertedByOrder.get(index),
+      correct_option_index: q.correct_index,
+      explanation: q.explanation,
+    }))
+    .filter((row) => row.question_id);
+
+  const { error: keysError } = await admin.from("mcq_answer_keys").insert(keyRows);
+  if (keysError) {
+    console.error("mcq: answer keys insert failed", keysError.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
+    return json(500, { error: "Could not save the answer keys.", code: "KEYS_SAVE_FAILED" });
+  }
+
+  return {
+    sessionId: session.id,
+    sanitised: questions.map((q, index) => ({
+      id: insertedByOrder.get(index),
+      order_index: index,
+      question_text: q.question,
+      options: q.options.map((text, idx) => ({ index: idx, text })),
+      subject_topic: q.subject_topic,
+      source_page: q.source_page,
+      difficulty: q.difficulty,
+    })),
+  };
+}
+
+/** The student's own uploaded questions for a topic, newest uploads first. */
+async function loadUploadedQuestions(
+  admin: any,
+  userId: string,
+  topic: string,
+  limit: number,
+): Promise<McqQuestion[]> {
+  const title = (UPLOAD_TITLE_PREFIX + topic).slice(0, 200);
+  const { data: sessions, error } = await admin
+    .from("mcq_sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .ilike("title", title)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error || !sessions?.length) return [];
+
+  const out: McqQuestion[] = [];
+  const seen = new Set<string>();
+
+  for (const session of sessions as any[]) {
+    if (out.length >= limit) break;
+
+    const { data: rows, error: rowsError } = await admin
+      .from("mcq_questions")
+      .select("id, question_text, options, subject_topic, source_page, difficulty, order_index")
+      .eq("session_id", session.id)
+      .order("order_index", { ascending: true });
+    if (rowsError || !rows?.length) continue;
+
+    const ids = (rows as any[]).map((r) => r.id);
+    const { data: keys } = await admin
+      .from("mcq_answer_keys")
+      .select("question_id, correct_option_index, explanation")
+      .in("question_id", ids);
+    const keyByQuestion = new Map((keys || []).map((k: any) => [k.question_id, k]));
+
+    for (const row of rows as any[]) {
+      if (out.length >= limit) break;
+      const text = String(row.question_text ?? "").trim();
+      if (!text) continue;
+      const key = text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+      const answer = keyByQuestion.get(row.id);
+      if (!answer || seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        question: text,
+        options: (row.options || []).map((o: any) => o.text),
+        correct_index: answer.correct_option_index,
+        explanation: answer.explanation || "",
+        subject_topic: row.subject_topic || topic,
+        source_page: row.source_page,
+        difficulty: row.difficulty || "medium",
+      });
+    }
+  }
+
+  return out;
+}
+
 async function handleGenerateTopic(supabase: any, admin: any, user: any, body: any): Promise<Response> {
   const rawTopic = body?.topic;
   const topic = typeof rawTopic === "string" ? rawTopic.trim() : "";
@@ -667,7 +836,8 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
       .from("mcq_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .gte("created_at", hourAgo);
+      .gte("created_at", hourAgo)
+      .not("title", "ilike", `${UPLOAD_TITLE_PREFIX}%`);
     if (typeof count === "number" && count >= MAX_GENERATIONS_PER_HOUR) {
       return json(429, {
         error: `You have generated ${MAX_GENERATIONS_PER_HOUR} quizzes this hour. Please try again later.`,
@@ -680,23 +850,8 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
 
   const count = resolveMcqCount(body);
 
-  // --- 1. Check user-uploaded questions for this topic first ---
-  const { data: uploadedRows, error: uploadedError } = await supabase
-    .from("mcq_uploaded_questions")
-    .select("id, question_text, options, correct_option_index, explanation")
-    .eq("user_id", user.id)
-    .ilike("topic", topic)
-    .order("created_at", { ascending: true });
-
-  const uploaded = (uploadedRows || []).map((row: any) => ({
-    question: row.question_text,
-    options: (row.options || []).map((o: any) => o.text),
-    correct_index: row.correct_option_index,
-    explanation: row.explanation || "Answer verified against your uploaded key.",
-    subject_topic: topic,
-    source_page: null,
-    difficulty: "medium",
-  }));
+  // --- 1. Use the student's own uploaded questions for this topic first ---
+  const uploaded = await loadUploadedQuestions(admin, user.id, topic, count);
 
   const collected = new Map<string, McqQuestion>();
   for (const q of uploaded) {
@@ -744,102 +899,20 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
   const questions = drafted;
 
   // Topic-based sessions need a source_pdf_id. Use a shared placeholder PDF.
-  let pdfId: number | null = null;
-  const { data: placeholder } = await admin
-    .from("pdfs")
-    .select("id")
-    .eq("file_name", "__TOPIC_BASED_MCQS__")
-    .maybeSingle();
-  if (placeholder?.id) {
-    pdfId = placeholder.id as number;
-  } else {
-    const { data: created, error: createError } = await admin
-      .from("pdfs")
-      .insert({
-        file_name: "__TOPIC_BASED_MCQS__",
-        file_url: "",
-        subject: "Topic-Based MCQs",
-        content_text: "",
-      })
-      .select("id")
-      .single();
-    if (createError || !created) {
-      console.error("mcq: placeholder pdf create failed", createError?.message);
-      return json(500, { error: "Could not prepare topic storage.", code: "PDF_CREATE_FAILED" });
-    }
-    pdfId = created.id as number;
+  const pdfId = await getOrCreatePlaceholderPdf(admin);
+  if (!pdfId) {
+    return json(500, { error: "Could not prepare topic storage.", code: "PDF_CREATE_FAILED" });
   }
 
   const title = `MCQ Practice · ${topic}`.slice(0, 200);
-  const { data: session, error: sessionError } = await admin
-    .from("mcq_sessions")
-    .insert({
-      user_id: user.id,
-      source_pdf_id: pdfId,
-      title,
-      status: "ready",
-      total_questions: questions.length,
-    })
-    .select("id")
-    .single();
-
-  if (sessionError || !session) {
-    console.error("mcq: topic session insert failed", sessionError?.message);
-    return json(500, { error: "Could not save the quiz session.", code: "SESSION_SAVE_FAILED" });
-  }
-
-  const questionRows = questions.map((q, index) => ({
-    session_id: session.id,
-    question_text: q.question,
-    options: q.options.map((text, idx) => ({ index: idx, text })),
-    subject_topic: q.subject_topic || topic,
-    source_page: null,
-    difficulty: q.difficulty,
-    order_index: index,
-  }));
-
-  const { data: inserted, error: questionsError } = await admin
-    .from("mcq_questions")
-    .insert(questionRows)
-    .select("id, order_index");
-
-  if (questionsError || !inserted) {
-    console.error("mcq: topic questions insert failed", questionsError?.message);
-    await admin.from("mcq_sessions").delete().eq("id", session.id);
-    return json(500, { error: "Could not save the generated questions.", code: "QUESTIONS_SAVE_FAILED" });
-  }
-
-  const insertedByOrder = new Map((inserted as any[]).map((row) => [row.order_index, row.id]));
-  const keyRows = questions
-    .map((q, index) => ({
-      question_id: insertedByOrder.get(index),
-      correct_option_index: q.correct_index,
-      explanation: q.explanation,
-    }))
-    .filter((row) => row.question_id);
-
-  const { error: keysError } = await admin.from("mcq_answer_keys").insert(keyRows);
-  if (keysError) {
-    console.error("mcq: topic answer keys insert failed", keysError.message);
-    await admin.from("mcq_sessions").delete().eq("id", session.id);
-    return json(500, { error: "Could not save the answer keys.", code: "KEYS_SAVE_FAILED" });
-  }
-
-  const sanitised = questions.map((q, index) => ({
-    id: insertedByOrder.get(index),
-    order_index: index,
-    question_text: q.question,
-    options: q.options.map((text, idx) => ({ index: idx, text })),
-    subject_topic: q.subject_topic,
-    source_page: q.source_page,
-    difficulty: q.difficulty,
-  }));
+  const saved = await saveSessionWithQuestions(admin, user.id, pdfId, title, questions);
+  if (saved instanceof Response) return saved;
 
   return json(200, {
-    session_id: session.id,
+    session_id: saved.sessionId,
     title,
     total_questions: questions.length,
-    questions: sanitised,
+    questions: saved.sanitised,
   });
 }
 
@@ -870,30 +943,21 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
     });
   }
 
-  const rows = questions.map((q) => ({
-    user_id: user.id,
-    topic,
-    question_text: q.question,
-    options: q.options.map((text, idx) => ({ index: idx, text })),
-    correct_option_index: q.correct_index,
-    explanation: q.explanation,
-  }));
-
-  const { data: inserted, error: insertError } = await admin
-    .from("mcq_uploaded_questions")
-    .insert(rows)
-    .select("id");
-
-  if (insertError || !inserted) {
-    console.error("mcq: upload insert failed", insertError?.message);
-    return json(500, { error: "Could not save your questions.", code: "UPLOAD_FAILED" });
+  const pdfId = await getOrCreatePlaceholderPdf(admin);
+  if (!pdfId) {
+    return json(500, { error: "Could not prepare your upload.", code: "PDF_CREATE_FAILED" });
   }
+
+  const title = (UPLOAD_TITLE_PREFIX + topic).slice(0, 200);
+  const saved = await saveSessionWithQuestions(admin, user.id, pdfId, title, questions);
+  if (saved instanceof Response) return saved;
 
   return json(200, {
     topic,
-    uploaded: inserted.length,
-    total: inserted.length,
-    message: `Saved ${inserted.length} MCQs under "${topic}". Start practice from MCQ Practice to use them.`,
+    session_id: saved.sessionId,
+    uploaded: questions.length,
+    total: questions.length,
+    message: `Saved ${questions.length} MCQs under "${topic}". Type that chapter name in MCQ Practice to practise them.`,
   });
 }
 

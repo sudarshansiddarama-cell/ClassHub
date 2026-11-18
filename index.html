@@ -165,8 +165,8 @@ main{
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .page-title{font-size:clamp(22px,3vw,28px);line-height:1.15;margin:0 0 6px;font-weight:600}
 .page-sub{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;max-width:64ch}
-.section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-.section-head .page-sub{margin:0}
+.section-head{margin-bottom:20px}
+.section-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .back-btn{
   display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;
   color:var(--muted);font-family:var(--font-mono);font-size:10.5px;font-weight:400;
@@ -1328,9 +1328,11 @@ body.sheet-open{overflow:hidden}
     <section id="mcq-practice" class="page">
       <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
       <div class="section-head">
-        <h1 class="page-title">MCQ Practice</h1>
+        <div class="section-head-row">
+          <h1 class="page-title">MCQ Practice</h1>
+          <button class="btn secondary" onclick="openUploadMcqPanel()"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Upload MCQs</button>
+        </div>
         <p class="page-sub">Generate practice quizzes from your uploaded PDFs or your own typed questions.</p>
-        <button class="btn secondary" onclick="openUploadMcqPanel()" style="margin-left:auto"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Upload MCQs</button>
       </div>
       <div id="mcqStatus" class="status" aria-live="polite"></div>
 
@@ -1341,14 +1343,6 @@ body.sheet-open{overflow:hidden}
           <p class="muted">Paste your typed questions below. Each question block:</p>
           <p class="muted" style="font-family:var(--font-mono);font-size:11px;margin:6px 0">Q: What is the capital of India?\nA) Delhi\nB) Mumbai\nC) Kolkata\nD) Chennai\nAns: A\nExplanation: Delhi is the capital city of India.</p>
           <div id="uploadMcqStatus" class="status" aria-live="polite"></div>
-          <div class="mcq-count-pick">
-            <label class="mcq-count-label">Questions to generate</label>
-            <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
-            <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
-            <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
-            <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
-            <span class="mcq-count-hint" id="uploadMcqCountHint">10 questions</span>
-          </div>
           <label class="f-label" for="uploadMcqTopic">Chapter / topic name</label>
           <input id="uploadMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
           <label class="f-label" for="uploadMcqText">Your questions (paste below)</label>
@@ -1362,7 +1356,7 @@ body.sheet-open{overflow:hidden}
       <div id="mcqViewStart">
         <div class="panel">
           <h2 class="panel-title">Start New Practice</h2>
-          <p class="muted">Choose an uploaded PDF. ClassHub reads it and generates multiple-choice questions from its content.</p>
+          <p class="muted">Type a chapter or topic name. ClassHub uses your uploaded MCQs for that topic first, then AI fills any remaining questions.</p>
           <div class="mcq-count-pick">
             <label class="mcq-count-label">Questions</label>
             <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
@@ -1371,6 +1365,10 @@ body.sheet-open{overflow:hidden}
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
             <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
           </div>
+          <label class="f-label" for="mcqTopicInput">Chapter / topic name</label>
+          <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
+          <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by chapter name</button>
+          <p class="muted" style="margin-top:18px">Or pick one of your uploaded PDFs:</p>
           <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
         </div>
         <div class="panel">
@@ -5841,8 +5839,6 @@ window.setMcqCount = function(count){
   });
   const hint = document.getElementById("mcqCountHint");
   if(hint) hint.textContent = count + " questions";
-  const uhint = document.getElementById("uploadMcqCountHint");
-  if(uhint) uhint.textContent = count + " questions";
 };
 
 window.openUploadMcqPanel = function(){
@@ -6278,6 +6274,81 @@ window.generateMcq = async function(pdfId, count){
     setMcqStatus(mcqErrorMessage(error,"Could not generate questions. Please try again."),"error");
     showMcqView("start");
     await window.loadMcqPractice();
+  }finally{
+    mcqState.generating = false;
+    mcqGenController = null;
+  }
+};
+
+window.startTopicPractice = async function(count){
+  if(!currentUser){ setMcqStatus("Please sign in to practice MCQs.","error"); return; }
+  if(mcqState.generating) return;
+
+  const input = document.getElementById("mcqTopicInput");
+  const topic = input ? input.value.trim() : "";
+  if(topic.length < 2){
+    setMcqStatus("Type a chapter or topic name first.","error");
+    if(input) input.focus();
+    return;
+  }
+
+  const questionsCount = count && [10,20,30,50].includes(Number(count)) ? Number(count) : mcqGenerateCount;
+  mcqState.generating = true;
+  mcqGenController = new AbortController();
+  showMcqView("generating");
+  setMcqStatus("");
+  setMcqGenProgress(
+    "Preparing questions…",
+    "Looking for your uploaded MCQs first, then asking the AI to fill the rest…",
+    ""
+  );
+
+  try{
+    const result = await mcqFetch("generateFromTopic",{topic,count:questionsCount}, mcqGenController.signal);
+    const questions = (result.questions || []).map((q)=>({
+      id: q.id,
+      order_index: q.order_index,
+      question_text: q.question_text,
+      options: q.options || [],
+      subject_topic: q.subject_topic,
+      source_page: q.source_page,
+      difficulty: q.difficulty
+    }));
+    if(!questions.length) throw new Error("No questions were found for this topic.");
+    if(questions.some(q=>!q.id)) throw new Error("The questions were incomplete. Please try again.");
+
+    const {data:attempt, error:attemptError} = await db.from("mcq_attempts")
+      .insert({session_id:result.session_id, user_id:currentUser.id, score:0, total:0})
+      .select("id")
+      .single();
+    if(attemptError) throw attemptError;
+
+    mcqState = {
+      sessionId: result.session_id,
+      session: {id:result.session_id, title:result.title, total_questions:result.total_questions, status:"ready"},
+      questions,
+      answers: {},
+      checked: {},
+      results: {},
+      currentIndex: 0,
+      attemptId: attempt.id,
+      generating: false,
+      checking: false,
+      finishing: false,
+      finalResult: null
+    };
+
+    showMcqView("practice");
+    renderMcqPractice();
+  }catch(error){
+    console.error("MCQ topic generate:", error);
+    if(error.code === "CANCELLED"){
+      setMcqStatus("");
+      showMcqView("start");
+      return;
+    }
+    setMcqStatus(mcqErrorMessage(error,"Could not prepare questions for this topic. Try another chapter name."),"error");
+    showMcqView("start");
   }finally{
     mcqState.generating = false;
     mcqGenController = null;
