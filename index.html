@@ -1182,38 +1182,32 @@ body.sheet-open{overflow:hidden}
           <span class="action-copy"><strong>MCQ Practice</strong><small>Generate quizzes from your PDFs</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
-        <button class="action-row" type="button" onclick="openSection('add-mcq')">
-          <span class="action-index">06</span>
-          <span class="action-icon"><svg class="ic"><use href="#i-plus"/></svg></span>
-          <span class="action-copy"><strong>Add MCQs</strong><small>Type a chapter, AI builds the quiz</small></span>
-          <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
-        </button>
         <button class="action-row" type="button" onclick="openSection('notices')">
-          <span class="action-index">07</span>
+          <span class="action-index">06</span>
           <span class="action-icon"><svg class="ic"><use href="#i-bell"/></svg></span>
           <span class="action-copy"><strong>Notices</strong><small>Important class updates</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('chat')">
-          <span class="action-index">08</span>
+          <span class="action-index">07</span>
           <span class="action-icon"><svg class="ic"><use href="#i-chat"/></svg></span>
           <span class="action-copy"><strong>Class Chat</strong><small>Talk with classmates</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('community')">
-          <span class="action-index">09</span>
+          <span class="action-index">08</span>
           <span class="action-icon"><svg class="ic"><use href="#i-users"/></svg></span>
           <span class="action-copy"><strong>Community</strong><small>Posts, likes &amp; comments</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('photos')">
-          <span class="action-index">10</span>
+          <span class="action-index">09</span>
           <span class="action-icon"><svg class="ic"><use href="#i-image"/></svg></span>
           <span class="action-copy"><strong>Case Studies</strong><small>Folder-wise patient case photos</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('accounts')">
-          <span class="action-index">11</span>
+          <span class="action-index">10</span>
           <span class="action-icon"><svg class="ic"><use href="#i-users"/></svg></span>
           <span class="action-copy"><strong>Accounts</strong><small>Discover classmates' profiles</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
@@ -1334,9 +1328,34 @@ body.sheet-open{overflow:hidden}
       <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
       <div class="section-head">
         <h1 class="page-title">MCQ Practice</h1>
-        <p class="page-sub">Generate practice quizzes from your uploaded PDFs.</p>
+        <p class="page-sub">Generate practice quizzes from your uploaded PDFs or your own typed questions.</p>
+        <button class="btn secondary" onclick="openUploadMcqPanel()" style="margin-left:auto"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Upload MCQs</button>
       </div>
       <div id="mcqStatus" class="status" aria-live="polite"></div>
+
+      <!-- UPLOAD MCQs PANEL (hidden by default) -->
+      <div id="mcqUploadPanel" style="display:none">
+        <div class="panel">
+          <h2 class="panel-title">Upload MCQs from Text</h2>
+          <p class="muted">Paste your typed questions below. Each question block:</p>
+          <p class="muted" style="font-family:var(--font-mono);font-size:11px;margin:6px 0">Q: What is the capital of India?\nA) Delhi\nB) Mumbai\nC) Kolkata\nD) Chennai\nAns: A\nExplanation: Delhi is the capital city of India.</p>
+          <div id="uploadMcqStatus" class="status" aria-live="polite"></div>
+          <div class="mcq-count-pick">
+            <label class="mcq-count-label">Questions to generate</label>
+            <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
+            <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
+            <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
+          </div>
+          <label class="f-label" for="uploadMcqTopic">Chapter / topic name</label>
+          <input id="uploadMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
+          <label class="f-label" for="uploadMcqText">Your questions (paste below)</label>
+          <textarea id="uploadMcqText" class="field" rows="8" placeholder="Q: What is ...?\nA) ...\nB) ...\nC) ...\nD) ...\nAns: A\nExplanation: ...\n\nQ: Next question..."></textarea>
+          <button class="btn full" onclick="uploadMcqsFromText()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Save Uploaded MCQs</button>
+          <button class="btn secondary full" onclick="document.getElementById('mcqUploadPanel').style.display='none'" style="margin-top:6px">Cancel</button>
+        </div>
+      </div>
 
       <!-- START VIEW -->
       <div id="mcqViewStart">
@@ -1427,30 +1446,6 @@ body.sheet-open{overflow:hidden}
     </section>
 
     <!-- ADD MCQs FROM TOPIC -->
-    <section id="add-mcq" class="page">
-      <button class="back-btn" onclick="openSection('mcq-practice')"><svg class="ic ic-sm"><use href="#i-back"/></svg>MCQ Practice</button>
-      <div class="section-head">
-        <h1 class="page-title">Add MCQs</h1>
-        <p class="page-sub">Type a chapter or topic name. ClassHub AI will build a multiple-choice quiz from its knowledge.</p>
-      </div>
-      <div id="addMcqStatus" class="status" aria-live="polite"></div>
-      <div class="panel">
-        <div class="mcq-count-pick">
-          <label class="mcq-count-label">Questions</label>
-          <button class="mcq-count-btn active" type="button" onclick="setAddMcqCount(10)">10</button>
-          <button class="mcq-count-btn" type="button" onclick="setAddMcqCount(20)">20</button>
-          <button class="mcq-count-btn" type="button" onclick="setAddMcqCount(30)">30</button>
-          <button class="mcq-count-btn" type="button" onclick="setAddMcqCount(50)">50</button>
-          <span class="mcq-count-hint" id="addMcqCountHint">10 questions</span>
-        </div>
-        <div style="margin-top:14px">
-          <label class="f-label" for="addMcqTopic">Chapter / topic name</label>
-          <input id="addMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
-        </div>
-        <button class="btn full" onclick="generateAddMcq()" style="margin-top:14px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Generate MCQs</button>
-      </div>
-    </section>
-
     <!-- PROFILE -->
     <section id="profile" class="page">
       <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
@@ -1582,7 +1577,6 @@ body.sheet-open{overflow:hidden}
       <button class="more-item" type="button" onclick="goFromMore('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
       <button class="more-item" type="button" onclick="goFromMore('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
       <button class="more-item" type="button" onclick="goFromMore('mcq-practice')"><svg class="ic"><use href="#i-mcq"/></svg>MCQ Practice</button>
-      <button class="more-item" type="button" onclick="goFromMore('add-mcq')"><svg class="ic"><use href="#i-plus"/></svg>Add MCQs</button>
       <button class="more-item" type="button" onclick="goFromMore('accounts')"><svg class="ic"><use href="#i-users"/></svg>Accounts</button>
       <button class="more-item" type="button" onclick="goFromMore('profile')"><svg class="ic"><use href="#i-user"/></svg>My Profile</button>
     </div>
@@ -1841,7 +1835,7 @@ function setAvatar(imgId, fbId, url, name){
 }
 
 /* ================= NAVIGATION ================= */
-const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile","mcq-practice","add-mcq"]);
+const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile","mcq-practice"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -5848,72 +5842,39 @@ window.setMcqCount = function(count){
   if(hint) hint.textContent = count + " questions";
 };
 
-let addMcqGenerateCount = 10;
-window.setAddMcqCount = function(count){
-  addMcqGenerateCount = count;
-  document.querySelectorAll("#add-mcq .mcq-count-btn").forEach(btn=>{
-    btn.classList.toggle("active", String(btn.textContent.trim()) === String(count));
-  });
-  const hint = document.getElementById("addMcqCountHint");
-  if(hint) hint.textContent = count + " questions";
+window.openUploadMcqPanel = function(){
+  const panel = document.getElementById("mcqUploadPanel");
+  if(panel) panel.style.display = panel.style.display === "none" ? "" : "none";
+  const statusEl = document.getElementById("uploadMcqStatus");
+  if(statusEl) statusEl.textContent = "";
 };
 
-window.generateAddMcq = async function(){
-  const topicInput = document.getElementById("addMcqTopic");
+window.uploadMcqsFromText = async function(){
+  const topicInput = document.getElementById("uploadMcqTopic");
+  const textInput = document.getElementById("uploadMcqText");
   const topic = topicInput ? topicInput.value.trim() : "";
-  const count = addMcqGenerateCount || 10;
-  const statusEl = document.getElementById("addMcqStatus");
+  const text = textInput ? textInput.value.trim() : "";
+  const statusEl = document.getElementById("uploadMcqStatus");
   if(statusEl) statusEl.textContent = "";
 
   if(!topic){
     if(statusEl){ statusEl.textContent = "Please enter a chapter or topic name."; statusEl.className = "status error"; }
     return;
   }
+  if(!text){
+    if(statusEl){ statusEl.textContent = "Please paste your questions in text format."; statusEl.className = "status error"; }
+    return;
+  }
 
   try{
-    const result = await mcqFetch("generateFromTopic",{topic,count});
-    const questions = (result.questions || []).map((q)=>({
-      id: q.id,
-      order_index: q.order_index,
-      question_text: q.question_text,
-      options: q.options || [],
-      subject_topic: q.subject_topic,
-      source_page: q.source_page,
-      difficulty: q.difficulty
-    }));
-    if(!questions.length) throw new Error("No questions were generated for this topic.");
-
-    mcqState = {
-      sessionId: result.session_id,
-      session: {id:result.session_id, title:result.title, total_questions:result.total_questions, status:"ready"},
-      questions,
-      answers: {},
-      checked: {},
-      results: {},
-      currentIndex: 0,
-      attemptId: null,
-      generating: false,
-      checking: false,
-      finishing: false,
-      finalResult: null
-    };
-
-    // Create an attempt for this session
-    const {data:attempt, error:attemptError} = await db.from("mcq_attempts")
-      .insert({session_id:result.session_id, user_id:currentUser.id, score:0, total:0})
-      .select("id")
-      .single();
-    if(attemptError) throw attemptError;
-    mcqState.attemptId = attempt.id;
-
-    document.getElementById("add-mcq")?.classList.remove("active");
-    document.getElementById("mcq-practice")?.classList.add("active");
-    currentPage = "mcq-practice";
-    showMcqView("practice");
-    renderMcqPractice();
+    const result = await mcqFetch("uploadFromText",{topic,text});
+    if(statusEl){ statusEl.textContent = result.message || `Saved ${result.uploaded} MCQs under "${topic}".`; statusEl.className = "status"; }
+    document.getElementById("mcqUploadPanel")?.style.display = "none";
+    topicInput.value = "";
+    textInput.value = "";
   }catch(error){
-    console.error("Add MCQs:", error);
-    if(statusEl){ statusEl.textContent = mcqErrorMessage(error,"Could not generate questions. Try again."); statusEl.className = "status error"; }
+    console.error("Upload MCQs:", error);
+    if(statusEl){ statusEl.textContent = mcqErrorMessage(error,"Could not save questions. Try again."); statusEl.className = "status error"; }
   }
 };
 

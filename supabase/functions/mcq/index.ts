@@ -244,6 +244,78 @@ function parseGeneratedQuestions(content: string): McqQuestion[] {
   return questions;
 }
 
+/* ------------------------------------------------------------------ */
+/* Text format parser                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Parses pasted text-format MCQs.
+ *
+ * Expected block format (blank line separates questions):
+ *   Q: What is the capital of India?
+ *   A) Delhi
+ *   B) Mumbai
+ *   C) Kolkata
+ *   D) Chennai
+ *   Ans: A
+ *   Explanation: Delhi is the capital city of India.
+ */
+function parseTextQuestions(rawText: string, topic: string): McqQuestion[] {
+  const blocks = rawText
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0);
+
+  const questions: McqQuestion[] = [];
+  const seen = new Set<string>();
+
+  for (const block of blocks) {
+    const lines = block.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+
+    let questionText = "";
+    const options: string[] = [];
+    let correctIndex = -1;
+    let explanation = "";
+
+    for (const line of lines) {
+      const qMatch = line.match(/^Q[:.]?\s*(.+)$/i);
+      if (qMatch) { questionText = qMatch[1].trim(); continue; }
+
+      const optMatch = line.match(/^([A-D])[\).:]\s*(.+)$/i);
+      if (optMatch) {
+        const idx = "ABCD".indexOf(optMatch[1].toUpperCase());
+        options[idx] = optMatch[2].trim();
+        continue;
+      }
+
+      const ansMatch = line.match(/^Ans?[:.]?\s*([A-D])$/i);
+      if (ansMatch) { correctIndex = "ABCD".indexOf(ansMatch[1].toUpperCase()); continue; }
+
+      const explMatch = line.match(/^Explanation[:.]?\s*(.+)$/i);
+      if (explMatch) { explanation = explMatch[1].trim(); continue; }
+    }
+
+    if (!questionText || options.length !== 4 || correctIndex < 0) continue;
+    if (options.some((o) => !o)) continue;
+
+    const key = questionText.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    questions.push({
+      question: questionText,
+      options,
+      correct_index: correctIndex,
+      explanation: explanation || "Answer verified against your uploaded key.",
+      subject_topic: topic || null,
+      source_page: null,
+      difficulty: "medium",
+    });
+  }
+
+  return questions;
+}
+
 function buildGenerationPrompt(pdfTitle: string, text: string, count: number): string {
   return `You are an expert academic question writer for ClassHub (Ayurveda students).
 
@@ -607,23 +679,52 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
   }
 
   const count = resolveMcqCount(body);
-  const collected = new Map<string, McqQuestion>();
-  let lastError: unknown = null;
-  const numWindows = count <= 10 ? 1 : count <= 30 ? 2 : 3;
 
-  for (let w = 0; w < numWindows && collected.size < count; w++) {
-    const prompt = buildTopicGenerationPrompt(topic, count);
-    for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
-      try {
-        const content = await callGroq(prompt);
-        for (const question of parseGeneratedQuestions(content)) {
-          const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-          if (!collected.has(key) && collected.size < count) collected.set(key, question);
+  // --- 1. Check user-uploaded questions for this topic first ---
+  const { data: uploadedRows, error: uploadedError } = await supabase
+    .from("mcq_uploaded_questions")
+    .select("id, question_text, options, correct_option_index, explanation")
+    .eq("user_id", user.id)
+    .ilike("topic", topic)
+    .order("created_at", { ascending: true });
+
+  const uploaded = (uploadedRows || []).map((row: any) => ({
+    question: row.question_text,
+    options: (row.options || []).map((o: any) => o.text),
+    correct_index: row.correct_option_index,
+    explanation: row.explanation || "Answer verified against your uploaded key.",
+    subject_topic: topic,
+    source_page: null,
+    difficulty: "medium",
+  }));
+
+  const collected = new Map<string, McqQuestion>();
+  for (const q of uploaded) {
+    const key = q.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (!collected.has(key) && collected.size < count) collected.set(key, q);
+  }
+
+  let lastError: unknown = null;
+  let aiNeeded = count - collected.size;
+
+  // --- 2. Supplement with AI generation if needed ---
+  if (aiNeeded > 0) {
+    const numWindows = aiNeeded <= 10 ? 1 : aiNeeded <= 30 ? 2 : 3;
+
+    for (let w = 0; w < numWindows && collected.size < count; w++) {
+      const prompt = buildTopicGenerationPrompt(topic, aiNeeded);
+      for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
+        try {
+          const content = await callGroq(prompt);
+          for (const question of parseGeneratedQuestions(content)) {
+            const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+            if (!collected.has(key) && collected.size < count) collected.set(key, question);
+          }
+        } catch (error) {
+          lastError = error;
+          if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
+          if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
         }
-      } catch (error) {
-        lastError = error;
-        if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
-        if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
       }
     }
   }
@@ -635,7 +736,7 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
       return json(lastError.status, { error: lastError.message, code: lastError.code });
     }
     return json(422, {
-      error: "The AI could not generate usable questions for this topic. Try a different chapter name.",
+      error: "No questions found for this topic. Upload some or try a different chapter name.",
       code: "NO_QUESTIONS_GENERATED",
     });
   }
@@ -739,6 +840,60 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
     title,
     total_questions: questions.length,
     questions: sanitised,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Upload MCQs from text                                              */
+/* ------------------------------------------------------------------ */
+
+async function handleUploadFromText(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const rawTopic = body?.topic;
+  const topic = typeof rawTopic === "string" ? rawTopic.trim() : "";
+  if (!topic || topic.length < 3) {
+    return json(400, { error: "Please enter a chapter or topic name.", code: "MISSING_TOPIC" });
+  }
+  if (topic.length > 120) {
+    return json(400, { error: "Topic name is too long. Keep it under 120 characters.", code: "TOPIC_TOO_LONG" });
+  }
+
+  const rawText = typeof body?.text === "string" ? body.text.trim() : "";
+  if (!rawText) {
+    return json(400, { error: "Please paste your questions in text format.", code: "MISSING_TEXT" });
+  }
+
+  const questions = parseTextQuestions(rawText, topic);
+  if (!questions.length) {
+    return json(422, {
+      error: "Could not parse any questions. Use the format: Q: ... / A) ... / B) ... / C) ... / D) ... / Ans: X / Explanation: ...",
+      code: "PARSE_FAILED",
+    });
+  }
+
+  const rows = questions.map((q) => ({
+    user_id: user.id,
+    topic,
+    question_text: q.question,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    correct_option_index: q.correct_index,
+    explanation: q.explanation,
+  }));
+
+  const { data: inserted, error: insertError } = await admin
+    .from("mcq_uploaded_questions")
+    .insert(rows)
+    .select("id");
+
+  if (insertError || !inserted) {
+    console.error("mcq: upload insert failed", insertError?.message);
+    return json(500, { error: "Could not save your questions.", code: "UPLOAD_FAILED" });
+  }
+
+  return json(200, {
+    topic,
+    uploaded: inserted.length,
+    total: inserted.length,
+    message: `Saved ${inserted.length} MCQs under "${topic}". Start practice from MCQ Practice to use them.`,
   });
 }
 
@@ -1094,6 +1249,7 @@ Deno.serve(async (request: Request) => {
   const action = typeof body?.action === "string" ? body.action : "";
   if (action === "generate") return handleGenerate(supabase, admin, user, body);
   if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
+  if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);
   return json(400, { error: "Unknown action.", code: "UNKNOWN_ACTION" });
