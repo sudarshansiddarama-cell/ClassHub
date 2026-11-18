@@ -165,7 +165,8 @@ main{
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .page-title{font-size:clamp(22px,3vw,28px);line-height:1.15;margin:0 0 6px;font-weight:600}
 .page-sub{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;max-width:64ch}
-.section-head{margin-bottom:20px}
+.section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.section-head .page-sub{margin:0}
 .back-btn{
   display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;
   color:var(--muted);font-family:var(--font-mono);font-size:10.5px;font-weight:400;
@@ -1346,7 +1347,7 @@ body.sheet-open{overflow:hidden}
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
-            <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
+            <span class="mcq-count-hint" id="uploadMcqCountHint">10 questions</span>
           </div>
           <label class="f-label" for="uploadMcqTopic">Chapter / topic name</label>
           <input id="uploadMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
@@ -5840,6 +5841,8 @@ window.setMcqCount = function(count){
   });
   const hint = document.getElementById("mcqCountHint");
   if(hint) hint.textContent = count + " questions";
+  const uhint = document.getElementById("uploadMcqCountHint");
+  if(uhint) uhint.textContent = count + " questions";
 };
 
 window.openUploadMcqPanel = function(){
