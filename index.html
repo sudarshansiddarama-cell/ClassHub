@@ -6119,11 +6119,6 @@ function renderMcqPdfList(pdfs, sessionByPdf){
     button.style.fontSize = "12px";
     actions.appendChild(button);
 
-    const del = makeButton("Delete",()=>deleteMcqSession(session.id),"btn secondary");
-    del.style.padding = "6px 10px";
-    del.style.fontSize = "12px";
-    actions.appendChild(del);
-
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -6185,6 +6180,12 @@ function renderMcqSessionList(sessions, attemptBySession){
     button.style.padding = "6px 10px";
     button.style.fontSize = "12px";
     actions.appendChild(button);
+
+    const del = makeButton("Delete",()=>deleteMcqSession(session.id),"btn secondary");
+    del.style.padding = "6px 10px";
+    del.style.fontSize = "12px";
+    actions.appendChild(del);
+
     card.appendChild(actions);
     list.appendChild(card);
   });
