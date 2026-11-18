@@ -5872,8 +5872,10 @@ window.uploadMcqsFromText = async function(){
   try{
     const result = await mcqFetch("uploadFromText",{topic,text});
     if(statusEl){ statusEl.textContent = result.message || `Saved ${result.uploaded} MCQs under "${topic}".`; statusEl.className = "status"; }
-    document.getElementById("mcqUploadPanel")?.style.display = "none";
-    topicInput.value = "";
+    const panelEl = document.getElementById("mcqUploadPanel");
+    if(panelEl) panelEl.style.display = "none";
+    if(topicInput) topicInput.value = "";
+    if(textInput) textInput.value = "";
     textInput.value = "";
   }catch(error){
     console.error("Upload MCQs:", error);
