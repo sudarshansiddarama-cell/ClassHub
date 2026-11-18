@@ -6118,10 +6118,30 @@ function renderMcqPdfList(pdfs, sessionByPdf){
     button.style.padding = "6px 10px";
     button.style.fontSize = "12px";
     actions.appendChild(button);
+
+    const del = makeButton("Delete",()=>deleteMcqSession(session.id),"btn secondary");
+    del.style.padding = "6px 10px";
+    del.style.fontSize = "12px";
+    actions.appendChild(del);
+
     card.appendChild(actions);
     list.appendChild(card);
   });
 }
+
+window.deleteMcqSession = async function(sessionId){
+  if(!sessionId) return;
+  if(!confirm("Delete this practice session and its score history?")) return;
+  setMcqStatus("Deleting session…");
+  try{
+    await mcqFetch("deleteSession",{session_id:sessionId});
+    setMcqStatus("Practice session deleted.");
+    await window.loadMcqPractice();
+  }catch(error){
+    console.error("Delete MCQ session:", error);
+    setMcqStatus(mcqErrorMessage(error,"Could not delete this session."),"error");
+  }
+};
 
 function renderMcqSessionList(sessions, attemptBySession){
   const list = document.getElementById("mcqSessionList");

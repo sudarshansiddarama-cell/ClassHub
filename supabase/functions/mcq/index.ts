@@ -962,6 +962,38 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
 }
 
 /* ------------------------------------------------------------------ */
+/* Delete a practice session                                          */
+/* ------------------------------------------------------------------ */
+
+async function handleDeleteSession(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const sessionId = typeof body?.session_id === "string" ? body.session_id.trim() : "";
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) {
+    return json(400, { error: "Invalid practice session.", code: "BAD_SESSION" });
+  }
+
+  const { data: row } = await admin
+    .from("mcq_sessions")
+    .select("id")
+    .eq("id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!row) {
+    return json(404, { error: "That practice session was not found.", code: "NOT_FOUND" });
+  }
+
+  const { error } = await admin
+    .from("mcq_sessions")
+    .delete()
+    .eq("id", sessionId)
+    .eq("user_id", user.id);
+  if (error) {
+    console.error("mcq: delete session failed", error.message);
+    return json(500, { error: "Could not delete this session.", code: "DELETE_FAILED" });
+  }
+  return json(200, { deleted: true, session_id: sessionId });
+}
+
+/* ------------------------------------------------------------------ */
 /* Validate / feedback                                                */
 /* ------------------------------------------------------------------ */
 
@@ -1314,6 +1346,7 @@ Deno.serve(async (request: Request) => {
   if (action === "generate") return handleGenerate(supabase, admin, user, body);
   if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
   if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
+  if (action === "deleteSession") return handleDeleteSession(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);
   return json(400, { error: "Unknown action.", code: "UNKNOWN_ACTION" });
