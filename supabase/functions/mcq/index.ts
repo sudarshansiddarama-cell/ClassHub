@@ -2,17 +2,13 @@
  * ClassHub MCQ Practice backend.
  *
  * Generates multiple-choice questions from an uploaded PDF's extracted text
- * using the same Groq provider as the ClassHub AI assistant, and validates
- * student answers server-side so scores and answer keys are never trusted to
- * the browser.
- *
- * The browser never sees GROQ_API_KEY or SUPABASE_SERVICE_ROLE_KEY. It calls
- * this function with the student's Supabase access token; the function verifies
- * the user, checks PDF access, and performs privileged writes with the service
- * role so answer keys stay server-side.
+ * or from a typed chapter/topic name, using the same Groq provider as the
+ * ClassHub AI assistant. Validates student answers server-side so scores and
+ * answer keys are never trusted to the browser.
  *
  * Actions:
- *   { action: "generate", pdf_id }
+ *   { action: "generate", pdf_id, count? }
+ *   { action: "generateFromTopic", topic, count? }
  *   { action: "validate", attempt_id, responses: [{ question_id, selected_option_index }], finalize? }
  *   { action: "feedback", attempt_id }
  *
@@ -35,7 +31,8 @@ const MAX_QUESTIONS = 50;
 const MIN_TEXT_CHARS = 200;
 const ALLOWED_COUNTS = [10, 20, 30, 50];
 const DEFAULT_COUNT = 10;
-const MAX_CONTEXT_CHARS = 14_000;
+const BASE_CONTEXT_CHARS = 14_000;
+const MAX_CONTEXT_CHARS = 80_000;
 const MAX_GENERATIONS_PER_HOUR = 20;
 
 const corsHeaders = {
@@ -128,7 +125,6 @@ async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
   }
 
   if (!response.ok) {
-    // Drain the body so the connection can be reused, but never log secrets.
     try { await response.text(); } catch { /* ignore */ }
     if (response.status === 401 || response.status === 403) {
       throw new AiError(503, "AI_AUTH_ERROR", "The AI service is not configured correctly.");
@@ -137,7 +133,7 @@ async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
       throw new AiError(503, "AI_BUSY", "The AI is busy right now. Please wait a few seconds and try again.");
     }
     if (response.status === 413) {
-      throw new AiError(413, "AI_CONTEXT_TOO_LARGE", "The PDF content is too large for the AI. Try a shorter document.");
+      throw new AiError(413, "AI_CONTEXT_TOO_LARGE", "The content is too large for the AI. Try a shorter document.");
     }
     if (response.status >= 500) {
       throw new AiError(503, "AI_UNAVAILABLE", "The AI service is temporarily unavailable. Please try again shortly.");
@@ -165,8 +161,8 @@ async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
 
 type McqQuestion = {
   question: string;
-  options: string[];        // exactly 4, distinct
-  correct_index: number;    // 0-3
+  options: string[];
+  correct_index: number;
   explanation: string;
   subject_topic: string | null;
   source_page: string | null;
@@ -189,19 +185,13 @@ function normaliseQuestion(raw: unknown, seen: Set<string>): McqQuestion | null 
   const question = cleanText(r.question, 1200);
   if (question.length < 12) return null;
 
-  // Reject question shapes that cannot have exactly one correct option.
   const badShape =
     /\b(what are|list|enumerate|name the|select all|choose all|which of the following are|except|not one of|is not|are not|which is false|which is incorrect|true or false)\b/i;
   if (badShape.test(question)) return null;
 
-  // Never leak source-attribution phrasing into what the student sees.
-  const sourceAttribution = /\b(as per|according to|based on|per the|from the|per|per this|from this)\s+(source|material|pdf|document|text|content|extract)\b/i;
-  if (sourceAttribution.test(question)) return null;
-
   if (!Array.isArray(r.options) || r.options.length !== 4) return null;
   const options = r.options.map((o) => cleanText(o, 500));
   if (options.some((o) => !o)) return null;
-  if (options.some((o) => sourceAttribution.test(o))) return null;
   if (options.some((o) => /^(all|none)\s+of\s+(the\s+)?(above|these)$|^both\s+[a-d]\s+and\s+[a-d]$/i.test(o))) return null;
   const distinct = new Set(options.map((o) => o.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()));
   if (distinct.size !== 4) return null;
@@ -211,19 +201,11 @@ function normaliseQuestion(raw: unknown, seen: Set<string>): McqQuestion | null 
 
   const explanation = cleanText(r.explanation, 900);
   if (explanation.length < 8) return null;
-  if (sourceAttribution.test(explanation)) return null;
 
-  // Soft safety net: the explanation must mention at least one of the four
-  // options. This catches questions whose real answer is missing from the
-  // options (e.g. "Kashaya" asked with only Bitter/Sweet/Sour/Salty).
-  const explanationLower = explanation.toLowerCase();
-  const mentionsAnOption = options.some((option) => {
-    if (explanationLower.includes(option.toLowerCase())) return true;
-    return option.toLowerCase().split(/[^\p{L}\p{N}]+/u)
-      .filter((word) => word.length >= 4)
-      .some((word) => explanationLower.includes(word));
-  });
-  if (!mentionsAnOption) return null;
+  const sourceAttribution = /\b(as per|according to|based on|per the|from the|per|per this|from this)\s+(source|material|pdf|document|text|content|extract)\b/i;
+  if (sourceAttribution.test(question)) return null;
+  if (options.some((o) => sourceAttribution.test(o))) return null;
+  if (sourceAttribution.test(explanation)) return null;
 
   const difficulty = r.difficulty === "easy" || r.difficulty === "hard" ? r.difficulty : "medium";
 
@@ -258,7 +240,6 @@ function parseGeneratedQuestions(content: string): McqQuestion[] {
   for (const raw of list) {
     const q = normaliseQuestion(raw, seen);
     if (q) questions.push(q);
-    if (questions.length >= MAX_QUESTIONS) break;
   }
   return questions;
 }
@@ -286,7 +267,7 @@ Return ONLY a single JSON object with this shape and nothing else:
 }
 
 QUALITY RULES (mandatory)
-1. Every question and answer must be answerable from the source material. Do not invent facts. Do not write "as per source", "according to the source", "based on the material", or any similar source-attribution phrase in the question text, options, or explanation.
+1. Every question and answer must be answerable from the source material. Do not invent facts. Do not write "as per source", "according to the source", "based on the source", "per the material", or any similar source-attribution phrase in the question text, options, or explanation.
 2. Exactly one correct option. All four options must be present and distinct.
 3. Every distractor must be clearly wrong to an expert. Never use an option that is also correct.
 4. Never ask the student to list, name, enumerate, or pick multiple items.
@@ -305,9 +286,43 @@ ${text}
 ---`;
 }
 
-/* Second pass: audit every question for single-correctness and grounding.
-   Returns the indices the auditor considers safe, or null when the audit
-   itself could not be parsed (callers then keep the shape-valid questions). */
+function buildTopicGenerationPrompt(topic: string, count: number): string {
+  return `You are an expert academic question writer for ClassHub (Ayurveda students).
+
+TASK
+Write exactly ${count} single-correct multiple-choice questions about "${topic}", grounded in general academic knowledge of that subject.
+
+OUTPUT FORMAT
+Return ONLY a single JSON object with this shape and nothing else:
+{
+  "questions": [
+    {
+      "question": "<question text>",
+      "options": ["<option A>", "<option B>", "<option C>", "<option D>"],
+      "correct_index": <0|1|2|3>,
+      "explanation": "<one or two short sentences explaining why the correct option is correct>",
+      "subject_topic": "<topic or subject, or null>",
+      "source_page": null,
+      "difficulty": "<easy|medium|hard>"
+    }
+  ]
+}
+
+QUALITY RULES (mandatory)
+1. Every question must have exactly one correct option. All four options must be present and distinct.
+2. Do not ask to list, name, enumerate, or pick multiple items.
+3. Avoid negative or tricky wording: no NOT, EXCEPT, FALSE, "which is incorrect", or double negatives.
+4. Never use "All of the above", "None of the above", or "Both A and B" as an option.
+5. No ambiguous questions and no duplicates.
+6. Do NOT write "as per source", "according to the source", "based on the source", "per the material", or any similar source-attribution phrase in the question text, options, or explanation.
+7. correct_index must match the explanation.
+8. Keep explanations to 1-2 sentences.
+
+QUESTIONS TO WRITE: ${count} questions about "${topic}".
+
+SOURCE MATERIAL: None - write from general academic knowledge of "${topic}".`;
+}
+
 function buildReviewPrompt(pdfTitle: string, text: string, questions: McqQuestion[]): string {
   const payload = questions.map((q, index) => ({
     index,
@@ -373,10 +388,6 @@ async function auditQuestions(
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Generate                                                           */
-/* ------------------------------------------------------------------ */
-
 function resolveMcqCount(body: any): number {
   const raw = body?.count;
   if (raw == null) return DEFAULT_COUNT;
@@ -384,6 +395,10 @@ function resolveMcqCount(body: any): number {
   if (Number.isFinite(parsed) && ALLOWED_COUNTS.includes(parsed)) return parsed;
   return DEFAULT_COUNT;
 }
+
+/* ------------------------------------------------------------------ */
+/* Generate from PDF                                                  */
+/* ------------------------------------------------------------------ */
 
 async function handleGenerate(supabase: any, admin: any, user: any, body: any): Promise<Response> {
   const rawId = body?.pdf_id;
@@ -394,7 +409,6 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
     return json(400, { error: "A PDF is required.", code: "MISSING_PDF" });
   }
 
-  // Basic abuse guard: generation is expensive.
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   try {
     const { count } = await supabase
@@ -412,7 +426,6 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
     console.warn("mcq: rate-limit check skipped", String(error));
   }
 
-  // Verify the student can read this PDF and that it has extractable text.
   const { data: pdf, error: pdfError } = await supabase
     .from("pdfs")
     .select("id, file_name, subject, subcategory, content_text")
@@ -435,31 +448,39 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
     });
   }
 
-  const context = contentText.slice(0, MAX_CONTEXT_CHARS);
   const count = resolveMcqCount(body);
-  const prompt = buildGenerationPrompt(pdf.file_name || "PDF", context, count);
+  const contextChars = Math.min(MAX_CONTEXT_CHARS, BASE_CONTEXT_CHARS + (count - 10) * 4_000);
+  const fullContext = contentText.slice(0, contextChars);
 
-  // Ask the AI, validating the output; retry a few times until we collect the
-  // requested number of good questions (each attempt also compensates for
-  // strict quality filters dropping some drafts).
   const collected = new Map<string, McqQuestion>();
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 4 && collected.size < count; attempt++) {
-    try {
-      const content = await callGroq(prompt);
-      for (const question of parseGeneratedQuestions(content)) {
-        const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-        if (!collected.has(key)) collected.set(key, question);
+  const numWindows = count <= 10 ? 1 : count <= 30 ? 2 : 3;
+
+  for (let w = 0; w < numWindows && collected.size < count; w++) {
+    const windowChars = Math.min(MAX_CONTEXT_CHARS, Math.max(BASE_CONTEXT_CHARS, Math.floor(fullContext.length / numWindows)));
+    const maxStart = Math.max(0, fullContext.length - windowChars);
+    const start = numWindows > 1 ? Math.floor((w / (numWindows - 1)) * maxStart) : 0;
+    const windowContext = fullContext.slice(start, start + windowChars);
+    const prompt = buildGenerationPrompt(pdf.file_name || "PDF", windowContext, count);
+
+    for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
+      try {
+        const content = await callGroq(prompt);
+        for (const question of parseGeneratedQuestions(content)) {
+          const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+          if (!collected.has(key) && collected.size < count) collected.set(key, question);
+        }
+        if (!collected.size) {
+          console.warn(`mcq: window ${w + 1}, attempt ${attempt + 1}: AI produced no valid questions`);
+        }
+      } catch (error) {
+        lastError = error;
+        if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
+        if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
       }
-      if (!collected.size) {
-        console.warn(`mcq: AI produced no valid questions (attempt ${attempt + 1})`);
-      }
-    } catch (error) {
-      lastError = error;
-      if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
-      if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
     }
   }
+
   const drafted = [...collected.values()].slice(0, count);
 
   if (!drafted.length) {
@@ -472,8 +493,7 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
     });
   }
 
-  // Audit the draft against the source; keep the draft when the auditor errors.
-  const audited = await auditQuestions(pdf.file_name || "PDF", context, drafted);
+  const audited = await auditQuestions(pdf.file_name || "PDF", fullContext, drafted);
   if (audited && audited.length === 0) {
     return json(422, {
       error: "The AI's draft questions did not pass the quality check. Please try again, or choose a PDF with clearer academic text.",
@@ -482,7 +502,6 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
   }
   const questions = audited && audited.length ? audited : drafted;
 
-  // Persist server-side with the service role (answer keys never touch the client).
   const title = `${String(pdf.file_name || "PDF").slice(0, 170)} · MCQ Practice`.slice(0, 200);
   const { data: session, error: sessionError } = await admin
     .from("mcq_sessions")
@@ -538,7 +557,173 @@ async function handleGenerate(supabase: any, admin: any, user: any, body: any): 
     return json(500, { error: "Could not save the answer keys.", code: "KEYS_SAVE_FAILED" });
   }
 
-  // Sanitised questions for the client: no correct_index, no explanation.
+  const sanitised = questions.map((q, index) => ({
+    id: insertedByOrder.get(index),
+    order_index: index,
+    question_text: q.question,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    subject_topic: q.subject_topic,
+    source_page: q.source_page,
+    difficulty: q.difficulty,
+  }));
+
+  return json(200, {
+    session_id: session.id,
+    title,
+    total_questions: questions.length,
+    questions: sanitised,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Generate from topic                                                */
+/* ------------------------------------------------------------------ */
+
+async function handleGenerateTopic(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const rawTopic = body?.topic;
+  const topic = typeof rawTopic === "string" ? rawTopic.trim() : "";
+  if (!topic || topic.length < 3) {
+    return json(400, { error: "Please enter a chapter or topic name.", code: "MISSING_TOPIC" });
+  }
+  if (topic.length > 120) {
+    return json(400, { error: "Topic name is too long. Keep it under 120 characters.", code: "TOPIC_TOO_LONG" });
+  }
+
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  try {
+    const { count } = await supabase
+      .from("mcq_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", hourAgo);
+    if (typeof count === "number" && count >= MAX_GENERATIONS_PER_HOUR) {
+      return json(429, {
+        error: `You have generated ${MAX_GENERATIONS_PER_HOUR} quizzes this hour. Please try again later.`,
+        code: "RATE_LIMITED",
+      });
+    }
+  } catch (error) {
+    console.warn("mcq: rate-limit check skipped", String(error));
+  }
+
+  const count = resolveMcqCount(body);
+  const collected = new Map<string, McqQuestion>();
+  let lastError: unknown = null;
+  const numWindows = count <= 10 ? 1 : count <= 30 ? 2 : 3;
+
+  for (let w = 0; w < numWindows && collected.size < count; w++) {
+    const prompt = buildTopicGenerationPrompt(topic, count);
+    for (let attempt = 0; attempt < 2 && collected.size < count; attempt++) {
+      try {
+        const content = await callGroq(prompt);
+        for (const question of parseGeneratedQuestions(content)) {
+          const key = question.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+          if (!collected.has(key) && collected.size < count) collected.set(key, question);
+        }
+      } catch (error) {
+        lastError = error;
+        if (error instanceof AiError && error.code === "AI_AUTH_ERROR") break;
+        if (error instanceof AiError && error.code === "AI_BUSY") await sleep(1500);
+      }
+    }
+  }
+
+  const drafted = [...collected.values()].slice(0, count);
+
+  if (!drafted.length) {
+    if (lastError instanceof AiError) {
+      return json(lastError.status, { error: lastError.message, code: lastError.code });
+    }
+    return json(422, {
+      error: "The AI could not generate usable questions for this topic. Try a different chapter name.",
+      code: "NO_QUESTIONS_GENERATED",
+    });
+  }
+
+  const questions = drafted;
+
+  // Topic-based sessions need a source_pdf_id. Use a shared placeholder PDF.
+  let pdfId: number | null = null;
+  const { data: placeholder } = await admin
+    .from("pdfs")
+    .select("id")
+    .eq("file_name", "__TOPIC_BASED_MCQS__")
+    .maybeSingle();
+  if (placeholder?.id) {
+    pdfId = placeholder.id as number;
+  } else {
+    const { data: created, error: createError } = await admin
+      .from("pdfs")
+      .insert({
+        file_name: "__TOPIC_BASED_MCQS__",
+        file_url: "",
+        subject: "Topic-Based MCQs",
+        content_text: "",
+      })
+      .select("id")
+      .single();
+    if (createError || !created) {
+      console.error("mcq: placeholder pdf create failed", createError?.message);
+      return json(500, { error: "Could not prepare topic storage.", code: "PDF_CREATE_FAILED" });
+    }
+    pdfId = created.id as number;
+  }
+
+  const title = `MCQ Practice · ${topic}`.slice(0, 200);
+  const { data: session, error: sessionError } = await admin
+    .from("mcq_sessions")
+    .insert({
+      user_id: user.id,
+      source_pdf_id: pdfId,
+      title,
+      status: "ready",
+      total_questions: questions.length,
+    })
+    .select("id")
+    .single();
+
+  if (sessionError || !session) {
+    console.error("mcq: topic session insert failed", sessionError?.message);
+    return json(500, { error: "Could not save the quiz session.", code: "SESSION_SAVE_FAILED" });
+  }
+
+  const questionRows = questions.map((q, index) => ({
+    session_id: session.id,
+    question_text: q.question,
+    options: q.options.map((text, idx) => ({ index: idx, text })),
+    subject_topic: q.subject_topic || topic,
+    source_page: null,
+    difficulty: q.difficulty,
+    order_index: index,
+  }));
+
+  const { data: inserted, error: questionsError } = await admin
+    .from("mcq_questions")
+    .insert(questionRows)
+    .select("id, order_index");
+
+  if (questionsError || !inserted) {
+    console.error("mcq: topic questions insert failed", questionsError?.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
+    return json(500, { error: "Could not save the generated questions.", code: "QUESTIONS_SAVE_FAILED" });
+  }
+
+  const insertedByOrder = new Map((inserted as any[]).map((row) => [row.order_index, row.id]));
+  const keyRows = questions
+    .map((q, index) => ({
+      question_id: insertedByOrder.get(index),
+      correct_option_index: q.correct_index,
+      explanation: q.explanation,
+    }))
+    .filter((row) => row.question_id);
+
+  const { error: keysError } = await admin.from("mcq_answer_keys").insert(keyRows);
+  if (keysError) {
+    console.error("mcq: topic answer keys insert failed", keysError.message);
+    await admin.from("mcq_sessions").delete().eq("id", session.id);
+    return json(500, { error: "Could not save the answer keys.", code: "KEYS_SAVE_FAILED" });
+  }
+
   const sanitised = questions.map((q, index) => ({
     id: insertedByOrder.get(index),
     order_index: index,
@@ -674,7 +859,6 @@ async function handleValidate(supabase: any, admin: any, user: any, body: any): 
     return json(400, { error: "Attempt is required.", code: "MISSING_INPUT" });
   }
 
-  // The user-scoped client enforces "own attempts only".
   const { data: attempt, error: attemptError } = await supabase
     .from("mcq_attempts")
     .select("id, session_id, started_at, completed_at")
@@ -700,7 +884,6 @@ async function handleValidate(supabase: any, admin: any, user: any, body: any): 
   const { questions, keys, selections } = data;
   const questionIds = new Set(questions.map((q) => q.id));
 
-  // Re-submitting a completed attempt is safe and idempotent.
   if (attempt.completed_at) {
     const summary = summaryFrom({
       attemptId,
@@ -731,7 +914,6 @@ async function handleValidate(supabase: any, admin: any, user: any, body: any): 
         return json(500, { error: "The answer key for this question is missing.", code: "KEY_MISSING" });
       }
 
-      // Answers are locked after the first check.
       if (selections.has(questionId)) {
         results.push(feedbackFor(questionId, selections.get(questionId) as number, key, false, true));
         continue;
@@ -763,8 +945,6 @@ async function handleValidate(supabase: any, admin: any, user: any, body: any): 
     return json(200, { attempt_id: attemptId, results });
   }
 
-  /* Final submission: all questions of the session are scored, not just the
-     ones present in the request. Existing checked answers are never changed. */
   const pending = new Map<string, number>();
   for (const raw of responses) {
     const questionId = typeof raw?.question_id === "string" ? raw.question_id : "";
@@ -850,7 +1030,6 @@ async function handleFeedback(supabase: any, admin: any, user: any, body: any): 
     return json(500, { error: "Could not load feedback.", code: "FEEDBACK_FAILED" });
   }
 
-  // Only answered questions are returned, so retrying a session reveals nothing new.
   const results = [];
   for (const q of data.questions) {
     if (!data.selections.has(q.id)) continue;
@@ -914,6 +1093,7 @@ Deno.serve(async (request: Request) => {
 
   const action = typeof body?.action === "string" ? body.action : "";
   if (action === "generate") return handleGenerate(supabase, admin, user, body);
+  if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);
   return json(400, { error: "Unknown action.", code: "UNKNOWN_ACTION" });
