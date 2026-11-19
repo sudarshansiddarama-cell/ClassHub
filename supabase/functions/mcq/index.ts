@@ -91,7 +91,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
+async function callGroq(prompt: string, temperature = 0.2, jsonMode = true): Promise<string> {
   let response: Response;
   try {
     response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -113,13 +113,13 @@ async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
         stream: false,
         max_completion_tokens: 3000,
         temperature,
-        response_format: { type: "json_object" },
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
     });
   } catch (error) {
     if (isTimeoutError(error)) {
-      throw new AiError(504, "AI_TIMEOUT", "The AI took too long to generate questions. Please try again.");
+      throw new AiError(504, "AI_TIMEOUT", "The AI took too long to respond. Please try again.");
     }
     throw new AiError(502, "AI_NETWORK_ERROR", "Could not reach the AI service. Check your connection and try again.");
   }
@@ -141,18 +141,25 @@ async function callGroq(prompt: string, temperature = 0.2): Promise<string> {
     throw new AiError(502, "AI_ERROR", "The AI could not process that request. Please try again.");
   }
 
-  let payload: any;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new AiError(502, "AI_BAD_FORMAT", "The AI returned an unreadable response. Please try again.");
+  if (jsonMode) {
+    let payload: any;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new AiError(502, "AI_BAD_FORMAT", "The AI returned an unreadable response. Please try again.");
+    }
+    const content = payload?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim()) {
+      throw new AiError(502, "AI_EMPTY", "The AI returned an empty response. Please try again.");
+    }
+    return content;
   }
 
-  const content = payload?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
+  const content = await response.text();
+  if (!content || !content.trim()) {
     throw new AiError(502, "AI_EMPTY", "The AI returned an empty response. Please try again.");
   }
-  return content;
+  return content.trim();
 }
 
 /* ------------------------------------------------------------------ */
@@ -962,6 +969,50 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
 }
 
 /* ------------------------------------------------------------------ */
+/* AI-generated explanation for a single MCQ answer                   */
+/* ------------------------------------------------------------------ */
+
+async function handleExplain(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const questionText = typeof body?.question_text === "string" ? body.question_text.trim() : "";
+  const options = Array.isArray(body?.options) ? body.options.map(String).slice(0, 4) : [];
+  const correctIndex = typeof body?.correct_index === "number" ? body.correct_index : -1;
+
+  if (!questionText) {
+    return json(400, { error: "Question is required.", code: "MISSING_QUESTION" });
+  }
+  if (options.length !== 4) {
+    return json(400, { error: "Four options are required.", code: "BAD_OPTIONS" });
+  }
+  if (correctIndex < 0 || correctIndex > 3) {
+    return json(400, { error: "Invalid correct answer.", code: "BAD_ANSWER" });
+  }
+
+  const correctLetter = "ABCD"[correctIndex];
+  const correctText = options[correctIndex];
+
+  const prompt = `You are an Ayurveda academic tutor. Explain why option ${correctLetter} is the correct answer to this MCQ. Write exactly 3-5 short, simple lines. Do NOT say "as per source", "according to the source", "based on the source", or any source-attribution phrase. Just explain the answer directly in plain language.
+
+Question: ${questionText}
+A) ${options[0]}
+B) ${options[1]}
+C) ${options[2]}
+D) ${options[3]}
+Correct answer: ${correctLetter} — ${correctText}
+
+Return only the explanation text, no labels, no markdown, no JSON.`;
+
+  try {
+    const explanation = await callGroq(prompt, 0.3, false);
+    return json(200, { explanation: explanation.trim() });
+  } catch (error) {
+    if (error instanceof AiError) {
+      return json(error.status, { error: error.message, code: error.code });
+    }
+    return json(500, { error: "Could not generate explanation.", code: "EXPLAIN_FAILED" });
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Delete a practice session                                          */
 /* ------------------------------------------------------------------ */
 
@@ -1346,6 +1397,7 @@ Deno.serve(async (request: Request) => {
   if (action === "generate") return handleGenerate(supabase, admin, user, body);
   if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
   if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
+  if (action === "explain") return handleExplain(supabase, admin, user, body);
   if (action === "deleteSession") return handleDeleteSession(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);
