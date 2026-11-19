@@ -1330,7 +1330,7 @@ body.sheet-open{overflow:hidden}
       <div class="section-head">
         <div class="section-head-row">
           <h1 class="page-title">MCQ Practice</h1>
-          <button class="btn secondary" onclick="openUploadMcqPanel()"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Upload MCQs</button>
+          <button class="btn secondary" onclick="openUploadMcqPanel()" title="Add MCQs"><svg class="ic ic-sm"><use href="#i-plus"/></svg></button>
         </div>
         <p class="page-sub">Generate practice quizzes from your uploaded PDFs or your own typed questions.</p>
       </div>
@@ -1347,7 +1347,7 @@ body.sheet-open{overflow:hidden}
           <input id="uploadMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
           <label class="f-label" for="uploadMcqText">Your questions (paste below)</label>
           <textarea id="uploadMcqText" class="field" rows="8" placeholder="Q: What is ...?\nA) ...\nB) ...\nC) ...\nD) ...\nAns: A\nExplanation: ...\n\nQ: Next question..."></textarea>
-          <button class="btn full" onclick="uploadMcqsFromText()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Save Uploaded MCQs</button>
+          <button class="btn full" onclick="uploadMcqsFromText()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-check"/></svg>OK</button>
           <button class="btn secondary full" onclick="document.getElementById('mcqUploadPanel').style.display='none'" style="margin-top:6px">Cancel</button>
         </div>
       </div>
