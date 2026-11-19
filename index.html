@@ -5848,6 +5848,7 @@ let mcqState = {
   answers: {},
   checked: {},
   results: {},
+  answerKeys: {},
   currentIndex: 0,
   attemptId: null,
   generating: false,
@@ -6320,6 +6321,7 @@ window.generateMcq = async function(pdfId, count){
       checked: {},
       results: {},
       explanations: {},
+      answerKeys: {},
       currentIndex: 0,
       attemptId: attempt.id,
       generating: false,
@@ -6401,6 +6403,7 @@ window.startTopicPractice = async function(count){
       checked: {},
       results: {},
       explanations: {},
+      answerKeys: {},
       currentIndex: 0,
       attemptId: attempt.id,
       generating: false,
@@ -6474,6 +6477,7 @@ window.startMcqPractice = async function(sessionId){
       answers: {},
       checked: {},
       results: {},
+      answerKeys: {},
       currentIndex: 0,
       attemptId: null,
       generating: false,
@@ -6635,14 +6639,29 @@ function selectMcqOption(questionId, optionIndex){
   renderMcqPractice();
 }
 
-/* Pre-generate and store all explanations for the session in the background,
-   so Check Answer shows them instantly with no AI wait. */
+/* Load the session answer key first (fast, no AI) so Check Answer can score
+   locally with zero wait. Then fill any missing AI explanations in the
+   background and refresh the key once they are ready. */
 window.preloadSessionExplanations = async function(sessionId){
   if(!sessionId) return;
+  const loadKeys = async () => {
+    const result = await mcqFetch("getAnswerKeys",{session_id:sessionId});
+    if(!result || !Array.isArray(result.keys)) return;
+    if(mcqState.sessionId !== sessionId) return;
+    const map = {};
+    for(const key of result.keys){
+      if(key && key.question_id) map[key.question_id] = key;
+    }
+    mcqState.answerKeys = map;
+  };
+
+  try{ await loadKeys(); }catch(e){ /* fall back to server validate */ }
+
   try{
     const result = await mcqFetch("generateExplanations",{session_id:sessionId});
     if(result && result.updated > 0){
       console.log("MCQ explanations preloaded:", result.updated);
+      try{ await loadKeys(); }catch(e){ /* keep current keys */ }
     }
   }catch(e){
     // silent — Check Answer falls back to on-demand generation
@@ -6657,6 +6676,31 @@ async function checkMcqAnswer(){
     return;
   }
 
+  const selected = mcqState.answers[question.id];
+  const key = mcqState.answerKeys?.[question.id];
+
+  // Fast path: the answer key is already loaded, so score locally and show
+  // the preloaded explanation immediately. Persist in the background.
+  if(key && key.correct_option_index != null){
+    const isCorrect = key.correct_option_index === selected;
+    const outcome = {
+      question_id: question.id,
+      selected_option_index: selected,
+      is_correct: isCorrect,
+      correct_option_index: key.correct_option_index,
+      explanation: key.explanation || "",
+      locked: false
+    };
+
+    mcqState.checked[question.id] = true;
+    mcqState.results[question.id] = outcome;
+    renderMcqPractice();
+    refreshMissingExplanation(question, outcome);
+    persistMcqResponse(question.id, selected);
+    return;
+  }
+
+  // Fallback: no local key yet — ask the server to validate.
   mcqState.checking = true;
   const checkButton = document.getElementById("mcqCheckBtn");
   checkButton.disabled = true;
@@ -6668,37 +6712,16 @@ async function checkMcqAnswer(){
       attempt_id: mcqState.attemptId,
       responses:[{
         question_id: question.id,
-        selected_option_index: mcqState.answers[question.id]
+        selected_option_index: selected
       }]
     });
     const outcome = response.results && response.results[0];
     if(!outcome) throw new Error("The server did not return feedback. Please try again.");
 
-    // Determine the correct option index: if the user was right, their pick is correct;
-    // if wrong, the server returns correct_option_index.
     const correctIdx = outcome.correct_option_index !== undefined
       ? outcome.correct_option_index
-      : mcqState.answers[question.id];
-
-    // The session preloaded explanations into the database, so the validate
-    // response already carries a full 3-5 line explanation. Fall back to the
-    // on-demand endpoint only if it still looks like a placeholder.
-    const expl = String(outcome.explanation || "").trim();
-    if (expl.length < 60 || /^Answer verified/i.test(expl)) {
-      try {
-        const explainResult = await mcqFetch("explain", {
-          question_text: question.question_text,
-          options: (question.options || []).map(o => o.text),
-          correct_index: correctIdx,
-          topic: question.subject_topic || ""
-        });
-        if (explainResult && explainResult.explanation) {
-          outcome.explanation = explainResult.explanation;
-        }
-      } catch (explainError) {
-        console.warn("AI explanation failed:", explainError);
-      }
-    }
+      : selected;
+    refreshMissingExplanation(question, outcome, correctIdx);
 
     mcqState.checked[question.id] = true;
     mcqState.results[question.id] = outcome;
@@ -6708,6 +6731,42 @@ async function checkMcqAnswer(){
   }finally{
     mcqState.checking = false;
     renderMcqPractice();
+  }
+}
+
+/* Save one checked answer without blocking the UI. The final submit sends
+   every answer again, so a failed background save is harmless. */
+function persistMcqResponse(questionId, selected){
+  if(!mcqState.attemptId) return;
+  mcqFetch("validate",{
+    attempt_id: mcqState.attemptId,
+    responses:[{question_id:questionId, selected_option_index:selected}]
+  }).catch(error=>console.warn("MCQ background save failed:", error));
+}
+
+/* If a stored explanation is still a placeholder, fetch a real one in the
+   background and swap it in when ready. */
+async function refreshMissingExplanation(question, outcome, correctIdx){
+  const current = String(outcome.explanation || "").trim();
+  if(current.length >= 60 && !/^Answer verified/i.test(current)) return;
+  const idx = correctIdx !== undefined ? correctIdx : outcome.correct_option_index;
+  try{
+    const result = await mcqFetch("explain",{
+      question_text: question.question_text,
+      options: (question.options || []).map(o=>o.text),
+      correct_index: idx,
+      topic: question.subject_topic || ""
+    });
+    if(result && result.explanation){
+      outcome.explanation = result.explanation;
+      if(mcqState.answerKeys?.[question.id]){
+        mcqState.answerKeys[question.id].explanation = result.explanation;
+      }
+      if(mcqState.results[question.id]) mcqState.results[question.id].explanation = result.explanation;
+      renderMcqPractice();
+    }
+  }catch(error){
+    console.warn("AI explanation failed:", error);
   }
 }
 
