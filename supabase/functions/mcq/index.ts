@@ -990,6 +990,95 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
 }
 
 /* ------------------------------------------------------------------ */
+/* Batch-generate explanations for a whole session (background)       */
+/* ------------------------------------------------------------------ */
+
+const EXPLANATION_MIN_CHARS = 120;
+
+async function handleGenerateExplanations(supabase: any, admin: any, user: any, body: any): Promise<Response> {
+  const sessionId = typeof body?.session_id === "string" ? body.session_id.trim() : "";
+  if (!sessionId) {
+    return json(400, { error: "Session is required.", code: "MISSING_SESSION" });
+  }
+
+  const { data: session } = await supabase
+    .from("mcq_sessions")
+    .select("id")
+    .eq("id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!session) {
+    return json(404, { error: "Session not found.", code: "NOT_FOUND" });
+  }
+
+  const { data: questions } = await admin
+    .from("mcq_questions")
+    .select("id, question_text, options, order_index")
+    .eq("session_id", sessionId)
+    .order("order_index", { ascending: true });
+  if (!questions?.length) {
+    return json(200, { updated: 0 });
+  }
+
+  const ids = (questions as any[]).map((q) => q.id);
+  const { data: keys } = await admin
+    .from("mcq_answer_keys")
+    .select("question_id, correct_option_index, explanation")
+    .in("question_id", ids);
+  const keyByQuestion = new Map((keys || []).map((k: any) => [k.question_id, k]));
+
+  const needs = (questions as any[]).filter((q) => {
+    const k = keyByQuestion.get(q.id);
+    if (!k) return false;
+    const text = String(k.explanation || "").trim();
+    return text.length < EXPLANATION_MIN_CHARS || /^Answer verified/i.test(text);
+  });
+  if (!needs.length) {
+    return json(200, { updated: 0 });
+  }
+
+  // Batch in groups of 10 so the AI output stays reliable.
+  let updated = 0;
+  for (let start = 0; start < needs.length; start += 10) {
+    const batch = needs.slice(start, start + 10);
+    const payload = batch.map((q, i) => ({
+      index: i,
+      question: q.question_text,
+      options: (q.options || []).map((o: any) => o.text),
+      correct_index: keyByQuestion.get(q.id)?.correct_option_index ?? 0,
+    }));
+
+    const prompt = `You are an Ayurveda academic tutor. For each MCQ below, write a clear explanation of 3-5 short lines saying why the correct option is right. Do NOT say "as per source", "according to the source", "based on the source", or any source-attribution phrase. Keep the language simple.
+
+Return ONLY a JSON object: {"explanations":[{"index":0,"explanation":"..."}]}
+
+QUESTIONS:
+${JSON.stringify(payload)}`;
+
+    try {
+      const content = await callGroq(prompt, 0.3);
+      const parsed = extractJsonObject(content) as any;
+      const list = Array.isArray(parsed?.explanations) ? parsed.explanations : [];
+      for (const item of list) {
+        const idx = typeof item?.index === "number" ? item.index : -1;
+        if (idx < 0 || idx >= batch.length) continue;
+        const explanation = cleanText(item.explanation, 900);
+        if (explanation.length < 8) continue;
+        const { error } = await admin
+          .from("mcq_answer_keys")
+          .update({ explanation })
+          .eq("question_id", batch[idx].id);
+        if (!error) updated++;
+      }
+    } catch (error) {
+      console.warn("mcq: explanation batch failed", String(error).slice(0, 200));
+    }
+  }
+
+  return json(200, { updated, total: needs.length });
+}
+
+/* ------------------------------------------------------------------ */
 /* AI-generated explanation for a single MCQ answer                   */
 /* ------------------------------------------------------------------ */
 
@@ -1419,6 +1508,7 @@ Deno.serve(async (request: Request) => {
   if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
   if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
   if (action === "explain") return handleExplain(supabase, admin, user, body);
+  if (action === "generateExplanations") return handleGenerateExplanations(supabase, admin, user, body);
   if (action === "deleteSession") return handleDeleteSession(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);

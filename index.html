@@ -6332,6 +6332,7 @@ window.generateMcq = async function(pdfId, count){
       showMcqView("practice");
       renderMcqPractice();
     }
+    preloadSessionExplanations(result.session_id);
   }catch(error){
     console.error("MCQ generate:", error);
     if(error.code === "CANCELLED"){
@@ -6410,6 +6411,7 @@ window.startTopicPractice = async function(count){
 
     showMcqView("practice");
     renderMcqPractice();
+    preloadSessionExplanations(result.session_id);
   }catch(error){
     console.error("MCQ topic generate:", error);
     if(error.code === "CANCELLED"){
@@ -6523,6 +6525,7 @@ window.startMcqPractice = async function(sessionId){
     setMcqStatus("");
     showMcqView("practice");
     renderMcqPractice();
+    preloadSessionExplanations(sessionId);
   }catch(error){
     console.error("MCQ start session:", error);
     setMcqStatus(mcqErrorMessage(error,"Could not start this practice session."),"error");
@@ -6630,31 +6633,19 @@ function selectMcqOption(questionId, optionIndex){
   if(mcqState.checked[questionId]) return;
   mcqState.answers[questionId] = optionIndex;
   renderMcqPractice();
-  preloadExplanationFor(questionId, optionIndex);
 }
 
-/* Preload AI explanation in the background when you pick an answer,
-   so Check Answer shows it instantly with no wait. */
-window.preloadExplanationFor = async function(questionId, correctIndex){
-  if(!mcqState || !mcqState.questions) return;
-  const question = mcqState.questions.find(q=>q.id===questionId);
-  if(!question) return;
-  if(mcqState.explanations[questionId]) return;
+/* Pre-generate and store all explanations for the session in the background,
+   so Check Answer shows them instantly with no AI wait. */
+window.preloadSessionExplanations = async function(sessionId){
+  if(!sessionId) return;
   try{
-    const result = await mcqFetch("explain",{
-      question_text: question.question_text,
-      options: (question.options || []).map(o=>o.text),
-      correct_index: correctIndex,
-      topic: question.subject_topic || ""
-    });
-    if(result && result.explanation){
-      mcqState.explanations[questionId] = {
-        correct_index: correctIndex,
-        explanation: result.explanation.trim()
-      };
+    const result = await mcqFetch("generateExplanations",{session_id:sessionId});
+    if(result && result.updated > 0){
+      console.log("MCQ explanations preloaded:", result.updated);
     }
   }catch(e){
-    // silent — will fetch on demand when you press Check Answer
+    // silent — Check Answer falls back to on-demand generation
   }
 };
 
@@ -6689,12 +6680,11 @@ async function checkMcqAnswer(){
       ? outcome.correct_option_index
       : mcqState.answers[question.id];
 
-    // Use preloaded explanation if it matches the correct answer — instant, no wait.
-    const preloaded = mcqState.explanations?.[question.id];
-    if (preloaded && preloaded.correct_index === correctIdx) {
-      outcome.explanation = preloaded.explanation;
-    } else {
-      // Fallback: fetch on demand (e.g. you changed your answer after preloading)
+    // The session preloaded explanations into the database, so the validate
+    // response already carries a full 3-5 line explanation. Fall back to the
+    // on-demand endpoint only if it still looks like a placeholder.
+    const expl = String(outcome.explanation || "").trim();
+    if (expl.length < 60 || /^Answer verified/i.test(expl)) {
       try {
         const explainResult = await mcqFetch("explain", {
           question_text: question.question_text,
@@ -6704,14 +6694,9 @@ async function checkMcqAnswer(){
         });
         if (explainResult && explainResult.explanation) {
           outcome.explanation = explainResult.explanation;
-          mcqState.explanations[question.id] = {
-            correct_index: correctIdx,
-            explanation: explainResult.explanation.trim()
-          };
         }
       } catch (explainError) {
         console.warn("AI explanation failed:", explainError);
-        // Keep whatever explanation the server returned
       }
     }
 
