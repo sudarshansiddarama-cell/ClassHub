@@ -6319,6 +6319,7 @@ window.generateMcq = async function(pdfId, count){
       answers: {},
       checked: {},
       results: {},
+      explanations: {},
       currentIndex: 0,
       attemptId: attempt.id,
       generating: false,
@@ -6398,6 +6399,7 @@ window.startTopicPractice = async function(count){
       answers: {},
       checked: {},
       results: {},
+      explanations: {},
       currentIndex: 0,
       attemptId: attempt.id,
       generating: false,
@@ -6628,7 +6630,33 @@ function selectMcqOption(questionId, optionIndex){
   if(mcqState.checked[questionId]) return;
   mcqState.answers[questionId] = optionIndex;
   renderMcqPractice();
+  preloadExplanationFor(questionId, optionIndex);
 }
+
+/* Preload AI explanation in the background when you pick an answer,
+   so Check Answer shows it instantly with no wait. */
+window.preloadExplanationFor = async function(questionId, correctIndex){
+  if(!mcqState || !mcqState.questions) return;
+  const question = mcqState.questions.find(q=>q.id===questionId);
+  if(!question) return;
+  if(mcqState.explanations[questionId]) return;
+  try{
+    const result = await mcqFetch("explain",{
+      question_text: question.question_text,
+      options: (question.options || []).map(o=>o.text),
+      correct_index: correctIndex,
+      topic: question.subject_topic || ""
+    });
+    if(result && result.explanation){
+      mcqState.explanations[questionId] = {
+        correct_index: correctIndex,
+        explanation: result.explanation.trim()
+      };
+    }
+  }catch(e){
+    // silent — will fetch on demand when you press Check Answer
+  }
+};
 
 async function checkMcqAnswer(){
   const question = mcqState.questions[mcqState.currentIndex];
@@ -6661,20 +6689,30 @@ async function checkMcqAnswer(){
       ? outcome.correct_option_index
       : mcqState.answers[question.id];
 
-    // Fetch AI-generated explanation (3-5 lines) for this answer
-    try {
-      const explainResult = await mcqFetch("explain", {
-        question_text: question.question_text,
-        options: (question.options || []).map(o => o.text),
-        correct_index: correctIdx,
-        topic: question.subject_topic || ""
-      });
-      if (explainResult && explainResult.explanation) {
-        outcome.explanation = explainResult.explanation;
+    // Use preloaded explanation if it matches the correct answer — instant, no wait.
+    const preloaded = mcqState.explanations?.[question.id];
+    if (preloaded && preloaded.correct_index === correctIdx) {
+      outcome.explanation = preloaded.explanation;
+    } else {
+      // Fallback: fetch on demand (e.g. you changed your answer after preloading)
+      try {
+        const explainResult = await mcqFetch("explain", {
+          question_text: question.question_text,
+          options: (question.options || []).map(o => o.text),
+          correct_index: correctIdx,
+          topic: question.subject_topic || ""
+        });
+        if (explainResult && explainResult.explanation) {
+          outcome.explanation = explainResult.explanation;
+          mcqState.explanations[question.id] = {
+            correct_index: correctIdx,
+            explanation: explainResult.explanation.trim()
+          };
+        }
+      } catch (explainError) {
+        console.warn("AI explanation failed:", explainError);
+        // Keep whatever explanation the server returned
       }
-    } catch (explainError) {
-      console.warn("AI explanation failed:", explainError);
-      // Keep whatever explanation the server returned
     }
 
     mcqState.checked[question.id] = true;
