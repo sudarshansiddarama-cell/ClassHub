@@ -419,12 +419,30 @@ label.f-label{
 .mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
 .mcq-pdf-status.failed{color:var(--red);border-color:var(--red)}
 .mcq-pdf-status.none{color:var(--muted2);border-color:var(--border-strong)}
-.mcq-session-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface)}
+.mcq-session-card{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface)}
 .mcq-session-info{min-width:0;flex:1}
-.mcq-session-info strong{display:block;font-size:13px;font-weight:500}
-.mcq-session-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:10px;margin-top:2px}
+.mcq-session-info strong{display:block;font-size:12.5px;font-weight:500}
+.mcq-session-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9.5px;margin-top:1px}
 .mcq-empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .mcq-empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
+
+/* ---------- MCQ NOTEPAD OVERLAY ---------- */
+.mcq-notepad-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;
+}
+.mcq-notepad-header{
+  display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);
+}
+.notepad-topic{width:100%;max-width:720px;margin:0 auto;padding:10px 14px;font-size:14px}
+.notepad-textarea{
+  flex:1;width:100%;max-width:900px;margin:0 auto;padding:14px;font-size:14px;line-height:1.6;
+  border:none;border-radius:0;resize:vertical;min-height:340px;font-family:inherit;
+  box-sizing:border-box;
+}
+.notepad-textarea:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.notepad-status{margin:10px 0;padding:10px 16px;text-align:center;font-weight:500}
+.notepad-status.success{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
+.mcq-notepad-hint{padding:0 16px 16px 16px;font-size:10px;color:var(--muted2);font-family:var(--font-mono)}
 
 .mcq-count-pick{display:flex;align-items:center;gap:10px;margin:10px 0 6px;flex-wrap:wrap}
 .mcq-count-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin:0}
@@ -1336,20 +1354,24 @@ body.sheet-open{overflow:hidden}
       </div>
       <div id="mcqStatus" class="status" aria-live="polite"></div>
 
-      <!-- UPLOAD MCQs PANEL (hidden by default) -->
-      <div id="mcqUploadPanel" style="display:none">
-        <div class="panel">
-          <h2 class="panel-title">Upload MCQs from Text</h2>
-          <p class="muted">Paste your questions. One question per block, blank line between questions. Both formats work:</p>
-          <p class="muted" style="font-family:var(--font-mono);font-size:11px;margin:6px 0">One line: Q: What is the capital of India? A) Delhi B) Mumbai C) Kolkata D) Chennai Ans: A</p>
-          <p class="muted" style="font-family:var(--font-mono);font-size:11px;margin:6px 0">Or multi-line:\nQ: What is the capital of India?\nA) Delhi\nB) Mumbai\nC) Kolkata\nD) Chennai\nAns: A\n(Explanation: optional — AI writes it when you check the answer.)</p>
-          <div id="uploadMcqStatus" class="status" aria-live="polite"></div>
-          <label class="f-label" for="uploadMcqTopic">Chapter / topic name</label>
-          <input id="uploadMcqTopic" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120">
-          <label class="f-label" for="uploadMcqText">Your questions (paste below)</label>
-          <textarea id="uploadMcqText" class="field" rows="8" placeholder="Q: What is ...? A) ... B) ... C) ... D) ... Ans: A\n\nQ: Next question? A) ... B) ... C) ... D) ... Ans: B\n\n(Explanation line is optional — AI generates it when you check the answer.)"></textarea>
-          <button class="btn full" onclick="uploadMcqsFromText()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-check"/></svg>OK</button>
-          <button class="btn secondary full" onclick="document.getElementById('mcqUploadPanel').style.display='none'" style="margin-top:6px">Cancel</button>
+      <!-- UPLOAD MCQs — FULL SCREEN NOTEPAD (hidden by default) -->
+      <div id="mcqUploadPanel" class="mcq-notepad-overlay" style="display:none">
+        <div class="mcq-notepad-header">
+          <button class="btn secondary" onclick="closeUploadMcqPanel()" title="Close"><svg class="ic ic-sm"><use href="#i-close"/></svg></button>
+          <h2 class="panel-title" style="margin:0;flex:1">Upload MCQs — Notepad</h2>
+          <button class="btn" onclick="uploadMcqsFromText()" id="mcqNotepadUploadBtn"><svg class="ic ic-sm"><use href="#i-check"/></svg>Upload MCQs</button>
+        </div>
+        <label class="f-label" style="margin:0 16px 8px 16px;font-size:11px">Chapter / topic name</label>
+        <input id="uploadMcqTopic" class="field notepad-topic" type="text" placeholder="e.g. Guna Adhyaya – Padartha Vijnana" maxlength="120">
+        <label class="f-label" style="margin:0 16px 8px 16px;font-size:11px">Your questions (paste or type below)</label>
+        <textarea id="uploadMcqText" class="field notepad-textarea" placeholder="Q: How many Gunas...? A) 20 B) 24 C) 41 D) 10 Ans: B
+
+Q: Next question... Ans: A
+
+(Explanation line is optional — AI writes it when you check the answer.)"></textarea>
+        <div id="uploadMcqStatus" class="status notepad-status" aria-live="polite"></div>
+        <div class="mcq-notepad-hint" style="padding:0 16px 16px 16px;font-size:10px;color:var(--muted2);font-family:var(--font-mono)">
+          One question per block, blank line between questions. Format: Q: ... A) ... B) ... C) ... D) ... Ans: X
         </div>
       </div>
 
@@ -1373,7 +1395,10 @@ body.sheet-open{overflow:hidden}
           <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
         </div>
         <div class="panel">
-          <h2 class="panel-title">Previous Practice</h2>
+          <div class="section-head-row">
+            <h2 class="panel-title">Previous Practice</h2>
+            <button class="btn secondary" onclick="clearAllMcqSessions()" style="padding:6px 10px;font-size:12px">Clear All Sessions</button>
+          </div>
           <p class="muted">Resume an unfinished session or review a completed one.</p>
           <div id="mcqSessionList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
         </div>
@@ -5844,7 +5869,16 @@ window.setMcqCount = function(count){
 
 window.openUploadMcqPanel = function(){
   const panel = document.getElementById("mcqUploadPanel");
-  if(panel) panel.style.display = panel.style.display === "none" ? "" : "none";
+  if(panel) panel.style.display = "flex";
+  const statusEl = document.getElementById("uploadMcqStatus");
+  if(statusEl) statusEl.textContent = "";
+  const topicInput = document.getElementById("uploadMcqTopic");
+  if(topicInput) topicInput.focus();
+};
+
+window.closeUploadMcqPanel = function(){
+  const panel = document.getElementById("mcqUploadPanel");
+  if(panel) panel.style.display = "none";
   const statusEl = document.getElementById("uploadMcqStatus");
   if(statusEl) statusEl.textContent = "";
 };
@@ -5868,12 +5902,12 @@ window.uploadMcqsFromText = async function(){
 
   try{
     const result = await mcqFetch("uploadFromText",{topic,text});
-    if(statusEl){ statusEl.textContent = result.message || `Saved ${result.uploaded} MCQs under "${topic}".`; statusEl.className = "status"; }
-    const panelEl = document.getElementById("mcqUploadPanel");
-    if(panelEl) panelEl.style.display = "none";
+    if(statusEl){ statusEl.textContent = "✓ Successful — " + (result.message || `Saved ${result.uploaded} MCQs under "${topic}".`); statusEl.className = "status success"; }
     if(topicInput) topicInput.value = "";
     if(textInput) textInput.value = "";
     textInput.value = "";
+    /* Auto-close the notepad after 1.5 seconds on success */
+    setTimeout(()=>{ closeUploadMcqPanel(); }, 1500);
   }catch(error){
     console.error("Upload MCQs:", error);
     if(statusEl){ statusEl.textContent = mcqErrorMessage(error,"Could not save questions. Try again."); statusEl.className = "status error"; }
@@ -6138,6 +6172,19 @@ window.deleteMcqSession = async function(sessionId){
   }catch(error){
     console.error("Delete MCQ session:", error);
     setMcqStatus(mcqErrorMessage(error,"Could not delete this session."),"error");
+  }
+};
+
+window.clearAllMcqSessions = async function(){
+  if(!confirm("Delete ALL your MCQ practice sessions? This cannot be undone.")) return;
+  setMcqStatus("Clearing all sessions…");
+  try{
+    const result = await mcqFetch("clearAllSessions",{});
+    setMcqStatus(result.message || "All sessions cleared.");
+    await window.loadMcqPractice();
+  }catch(error){
+    console.error("Clear all MCQ sessions:", error);
+    setMcqStatus(mcqErrorMessage(error,"Could not clear sessions."),"error");
   }
 };
 
