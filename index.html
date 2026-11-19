@@ -1397,7 +1397,7 @@ Q: Next question... Ans: A
         <div class="panel">
           <div class="section-head-row">
             <h2 class="panel-title">Previous Practice</h2>
-            <button class="btn secondary" onclick="clearAllMcqSessions()" style="padding:6px 10px;font-size:12px">Clear All Sessions</button>
+            <button class="btn secondary" onclick="clearMcqPage()" style="padding:6px 10px;font-size:12px">Clear Page</button>
           </div>
           <p class="muted">Resume an unfinished session or review a completed one.</p>
           <div id="mcqSessionList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
@@ -6175,16 +6175,13 @@ window.deleteMcqSession = async function(sessionId){
   }
 };
 
-window.clearAllMcqSessions = async function(){
-  if(!confirm("Delete ALL your MCQ practice sessions? This cannot be undone.")) return;
-  setMcqStatus("Clearing all sessions…");
-  try{
-    const result = await mcqFetch("clearAllSessions",{});
-    setMcqStatus(result.message || "All sessions cleared.");
-    await window.loadMcqPractice();
-  }catch(error){
-    console.error("Clear all MCQ sessions:", error);
-    setMcqStatus(mcqErrorMessage(error,"Could not clear sessions."),"error");
+window.clearMcqPage = function(){
+  if(!confirm("Clear this page? Your sessions stay saved in ClassHub — only this view is cleared.")) return;
+  setMcqStatus("Page cleared. Sessions are still saved in ClassHub.");
+  const list = document.getElementById("mcqSessionList");
+  if(list){
+    list.replaceChildren();
+    list.appendChild(makeEmptyState("Page cleared. Your sessions are still saved — reload to see them again.","i-history"));
   }
 };
 

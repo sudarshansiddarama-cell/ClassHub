@@ -990,53 +990,6 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
 }
 
 /* ------------------------------------------------------------------ */
-/* Clear all MCQ practice sessions for the current user               */
-/* ------------------------------------------------------------------ */
-
-async function handleClearAllSessions(supabase: any, admin: any, user: any, body: any): Promise<Response> {
-  const { data: sessions } = await supabase
-    .from("mcq_sessions")
-    .select("id")
-    .eq("user_id", user.id);
-
-  const sessionIds = (sessions || []).map((s: any) => s.id);
-  if (sessionIds.length === 0) {
-    return json(200, { cleared: 0, message: "No sessions to clear." });
-  }
-
-  // Collect attempt IDs for these sessions
-  const { data: attempts } = await supabase
-    .from("mcq_attempts")
-    .select("id")
-    .in("session_id", sessionIds);
-  const attemptIds = (attempts || []).map((a: any) => a.id);
-
-  if (attemptIds.length > 0) {
-    await admin.from("mcq_responses").delete().in("attempt_id", attemptIds);
-  }
-  await admin.from("mcq_attempts").delete().in("session_id", sessionIds);
-
-  // Collect question IDs for these sessions
-  const { data: questions } = await supabase
-    .from("mcq_questions")
-    .select("id")
-    .in("session_id", sessionIds);
-  const questionIds = (questions || []).map((q: any) => q.id);
-
-  if (questionIds.length > 0) {
-    await admin.from("mcq_answer_keys").delete().in("question_id", questionIds);
-  }
-  await admin.from("mcq_questions").delete().in("session_id", sessionIds);
-
-  const { error } = await admin.from("mcq_sessions").delete().eq("user_id", user.id);
-  if (error) {
-    return json(500, { error: "Could not clear sessions.", code: "CLEAR_FAILED" });
-  }
-
-  return json(200, { cleared: sessionIds.length, message: `Cleared ${sessionIds.length} practice session(s).` });
-}
-
-/* ------------------------------------------------------------------ */
 /* AI-generated explanation for a single MCQ answer                   */
 /* ------------------------------------------------------------------ */
 
@@ -1466,7 +1419,6 @@ Deno.serve(async (request: Request) => {
   if (action === "generateFromTopic") return handleGenerateTopic(supabase, admin, user, body);
   if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
   if (action === "explain") return handleExplain(supabase, admin, user, body);
-  if (action === "clearAllSessions") return handleClearAllSessions(supabase, admin, user, body);
   if (action === "deleteSession") return handleDeleteSession(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);
