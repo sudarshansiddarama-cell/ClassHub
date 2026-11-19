@@ -993,7 +993,7 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
 /* Batch-generate explanations for a whole session (background)       */
 /* ------------------------------------------------------------------ */
 
-const EXPLANATION_MIN_CHARS = 120;
+const EXPLANATION_MIN_CHARS = 60;
 
 async function handleGenerateExplanations(supabase: any, admin: any, user: any, body: any): Promise<Response> {
   const sessionId = typeof body?.session_id === "string" ? body.session_id.trim() : "";

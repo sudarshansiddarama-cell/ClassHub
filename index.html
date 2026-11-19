@@ -431,8 +431,10 @@ label.f-label{
   position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;
 }
 .mcq-notepad-header{
-  display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);
 }
+.mcq-notepad-header .panel-title{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcq-notepad-header .btn{flex-shrink:0}
 .notepad-topic{width:100%;max-width:720px;margin:0 auto;padding:10px 14px;font-size:14px}
 .notepad-textarea{
   flex:1;width:100%;max-width:900px;margin:0 auto;padding:14px;font-size:14px;line-height:1.6;
@@ -474,8 +476,9 @@ label.f-label{
 .mcq-option.correct .ic{stroke:var(--green)}
 .mcq-option.wrong .ic{stroke:var(--red)}
 .mcq-check{margin-top:14px}
+.mcq-check:disabled{background:var(--surface);border-color:var(--border);color:var(--muted2);opacity:1}
 .mcq-gen-progress{font-family:var(--font-mono);font-size:11px;color:var(--muted2);margin:6px 0 0;min-height:16px}
-.mcq-explanation{margin-top:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text)}
+.mcq-explanation{margin-top:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-line}
 .mcq-explanation.correct{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
 .mcq-explanation.incorrect{color:var(--red);border-color:var(--red);background:rgba(255,107,94,.08)}
 .mcq-nav{display:flex;gap:8px;margin-top:16px}
@@ -1359,7 +1362,7 @@ body.sheet-open{overflow:hidden}
         <div class="mcq-notepad-header">
           <button class="btn secondary" onclick="closeUploadMcqPanel()" title="Close"><svg class="ic ic-sm"><use href="#i-close"/></svg></button>
           <h2 class="panel-title" style="margin:0;flex:1">Upload MCQs — Notepad</h2>
-          <button class="btn full" onclick="uploadMcqsFromText()" id="mcqNotepadUploadBtn" style="background:var(--green);color:var(--bg);border:none"><svg class="ic ic-sm"><use href="#i-check"/></svg>Submit</button>
+          <button class="btn" onclick="uploadMcqsFromText()" id="mcqNotepadUploadBtn" style="background:var(--green);color:var(--bg);border:none"><svg class="ic ic-sm"><use href="#i-check"/></svg>Submit</button>
         </div>
         <label class="f-label" style="margin:0 16px 8px 16px;font-size:11px">Chapter / topic name</label>
         <input id="uploadMcqTopic" class="field notepad-topic" type="text" placeholder="e.g. Guna Adhyaya – Padartha Vijnana" maxlength="120">
@@ -5870,6 +5873,9 @@ window.setMcqCount = function(count){
 
 window.openUploadMcqPanel = function(){
   const panel = document.getElementById("mcqUploadPanel");
+  /* Move the overlay to <body> so the app-shell stacking context and the
+     topbar cannot cover or clip it. */
+  if(panel && panel.parentElement !== document.body) document.body.appendChild(panel);
   if(panel) panel.style.display = "flex";
   const statusEl = document.getElementById("uploadMcqStatus");
   if(statusEl) statusEl.textContent = "";
@@ -5906,7 +5912,6 @@ window.uploadMcqsFromText = async function(){
     if(statusEl){ statusEl.textContent = "✓ Successful — " + (result.message || `Saved ${result.uploaded} MCQs under "${topic}".`); statusEl.className = "status success"; }
     if(topicInput) topicInput.value = "";
     if(textInput) textInput.value = "";
-    textInput.value = "";
     /* Auto-close the notepad after 1.5 seconds on success */
     setTimeout(()=>{ closeUploadMcqPanel(); }, 1500);
   }catch(error){
@@ -6320,7 +6325,6 @@ window.generateMcq = async function(pdfId, count){
       answers: {},
       checked: {},
       results: {},
-      explanations: {},
       answerKeys: {},
       currentIndex: 0,
       attemptId: attempt.id,
@@ -6402,7 +6406,6 @@ window.startTopicPractice = async function(count){
       answers: {},
       checked: {},
       results: {},
-      explanations: {},
       answerKeys: {},
       currentIndex: 0,
       attemptId: attempt.id,
@@ -6610,7 +6613,9 @@ function renderMcqPractice(){
 
   const checkButton = document.getElementById("mcqCheckBtn");
   checkButton.disabled = locked || mcqState.answers[question.id] == null;
-  checkButton.textContent = locked ? "Answer checked" : "Check Answer";
+  checkButton.textContent = "Check Answer";
+  /* Once checked, the result and explanation replace this button. */
+  checkButton.style.display = locked ? "none" : "";
 
   const prevButton = document.getElementById("mcqPrevBtn");
   const nextButton = document.getElementById("mcqNextBtn");
