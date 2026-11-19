@@ -249,16 +249,20 @@ function parseGeneratedQuestions(content: string): McqQuestion[] {
 /* ------------------------------------------------------------------ */
 
 /**
- * Parses pasted text-format MCQs.
+ * Parses pasted text-format MCQs. Supports BOTH:
  *
- * Expected block format (blank line separates questions):
+ * Multi-line block:
  *   Q: What is the capital of India?
  *   A) Delhi
  *   B) Mumbai
  *   C) Kolkata
  *   D) Chennai
  *   Ans: A
- *   Explanation: Delhi is the capital city of India.
+ *
+ * One-line compact (each question on its own line, blocks separated by blank lines):
+ *   Q: What is the capital of India? A) Delhi B) Mumbai C) Kolkata D) Chennai Ans: A
+ *
+ * A leading "Topic: ..." line is ignored.
  */
 function parseTextQuestions(rawText: string, topic: string): McqQuestion[] {
   const blocks = rawText
@@ -270,43 +274,23 @@ function parseTextQuestions(rawText: string, topic: string): McqQuestion[] {
   const seen = new Set<string>();
 
   for (const block of blocks) {
-    const lines = block.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+    // Skip a standalone "Topic: ..." header block.
+    if (/^Topic\s*:/i.test(block) && !/\bQ\s*[:.)]/i.test(block)) continue;
 
-    let questionText = "";
-    const options: string[] = [];
-    let correctIndex = -1;
-    let explanation = "";
+    // Normalise newlines to spaces so one-line and multi-line formats share one parser.
+    const flat = block.replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim();
+    const parsed = parseFlatQuestion(flat);
+    if (!parsed) continue;
 
-    for (const line of lines) {
-      const qMatch = line.match(/^Q[:.]?\s*(.+)$/i);
-      if (qMatch) { questionText = qMatch[1].trim(); continue; }
-
-      const optMatch = line.match(/^([A-D])[\).:]\s*(.+)$/i);
-      if (optMatch) {
-        const idx = "ABCD".indexOf(optMatch[1].toUpperCase());
-        options[idx] = optMatch[2].trim();
-        continue;
-      }
-
-      const ansMatch = line.match(/^Ans?[:.]?\s*([A-D])$/i);
-      if (ansMatch) { correctIndex = "ABCD".indexOf(ansMatch[1].toUpperCase()); continue; }
-
-      const explMatch = line.match(/^Explanation[:.]?\s*(.+)$/i);
-      if (explMatch) { explanation = explMatch[1].trim(); continue; }
-    }
-
-    if (!questionText || options.length !== 4 || correctIndex < 0) continue;
-    if (options.some((o) => !o)) continue;
-
-    const key = questionText.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    const key = parsed.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
     if (seen.has(key)) continue;
     seen.add(key);
 
     questions.push({
-      question: questionText,
-      options,
-      correct_index: correctIndex,
-      explanation: explanation || "Answer verified against your uploaded key.",
+      question: parsed.question,
+      options: parsed.options,
+      correct_index: parsed.correctIndex,
+      explanation: parsed.explanation || "Answer verified against your uploaded key.",
       subject_topic: topic || null,
       source_page: null,
       difficulty: "medium",
@@ -314,6 +298,50 @@ function parseTextQuestions(rawText: string, topic: string): McqQuestion[] {
   }
 
   return questions;
+}
+
+function parseFlatQuestion(
+  text: string,
+): { question: string; options: string[]; correctIndex: number; explanation: string } | null {
+  // Find the Q: marker (allow "Q:", "Q.", "Q)").
+  const qMatch = text.match(/\bQ\s*[:.)]\s*/i);
+  if (!qMatch) return null;
+
+  const rest = text.slice(qMatch.index! + qMatch[0].length);
+
+  // Find option markers A) B) C) D) — inline or after newlines (already flattened).
+  const optRegex = /\b([A-D])\s*[\).:]\s*/g;
+  const optMatches = [...rest.matchAll(optRegex)];
+  if (optMatches.length < 4) return null;
+
+  // Question = text before the first option marker.
+  const question = rest.slice(0, optMatches[0].index).trim();
+  if (question.length < 3) return null;
+
+  // Locate where answer/explanation start.
+  const ansMatch = rest.match(/\bAns(?:wer)?\s*[:.)]\s*([A-D])\b/i);
+  const explMatch = rest.match(/\bExplanation\s*[:.)]\s*(.+)$/i);
+
+  let optionsEnd = rest.length;
+  if (ansMatch?.index !== undefined) optionsEnd = Math.min(optionsEnd, ansMatch.index);
+  if (explMatch?.index !== undefined) optionsEnd = Math.min(optionsEnd, explMatch.index);
+
+  // Extract the four options.
+  const options: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    const start = optMatches[i].index! + optMatches[i][0].length;
+    const end = i + 1 < optMatches.length ? optMatches[i + 1].index! : optionsEnd;
+    if (start >= end) return null;
+    const value = rest.slice(start, end).trim();
+    if (!value) return null;
+    options.push(value);
+  }
+
+  let correctIndex = -1;
+  if (ansMatch) correctIndex = "ABCD".indexOf(ansMatch[1].toUpperCase());
+
+  const explanation = explMatch ? explMatch[1].trim() : "";
+  return { question, options, correctIndex, explanation };
 }
 
 function buildGenerationPrompt(pdfTitle: string, text: string, count: number): string {
@@ -938,7 +966,7 @@ async function handleUploadFromText(supabase: any, admin: any, user: any, body: 
   const questions = parseTextQuestions(rawText, topic);
   if (!questions.length) {
     return json(422, {
-      error: "Could not parse any questions. Use the format: Q: ... / A) ... / B) ... / C) ... / D) ... / Ans: X / Explanation: ...",
+      error: "Could not parse any questions. Use either: Q: ... A) ... B) ... C) ... D) ... Ans: X (all on one line) or each part on its own line. Separate questions with a blank line.",
       code: "PARSE_FAILED",
     });
   }
