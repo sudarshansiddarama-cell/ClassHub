@@ -141,22 +141,15 @@ async function callGroq(prompt: string, temperature = 0.2, jsonMode = true): Pro
     throw new AiError(502, "AI_ERROR", "The AI could not process that request. Please try again.");
   }
 
-  if (jsonMode) {
-    let payload: any;
-    try {
-      payload = await response.json();
-    } catch {
-      throw new AiError(502, "AI_BAD_FORMAT", "The AI returned an unreadable response. Please try again.");
-    }
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || !content.trim()) {
-      throw new AiError(502, "AI_EMPTY", "The AI returned an empty response. Please try again.");
-    }
-    return content;
+  let payload: any;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new AiError(502, "AI_BAD_FORMAT", "The AI returned an unreadable response. Please try again.");
   }
 
-  const content = await response.text();
-  if (!content || !content.trim()) {
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
     throw new AiError(502, "AI_EMPTY", "The AI returned an empty response. Please try again.");
   }
   return content.trim();
