@@ -405,6 +405,23 @@ label.f-label{
 .privacy-row.compact{margin:0;font-size:11.5px}
 .char-count{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-left:auto}
 
+/* Media bar */
+.compose-media-bar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.media-btn{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);cursor:pointer;transition:background-color .12s,border-color .12s,color .12s}
+.media-btn:hover{background:var(--surface-hover);border-color:var(--border-strong);color:var(--text)}
+.media-btn .ic{width:18px;height:18px}
+
+/* Sticker picker */
+.sticker-picker{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto}
+.sticker-btn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:20px;cursor:pointer;transition:transform .1s,background-color .1s}
+.sticker-btn:hover{transform:scale(1.15);background:var(--surface-hover);z-index:1}
+.sticker-btn:active{transform:scale(0.95)}
+
+/* Media preview */
+.post-media-preview{position:relative;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.post-media-preview img{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border)}
+.post-media-preview .remove-media{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:var(--red);color:var(--bg);border:none;display:grid;place-items:center;cursor:pointer;font-size:14px;line-height:1}
+
 /* ---------- MCQ PRACTICE ---------- */
 .mcq-grid{display:flex;flex-direction:column;gap:8px}
 .mcq-pdf-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s;max-width:520px}
@@ -1340,12 +1357,28 @@ body.sheet-open{overflow:hidden}
         </div>
         <div class="compose-body" id="composeBody" style="display:none">
           <textarea id="postContent" class="field" maxlength="3000" aria-label="Write a community post" placeholder="What's on your mind?" oninput="updateCharCount()"></textarea>
+          
+          <!-- Media preview & picker -->
+          <div id="postMediaPreview" class="post-media-preview" style="display:none"></div>
+          <div class="compose-media-bar">
+            <button type="button" class="media-btn" onclick="document.getElementById('postImageInput').click()" title="Add image">
+              <svg class="ic ic-sm"><use href="#i-image"/></svg>
+            </button>
+            <button type="button" class="media-btn" onclick="toggleStickerPicker()" title="Add sticker">
+              <svg class="ic ic-sm" style="transform:rotate(15deg)"><use href="#i-spark"/></svg>
+            </button>
+            <input type="file" id="postImageInput" accept="image/*" style="display:none" onchange="handlePostImageSelect(this)">
+            <span class="char-count" id="charCount">0/3000</span>
+          </div>
+          
+          <!-- Sticker picker (hidden by default) -->
+          <div id="stickerPicker" class="sticker-picker" style="display:none"></div>
+          
           <div class="compose-row">
             <label class="privacy-row compact">
               <input id="anonymousPost" type="checkbox">
               Anonymous
             </label>
-            <span class="char-count" id="charCount">0/3000</span>
           </div>
           <button class="btn full" id="publishPostBtn" type="button" onclick="publishCommunityPost()">
             <svg class="ic ic-sm"><use href="#i-send"/></svg>Publish Post
@@ -5531,6 +5564,66 @@ function updateCharCount(){
   }
 }
 
+/* ---- Community media & stickers ---- */
+let pendingPostMedia = null; // {file, previewUrl, type}
+
+/* Sticker set — simple emoji-based stickers */
+const STICKERS = [
+  "😀","😂","😍","🤔","😭","😎","🥳","🤯",
+  "👍","👎","🙏","🔥","💯","✨","💡","🎉",
+  "📚","✏️","🏥","💊","🩺","🧠","🫀","🦷",
+  "🍎","☕","🍕","🌙","☀️","🌈","⚡","💤",
+  "🎓","📝","⏰","📅","🚀","💪","🙌","🤝"
+];
+
+function renderStickerPicker(){
+  const container = document.getElementById("stickerPicker");
+  if(!container) return;
+  container.innerHTML = STICKERS.map(s=>`<button type="button" class="sticker-btn" onclick="pickSticker('${s.replace(/'/g,"'")}')">${s}</button>`).join("");
+}
+
+function toggleStickerPicker(){
+  const picker = document.getElementById("stickerPicker");
+  if(!picker) return;
+  const show = picker.style.display === "none";
+  picker.style.display = show ? "grid" : "none";
+  if(show) renderStickerPicker();
+}
+
+function pickSticker(sticker){
+  const ta = document.getElementById("postContent");
+  if(!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.slice(0,start) + " " + sticker + " " + ta.value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + sticker.length + 2;
+  ta.focus();
+  updateCharCount();
+  toggleStickerPicker();
+}
+
+function handlePostImageSelect(input){
+  const file = input.files?.[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ showToast("Please select an image file"); return; }
+  if(file.size > 5*1024*1024){ showToast("Image too large (max 5 MB)"); return; }
+  
+  pendingPostMedia = { file, type: file.type };
+  
+  const preview = document.getElementById("postMediaPreview");
+  if(preview){
+    preview.style.display = "flex";
+    preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview"><button type="button" class="remove-media" onclick="clearPostMedia()" title="Remove">×</button>`;
+  }
+  input.value = "";
+}
+
+function clearPostMedia(){
+  pendingPostMedia = null;
+  const preview = document.getElementById("postMediaPreview");
+  if(preview){ preview.style.display = "none"; preview.innerHTML = ""; }
+}
+
 window.loadCommunityPosts = async function(){
   const container = document.getElementById("communityPosts");
   if(!container) return;
@@ -5822,17 +5915,40 @@ window.publishCommunityPost = async function(){
   const anonymousBox = document.getElementById("anonymousPost");
   const content = contentBox?.value.trim() || "";
   const isAnonymous = anonymousBox?.checked || false;
-  if(!content){ setStatus("communityStatus","Please write something first.","error"); return; }
+  if(!content && !pendingPostMedia){ setStatus("communityStatus","Please write something or add an image.","error"); return; }
   const btn = document.getElementById("publishPostBtn");
   btn.disabled = true;
   setStatus("communityStatus","Publishing…");
+  
+  let mediaUrl = null;
+  let mediaType = null;
+  
   try{
+    // Upload image if present
+    if(pendingPostMedia){
+      setStatus("communityStatus","Uploading image…");
+      const fileExt = pendingPostMedia.file.name.split(".").pop() || "jpg";
+      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const {error:uploadError} = await db.storage.from("community-media").upload(fileName, pendingPostMedia.file, {
+        contentType: pendingPostMedia.type,
+        upsert: false
+      });
+      if(uploadError) throw uploadError;
+      
+      const {data:publicUrlData} = db.storage.from("community-media").getPublicUrl(fileName);
+      mediaUrl = publicUrlData?.publicUrl || null;
+      mediaType = "image";
+    }
+    
     const {error} = await db.from("community_posts").insert({
-      author_id: currentUser.id, content, is_anonymous: isAnonymous
+      author_id: currentUser.id, content, is_anonymous: isAnonymous,
+      media_url: mediaUrl, media_type: mediaType
     });
     if(error) throw error;
+    
     contentBox.value = "";
     if(anonymousBox) anonymousBox.checked = false;
+    clearPostMedia();
     updateCharCount();
     setStatus("communityStatus","Post published.","success");
     showToast("Post published");
