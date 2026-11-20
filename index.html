@@ -456,7 +456,7 @@ label.f-label{
   .mcq-count-hint{margin-left:8px}
 }
 
-.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin:0 auto 16px}
 .mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px;color:var(--muted2)}
 .mcq-progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
 .mcq-progress-fill{height:100%;background:var(--accent);width:0%}
@@ -504,6 +504,10 @@ label.f-label{
   .mcq-result-meta{flex-wrap:wrap;gap:8px 14px}
   .mcq-nav{flex-wrap:wrap}
   .mcq-nav .btn{flex:1 1 auto}
+}
+@media (min-width:640px){
+  .mcq-question-card{max-width:640px}
+  .mcq-pdf-card,.mcq-session-card{max-width:720px}
 }
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
