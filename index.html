@@ -472,47 +472,38 @@ label.f-label{
   .mcq-count-hint{margin-left:8px}
 }
 
-.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin:0 auto 16px}
-.mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--font-mono);font-size:11px;color:var(--muted2)}
-.mcq-progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin:0 auto 12px}
+.mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
+.mcq-progress-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
 .mcq-progress-fill{height:100%;background:var(--accent);width:0%}
-.mcq-qtext{font-size:15px;line-height:1.5;margin:0 0 14px;font-weight:500;overflow-wrap:anywhere}
-.mcq-meta{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
-.mcq-meta .tag{border:1px solid var(--border);border-radius:6px;padding:2px 8px;background:transparent;color:var(--muted2)}
-.mcq-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mcq-option{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
+.mcq-qtext{font-size:14.5px;line-height:1.45;margin:0 0 10px;font-weight:500;overflow-wrap:anywhere}
+.mcq-meta{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;font-size:10px;color:var(--muted);font-family:var(--font-mono)}
+.mcq-meta .tag{border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:transparent;color:var(--muted2);font-size:9px}
+.mcq-options{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mcq-option{position:relative;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
 .mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface-hover)}
-.mcq-option input{appearance:none;width:18px;height:18px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;margin:0;flex-shrink:0}
+.mcq-option input{appearance:none;width:16px;height:16px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;margin:0;flex-shrink:0}
 .mcq-option input:checked{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--surface)}
 .mcq-option.correct{background:var(--green-soft);border-color:var(--green);color:var(--green)}
 .mcq-option.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
 .mcq-option.locked{cursor:not-allowed}
 .mcq-option-mark{margin-left:auto;font-weight:700;flex-shrink:0}
-.mcq-option .ic{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.mcq-option .ic{width:14px;height:14px;stroke-width:2;flex-shrink:0}
 .mcq-option.correct .ic{stroke:var(--green)}
 .mcq-option.wrong .ic{stroke:var(--red)}
-.mcq-check{margin-top:14px}
+.mcq-check{margin-top:10px}
 .mcq-check:disabled{background:var(--surface);border-color:var(--border);color:var(--muted2);opacity:1}
-.mcq-gen-progress{font-family:var(--font-mono);font-size:11px;color:var(--muted2);margin:6px 0 0;min-height:16px}
-.mcq-explanation{margin-top:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-line}
+.mcq-gen-progress{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 0;min-height:14px}
+.mcq-explanation{margin-top:8px;padding:8px 10px;border-radius:5px;border:1px solid var(--border);font-size:11.5px;line-height:1.4;color:var(--text);white-space:pre-line}
 .mcq-explanation.correct{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
 .mcq-explanation.incorrect{color:var(--red);border-color:var(--red);background:rgba(255,107,94,.08)}
-.mcq-nav{display:flex;gap:8px;margin-top:16px}
+.mcq-nav{display:flex;gap:8px;margin-top:12px}
 
-.mcq-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:22px;text-align:center;margin-bottom:16px}
-.mcq-score{font-size:42px;font-weight:600;letter-spacing:-.02em}
+.mcq-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;text-align:center;margin-bottom:12px}
+.mcq-score{font-size:36px;font-weight:600;letter-spacing:-.02em}
 .mcq-score.correct{color:var(--green)}
 .mcq-score.incorrect{color:var(--red)}
-.mcq-result-meta{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--muted);font-family:var(--font-mono)}
-.mcq-review-list{display:flex;flex-direction:column;gap:10px}
-.mcq-review-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
-.mcq-review-q{font-size:13.5px;font-weight:500;margin:0 0 8px;overflow-wrap:anywhere}
-.mcq-review-ans{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px;font-size:12px}
-.mcq-review-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:0 0 6px}
-.mcq-review-ans .tag{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border-radius:99px}
-.mcq-review-ans .tag.correct{color:var(--green);border:1px solid var(--green);background:rgba(91,211,139,.08)}
-.mcq-review-ans .tag.wrong{color:var(--red);border:1px solid var(--red);background:rgba(255,107,94,.08)}
-.mcq-review-expl{font-size:12px;color:var(--muted);margin-top:4px}
+.mcq-result-meta{display:flex;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--font-mono);flex-wrap:wrap}
 @media (max-width:640px){
   .mcq-pdf-card,.mcq-session-card{flex-wrap:wrap}
   .mcq-pdf-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
@@ -1401,8 +1392,7 @@ Q: Next question... Ans: A
       <!-- START VIEW -->
       <div id="mcqViewStart">
         <div class="panel">
-          <h2 class="panel-title">Start New Practice</h2>
-          <p class="muted">Type a chapter or topic name. ClassHub uses your uploaded MCQs for that topic first, then AI fills any remaining questions.</p>
+          <h2 class="panel-title">MCQ Practice</h2>
           <div class="mcq-count-pick">
             <label class="mcq-count-label">Questions</label>
             <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
@@ -1411,20 +1401,18 @@ Q: Next question... Ans: A
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
             <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
           </div>
-          <label class="f-label" for="mcqTopicInput">Chapter / topic name</label>
-          <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
-          <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by chapter name</button>
+          <label class="f-label" for="mcqTopicInput">Topic / chapter name</label>
+          <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
+          <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by topic</button>
           <div id="mcqRateLimit" class="mcq-rate-limit"></div>
-          <p class="muted" style="margin-top:18px">Or pick one of your uploaded PDFs:</p>
           <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
-          <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
+          <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading PDFs…</div></div>
         </div>
-        <div class="panel">
+        <div class="panel" style="margin-top:12px">
           <div class="section-head-row">
             <h2 class="panel-title">Previous Practice</h2>
             <button class="btn secondary" onclick="clearMcqPage()" style="padding:6px 10px;font-size:12px">Clear Page</button>
           </div>
-          <p class="muted">Resume an unfinished session or review a completed one.</p>
           <div id="mcqSessionList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
         </div>
       </div>
@@ -1453,7 +1441,7 @@ Q: Next question... Ans: A
           <button class="btn full mcq-check" id="mcqCheckBtn" onclick="checkMcqAnswer()">Check Answer</button>
           <div id="mcqExplanation" class="mcq-explanation" aria-live="polite"></div>
           <div class="mcq-nav">
-            <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Previous</button>
+            <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Prev</button>
             <button class="btn" id="mcqNextBtn" onclick="mcqNextQuestion()" disabled>Next</button>
             <button class="btn secondary" id="mcqFinishBtn" onclick="finishMcqPractice()" style="display:none">Finish &amp; Review</button>
           </div>
@@ -1474,23 +1462,8 @@ Q: Next question... Ans: A
           </div>
         </div>
         <div class="btn-row">
-          <button class="btn full" onclick="openMcqReview()">Review Answers</button>
           <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
-          <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
-        </div>
-      </div>
-
-      <!-- REVIEW VIEW -->
-      <div id="mcqViewReview" style="display:none">
-        <div class="panel">
-          <h2 class="panel-title">Review Answers</h2>
-          <p class="muted">Your selected answer, the correct answer, and the explanation for each question.</p>
-          <div id="mcqReviewList" class="mcq-review-list"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn full" onclick="showMcqView('result')">Back to Results</button>
-          <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
-          <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
+          <button class="btn ghost full" onclick="openSection('mcq-practice')">Back to MCQ</button>
         </div>
       </div>
 
