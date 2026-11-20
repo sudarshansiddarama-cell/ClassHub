@@ -413,9 +413,10 @@ label.f-label{
 
 /* Sticker picker */
 .sticker-picker{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto}
-.sticker-btn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:20px;cursor:pointer;transition:transform .1s,background-color .1s}
-.sticker-btn:hover{transform:scale(1.15);background:var(--surface-hover);z-index:1}
+.sticker-btn{width:48px;height:48px;display:grid;place-items:center;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:0;cursor:pointer;transition:transform .1s,background-color .1s;overflow:hidden}
+.sticker-btn:hover{transform:scale(1.2);background:var(--surface-hover);z-index:1}
 .sticker-btn:active{transform:scale(0.95)}
+.sticker-btn img{width:40px;height:40px;object-fit:contain;display:block}
 
 /* Media preview */
 .post-media-preview{position:relative;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
@@ -5567,19 +5568,62 @@ function updateCharCount(){
 /* ---- Community media & stickers ---- */
 let pendingPostMedia = null; // {file, previewUrl, type}
 
-/* Sticker set — simple emoji-based stickers */
-const STICKERS = [
-  "😀","😂","😍","🤔","😭","😎","🥳","🤯",
-  "👍","👎","🙏","🔥","💯","✨","💡","🎉",
-  "📚","✏️","🏥","💊","🩺","🧠","🫀","🦷",
-  "🍎","☕","🍕","🌙","☀️","🌈","⚡","💤",
-  "🎓","📝","⏰","📅","🚀","💪","🙌","🤝"
-];
+/* Sticker packs — WebP images with transparency (WhatsApp-style) */
+const STICKER_PACKS = {
+  "default": {
+    name: "ClassHub",
+    stickers: [
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/happy.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/laugh.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/love.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thinking.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/cry.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/cool.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/party.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/mindblown.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thumbsup.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thumbsdown.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pray.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/fire.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/hundred.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/sparkles.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/bulb.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/tada.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/books.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pencil.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/hospital.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pill.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/stethoscope.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/brain.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/heart.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/tooth.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/apple.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/coffee.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pizza.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/moon.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/sun.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/rainbow.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/bolt.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/zzz.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/graduation.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/memo.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/clock.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/calendar.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/rocket.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/flex.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/raisedhands.webp",
+      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/handshake.webp"
+    ]
+  }
+};
+
+let currentStickerPack = "default";
 
 function renderStickerPicker(){
   const container = document.getElementById("stickerPicker");
   if(!container) return;
-  container.innerHTML = STICKERS.map(s=>`<button type="button" class="sticker-btn" onclick="pickSticker('${s.replace(/'/g,"'")}')">${s}</button>`).join("");
+  const pack = STICKER_PACKS[currentStickerPack];
+  container.innerHTML = pack.stickers.map((url, i)=>`<button type="button" class="sticker-btn" onclick="pickSticker('${url}')" aria-label="Sticker ${i+1}"><img src="${url}" alt="Sticker ${i+1}" loading="lazy"></button>`).join("");
 }
 
 function toggleStickerPicker(){
@@ -5590,16 +5634,23 @@ function toggleStickerPicker(){
   if(show) renderStickerPicker();
 }
 
-function pickSticker(sticker){
-  const ta = document.getElementById("postContent");
-  if(!ta) return;
-  const start = ta.selectionStart;
-  const end = ta.selectionEnd;
-  ta.value = ta.value.slice(0,start) + " " + sticker + " " + ta.value.slice(end);
-  ta.selectionStart = ta.selectionEnd = start + sticker.length + 2;
-  ta.focus();
-  updateCharCount();
+function pickSticker(stickerUrl){
+  const preview = document.getElementById("postMediaPreview");
+  if(!preview) return;
+  
+  // Add sticker as pending media (image)
+  pendingPostMedia = { 
+    file: null, 
+    type: "image/webp", 
+    url: stickerUrl,
+    isSticker: true 
+  };
+  
+  preview.style.display = "flex";
+  preview.innerHTML = `<img src="${stickerUrl}" alt="Sticker" style="max-width:120px;max-height:120px"><button type="button" class="remove-media" onclick="clearPostMedia()" title="Remove">×</button>`;
+  
   toggleStickerPicker();
+  showToast("Sticker added — tap to send");
 }
 
 function handlePostImageSelect(input){
@@ -5915,7 +5966,7 @@ window.publishCommunityPost = async function(){
   const anonymousBox = document.getElementById("anonymousPost");
   const content = contentBox?.value.trim() || "";
   const isAnonymous = anonymousBox?.checked || false;
-  if(!content && !pendingPostMedia){ setStatus("communityStatus","Please write something or add an image.","error"); return; }
+  if(!content && !pendingPostMedia){ setStatus("communityStatus","Please write something or add an image/sticker.","error"); return; }
   const btn = document.getElementById("publishPostBtn");
   btn.disabled = true;
   setStatus("communityStatus","Publishing…");
@@ -5924,20 +5975,27 @@ window.publishCommunityPost = async function(){
   let mediaType = null;
   
   try{
-    // Upload image if present
+    // Handle pending media (image upload or sticker URL)
     if(pendingPostMedia){
-      setStatus("communityStatus","Uploading image…");
-      const fileExt = pendingPostMedia.file.name.split(".").pop() || "jpg";
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
-      const {error:uploadError} = await db.storage.from("community-media").upload(fileName, pendingPostMedia.file, {
-        contentType: pendingPostMedia.type,
-        upsert: false
-      });
-      if(uploadError) throw uploadError;
-      
-      const {data:publicUrlData} = db.storage.from("community-media").getPublicUrl(fileName);
-      mediaUrl = publicUrlData?.publicUrl || null;
-      mediaType = "image";
+      if(pendingPostMedia.isSticker && pendingPostMedia.url){
+        // Sticker: use the URL directly (already hosted)
+        mediaUrl = pendingPostMedia.url;
+        mediaType = "sticker";
+      } else if(pendingPostMedia.file){
+        // User uploaded image: upload to storage
+        setStatus("communityStatus","Uploading image…");
+        const fileExt = pendingPostMedia.file.name.split(".").pop() || "jpg";
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+        const {error:uploadError} = await db.storage.from("community-media").upload(fileName, pendingPostMedia.file, {
+          contentType: pendingPostMedia.type,
+          upsert: false
+        });
+        if(uploadError) throw uploadError;
+        
+        const {data:publicUrlData} = db.storage.from("community-media").getPublicUrl(fileName);
+        mediaUrl = publicUrlData?.publicUrl || null;
+        mediaType = "image";
+      }
     }
     
     const {error} = await db.from("community_posts").insert({
