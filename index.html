@@ -5568,51 +5568,51 @@ function updateCharCount(){
 /* ---- Community media & stickers ---- */
 let pendingPostMedia = null; // {file, previewUrl, type}
 
-/* Sticker packs — WebP images with transparency (WhatsApp-style) */
+/* Sticker packs — inline SVG (transparent, lightweight, WhatsApp-style) */
 const STICKER_PACKS = {
   "default": {
     name: "ClassHub",
     stickers: [
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/happy.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/laugh.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/love.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thinking.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/cry.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/cool.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/party.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/mindblown.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thumbsup.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/thumbsdown.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pray.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/fire.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/hundred.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/sparkles.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/bulb.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/tada.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/books.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pencil.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/hospital.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pill.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/stethoscope.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/brain.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/heart.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/tooth.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/apple.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/coffee.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/pizza.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/moon.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/sun.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/rainbow.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/bolt.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/zzz.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/graduation.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/memo.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/clock.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/calendar.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/rocket.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/flex.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/raisedhands.webp",
-      "https://raw.githubusercontent.com/sudarshansiddarama-cell/ClassHub/main/stickers/handshake.webp"
+      {name:"Happy",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M9 16q0 2 1.5 3t3.5 1 3.5-1 1.5-3" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Laugh",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 10l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 10l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M9 15q0 2 1.5 3t3.5 1 3.5-1 1.5-3" stroke="#2D2D2D" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Love",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M12 14l-2 2 2 2" stroke="#E53E3E" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Thinking",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M10 16q0 1 .5 2t2 1.5 2-1.5.5-2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M14 18q0 1.5 1 2.5" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Cry",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M9 16q0 2 1.5 3t3.5 1 3.5-1 1.5-3" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M8 13l1 4M16 13l-1 4" stroke="#3182CE" stroke-width="2" stroke-linecap="round"/></svg>`},
+      {name:"Cool",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="7" y="9" width="3" height="3" rx="1" fill="#2D2D2D"/><rect x="14" y="9" width="3" height="3" rx="1" fill="#2D2D2D"/><path d="M7 16q0 2 1.5 3t3.5 1 3.5-1 1.5-3" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Party",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M14 11l1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/><path d="M9 16q0 2 1.5 3t3.5 1 3.5-1 1.5-3" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="6" cy="6" r="2" fill="#E53E3E"/><circle cx="18" cy="6" r="2" fill="#3182CE"/><circle cx="6" cy="18" r="2" fill="#38B2AC"/><circle cx="18" cy="18" r="2" fill="#DD6B20"/></svg>`},
+      {name:"Mind Blown",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><circle cx="9" cy="10" r="1.5" fill="#2D2D2D"/><circle cx="15" cy="10" r="1.5" fill="#2D2D2D"/><path d="M9 15q0 1.5 1.5 2.5t3.5.5 3.5-.5 1.5-2.5" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M12 6l-2 2M12 6l2 2" stroke="#9F7AEA" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="6" r="1.5" fill="#9F7AEA" fill-opacity="0.3"/></svg>`},
+      {name:"Thumbs Up",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M11 16v-4l2-2 3 3 4-5" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+      {name:"Thumbs Down",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M13 8v4l-2 2-3-3-4 5" stroke="#E53E3E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+      {name:"Pray",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 8c-2 0-3 1-3 3s1 3 3 3 3-1 3-3-1-3-3-3zm0 2c1 0 2 1 2 2s-1 2-2 2-2-1-2-2 1-2 2-2z" fill="#2D2D2D"/><path d="M8 16l2-3 2 3" stroke="#2D2D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+      {name:"Fire",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 18c-1.5-.5-2.5-1.5-2.5-3.5 0-1.5 1-2.5 2.5-2.5s2.5 1 2.5 2.5c0 2-1 3-2.5 3.5z" fill="#DD6B20"/><path d="M12 14c-.8-.3-1.3-.8-1.3-1.5 0-.8.5-1.3 1.3-1.3s1.3.5 1.3 1.3c0 .7-.5 1.2-1.3 1.5z" fill="#F6AD55"/></svg>`},
+      {name:"100",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#2D2D2D" font-family="system-ui">100</text></svg>`},
+      {name:"Sparkles",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 6l-1 2 2 1-1 2 2 1" stroke="#F6AD55" stroke-width="2" stroke-linecap="round"/><path d="M16 10l-1 2 2 1" stroke="#F6AD55" stroke-width="2" stroke-linecap="round"/><path d="M8 14l-1 2 2 1" stroke="#F6AD55" stroke-width="2" stroke-linecap="round"/></svg>`},
+      {name:"Idea",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M9 16c0-2 2-3 4-3s4 1 4 3" stroke="#F6AD55" stroke-width="2.5" stroke-linecap="round" fill="none"/><path d="M9 13c1-2 3-3 6-3s5 1 5 3" stroke="#F6AD55" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+      {name:"Tada",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M7 12l3 3 5-6" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="6" r="1.5" fill="#E53E3E"/><circle cx="18" cy="6" r="1.5" fill="#3182CE"/><circle cx="6" cy="18" r="1.5" fill="#38B2AC"/><circle cx="18" cy="18" r="1.5" fill="#DD6B20"/></svg>`},
+      {name:"Books",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="6" y="8" width="5" height="10" rx="1" fill="#4299E1"/><rect x="13" y="8" width="5" height="10" rx="1" fill="#48BB78"/><path d="M6 8v-2h5v2M13 8v-2h5v2" stroke="#2D2D2D" stroke-width="1.5"/></svg>`},
+      {name:"Pencil",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 6l4 10-8 0z" fill="#F6AD55"/><path d="M12 6l-2 5h4l-2-5z" fill="#ED8936"/><rect x="10" y="16" width="4" height="3" rx="1" fill="#718096"/></svg>`},
+      {name:"Hospital",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="6" y="8" width="12" height="10" rx="2" stroke="#E53E3E" stroke-width="2"/><rect x="11" y="10" width="2" height="8" fill="#E53E3E"/><rect x="8" y="14" width="8" height="2" fill="#E53E3E"/></svg>`},
+      {name:"Pill",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="8" y="10" width="8" height="4" rx="2" fill="#4299E1"/><rect x="9" y="10.5" width="3" height="3" rx="1" fill="#FFF"/><rect x="12" y="10.5" width="3" height="3" rx="1" fill="#FFF"/></svg>`},
+      {name:"Stethoscope",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 6v4M12 10a5 5 0 0 1 5 5" stroke="#3182CE" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="17" cy="15" r="3" stroke="#3182CE" stroke-width="2.5"/></svg>`},
+      {name:"Brain",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 4c-4 0-7 3-7 7s3 7 7 7 7-3 7-7-3-7-7-7zm0 2c2.5 0 4.5 2 4.5 4.5S14.5 17 12 17 7.5 15 7.5 12.5 9.5 8 12 8z" fill="#9F7AEA" fill-opacity="0.3" stroke="#9F7AEA" stroke-width="1.5"/></svg>`},
+      {name:"Heart",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 16.5c-2.5 0-4-1.5-4-3.5s1.5-3.5 4-3.5 4 1.5 4 3.5-1.5 3.5-4 3.5z" fill="#E53E3E"/></svg>`},
+      {name:"Tooth",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 9c-2 0-3 1.5-3 3s1 3 3 3 3-1 3-3-1-3-3-3zm0 2c1 0 2 1 2 2s-1 2-2 2-2-1-2-2 1-2 2-2z" fill="#EDF2F7" stroke="#A0AEC0" stroke-width="2"/></svg>`},
+      {name:"Apple",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 7c2.5 0 4.5 2 4.5 4.5S14.5 18 12 18 7.5 16 7.5 13.5 9.5 7 12 7z" fill="#E53E3E"/><path d="M12 7l-1 2" stroke="#2D2D2D" stroke-width="2" stroke-linecap="round"/></svg>`},
+      {name:"Coffee",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="8" y="8" width="8" height="10" rx="1" fill="#744210"/><path d="M10 8v-2h4v2" stroke="#744210" stroke-width="2"/><rect x="14" y="10" width="3" height="8" rx="1" fill="#744210"/></svg>`},
+      {name:"Pizza",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 6l5 9-10 0z" fill="#F6AD55"/><path d="M12 6l-2 5h4l-2-5z" fill="#ED8936"/><circle cx="10" cy="11" r="1.5" fill="#E53E3E"/><circle cx="14" cy="11" r="1.5" fill="#E53E3E"/><circle cx="12" cy="14" r="1.5" fill="#E53E3E"/></svg>`},
+      {name:"Moon",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 4a8 8 0 0 0-8 8c0 2.5 1.5 4.5 3.5 5.5" stroke="#F6E05E" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="16" cy="8" r="2" fill="#F6E05E"/></svg>`},
+      {name:"Sun",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><circle cx="12" cy="12" r="4" fill="#F6E05E"/><g stroke="#F6E05E" stroke-width="2" stroke-linecap="round"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></g></svg>`},
+      {name:"Rainbow",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><g stroke-width="3" stroke-linecap="round"><path d="M7 17a10 10 0 0 1 10 0" stroke="#E53E3E"/><path d="M9 17a8 8 0 0 1 6 0" stroke="#DD6B20"/><path d="M11 17a6 6 0 0 1 2 0" stroke="#F6E05E"/><path d="M12 17a4 4 0 0 1 0 0" stroke="#38B2AC"/></g></svg>`},
+      {name:"Bolt",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 5l-3 5h3l-2 7 9-10h-3l3-5z" fill="#F6E05E"/></svg>`},
+      {name:"ZZZ",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#4A5568" font-family="system-ui">Z Z Z</text></svg>`},
+      {name:"Graduation",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 18l-6-4 2-3 4 2 4-2 2 3" fill="#4299E1"/><rect x="6" y="14" width="12" height="2" fill="#2D2D2D"/><polygon points="12,6 18,10 6,10" fill="#4299E1"/></svg>`},
+      {name:"Memo",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="7" y="7" width="10" height="14" rx="1" fill="#EDF2F7" stroke="#A0AEC0" stroke-width="1.5"/><path d="M7 11h10M7 14h10M7 17h6" stroke="#A0AEC0" stroke-width="1.5" stroke-linecap="round"/></svg>`},
+      {name:"Clock",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><circle cx="12" cy="12" r="7" stroke="#2D2D2D" stroke-width="2"/><path d="M12 9v3l2 2" stroke="#2D2D2D" stroke-width="2.5" stroke-linecap="round"/></svg>`},
+      {name:"Calendar",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><rect x="6" y="7" width="12" height="14" rx="1" fill="#EDF2F7" stroke="#A0AEC0" stroke-width="1.5"/><rect x="8" y="7" width="2" height="3" fill="#A0AEC0"/><rect x="14" y="7" width="2" height="3" fill="#A0AEC0"/><text x="12" y="16" text-anchor="middle" font-size="8" font-weight="bold" fill="#2D2D2D" font-family="system-ui">21</text></svg>`},
+      {name:"Rocket",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M12 18l2-6 4 2-2-5" fill="#E53E3E"/><path d="M10 12l2-6 4 2" fill="#F6AD55"/><path d="M12 18l-2-3" stroke="#F6E05E" stroke-width="3" stroke-linecap="round"/></svg>`},
+      {name:"Flex",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M10 16v-6l2-2 4 5" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14 16v-4l-2 2" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+      {name:"Raised Hands",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M7 16l-1-4h2l1 4M17 16l1-4h-2l-1 4" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+      {name:"Handshake",svg:`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFD93D"/><path d="M8 14l3 3 4-4" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M16 14l-3 3" stroke="#38B2AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`}
     ]
   }
 };
@@ -5623,7 +5623,7 @@ function renderStickerPicker(){
   const container = document.getElementById("stickerPicker");
   if(!container) return;
   const pack = STICKER_PACKS[currentStickerPack];
-  container.innerHTML = pack.stickers.map((url, i)=>`<button type="button" class="sticker-btn" onclick="pickSticker('${url}')" aria-label="Sticker ${i+1}"><img src="${url}" alt="Sticker ${i+1}" loading="lazy"></button>`).join("");
+  container.innerHTML = pack.stickers.map((s, i)=>`<button type="button" class="sticker-btn" onclick="pickSticker('${s.svg.replace(/'/g,"'")}')" aria-label="${s.name}">${s.svg}</button>`).join("");
 }
 
 function toggleStickerPicker(){
@@ -5634,20 +5634,22 @@ function toggleStickerPicker(){
   if(show) renderStickerPicker();
 }
 
-function pickSticker(stickerUrl){
+function pickSticker(stickerSvg){
   const preview = document.getElementById("postMediaPreview");
   if(!preview) return;
   
-  // Add sticker as pending media (image)
+  // Convert SVG to data URL for storage/preview
+  const dataUrl = "data:image/svg+xml;base64," + btoa(stickerSvg);
+  
   pendingPostMedia = { 
     file: null, 
-    type: "image/webp", 
-    url: stickerUrl,
+    type: "image/svg+xml", 
+    url: dataUrl,
     isSticker: true 
   };
   
   preview.style.display = "flex";
-  preview.innerHTML = `<img src="${stickerUrl}" alt="Sticker" style="max-width:120px;max-height:120px"><button type="button" class="remove-media" onclick="clearPostMedia()" title="Remove">×</button>`;
+  preview.innerHTML = `<img src="${dataUrl}" alt="Sticker" style="max-width:120px;max-height:120px"><button type="button" class="remove-media" onclick="clearPostMedia()" title="Remove">×</button>`;
   
   toggleStickerPicker();
   showToast("Sticker added — tap to send");
