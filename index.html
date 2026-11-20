@@ -1717,17 +1717,6 @@ function safeUrl(u){
 const SUPABASE_URL = "https://oekunhqzhwwjfrcaiuit.supabase.co";
 const SUPABASE_KEY = "sb_publishable_EyHZW0-TGp2-LfsS3KHB5w_0mmjSCsY";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-console.log("[ClassHub] Supabase client created:", !!db);
-// Visual debug - synchronous
-document.title = "ClassHub [DB:" + (!!db) + "]";
-// Visual debug
-(function(){
-  const debugDiv = document.createElement("div");
-  debugDiv.id = "debug-info";
-  debugDiv.style.cssText = "position:fixed;bottom:10px;right:10px;background:#000;color:#0f0;padding:10px;font-family:monospace;font-size:12px;z-index:9999;border:1px solid #0f0;";
-  debugDiv.textContent = "DB: " + (!!db) + " | readyState: " + document.readyState;
-  document.body.appendChild(debugDiv);
-})();
 
 const MAX_PDF_SIZE = 50 * 1024 * 1024;
 const CR_USER_ID = "953bb1d4-b22e-4458-b618-d8d0d8681231";
@@ -1957,10 +1946,6 @@ function onAvatarClick(){
 
 /* ================= GOOGLE AUTH ================= */
 async function signInWithGoogle(){
-  console.log("[ClassHub] signInWithGoogle called");
-  // Visual debug
-  const debugDiv = document.getElementById("debug-info");
-  if (debugDiv) debugDiv.textContent += " | signIn";
   const button = document.getElementById("googleSignInBtn");
   button.disabled = true;
   setStatus("authStatus","Opening Google sign-in…");
@@ -2081,10 +2066,6 @@ function dismissAuthBar(){
   showToast("Banner hidden — use the profile icon (top right) anytime");
 }
 async function initialiseGoogleAuth(){
-  console.log("[ClassHub] initialiseGoogleAuth called");
-  // Visual debug
-  const debugDiv = document.getElementById("debug-info");
-  if (debugDiv) debugDiv.textContent += " | initAuth";
   /* register the listener FIRST so the OAuth sign-in event is never missed */
   db.auth.onAuthStateChange((event, session)=>{
     setTimeout(()=>syncAuth(session?.user || null), 0);
@@ -6731,7 +6712,7 @@ async function checkMcqAnswer(){
 /* Save one checked answer without blocking the UI. The final submit sends
    every answer again, so a failed background save is harmless. */
 
-function mcqNextQuestion(){
+/* Pre-fetch AI explanation for a question outcome (fire-and-forget). */
 async function refreshMissingExplanation(question, outcome, correctIdx){
   const current = String(outcome.explanation || "").trim();
   if(current.length >= 60 && !/^Answer verified/i.test(current)) return;
@@ -7006,10 +6987,6 @@ function subscribeToCommunity(){
 
 /* ================= STARTUP ================= */
 async function initialiseClassHub(){
-  console.log("[ClassHub] initialiseClassHub called");
-  // Visual debug
-  const debugDiv = document.getElementById("debug-info");
-  if (debugDiv) debugDiv.textContent += " | initHub";
   document.addEventListener("click", function primeAlerts(){
     try{
       if(!noticeSoundContext){
