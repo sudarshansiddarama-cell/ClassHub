@@ -924,7 +924,10 @@ async function handleGenerateTopic(supabase: any, admin: any, user: any, body: a
     });
   }
 
-  const questions = drafted;
+  // Quality audit: reject drafts with multiple-correct options, list questions,
+  // negative/trick wording, or incorrect-index mismatches.
+  const audited = await auditQuestions(topic, "", drafted);
+  const questions = audited && audited.length ? audited : drafted;
 
   // Topic-based sessions need a source_pdf_id. Use a shared placeholder PDF.
   const pdfId = await getOrCreatePlaceholderPdf(admin);
@@ -1455,41 +1458,6 @@ async function handleFeedback(supabase: any, admin: any, user: any, body: any): 
 }
 
 /* ------------------------------------------------------------------ */
-/* Answer keys for a session (client-side instant checking)           */
-/* ------------------------------------------------------------------ */
-
-async function handleGetAnswerKeys(supabase: any, admin: any, user: any, body: any): Promise<Response> {
-  const sessionId = typeof body?.session_id === "string" ? body.session_id.trim() : "";
-  if (!sessionId) {
-    return json(400, { error: "Session is required.", code: "MISSING_SESSION" });
-  }
-
-  const { data: session } = await supabase
-    .from("mcq_sessions")
-    .select("id")
-    .eq("id", sessionId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!session) {
-    return json(404, { error: "Session not found.", code: "NOT_FOUND" });
-  }
-
-  const { data: questions } = await admin
-    .from("mcq_questions")
-    .select("id")
-    .eq("session_id", sessionId);
-  const ids = (questions || []).map((q: any) => q.id);
-  if (!ids.length) return json(200, { keys: [] });
-
-  const { data: keys } = await admin
-    .from("mcq_answer_keys")
-    .select("question_id, correct_option_index, explanation")
-    .in("question_id", ids);
-
-  return json(200, { keys: keys || [] });
-}
-
-/* ------------------------------------------------------------------ */
 /* Entry point                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -1544,7 +1512,6 @@ Deno.serve(async (request: Request) => {
   if (action === "uploadFromText") return handleUploadFromText(supabase, admin, user, body);
   if (action === "explain") return handleExplain(supabase, admin, user, body);
   if (action === "generateExplanations") return handleGenerateExplanations(supabase, admin, user, body);
-  if (action === "getAnswerKeys") return handleGetAnswerKeys(supabase, admin, user, body);
   if (action === "deleteSession") return handleDeleteSession(supabase, admin, user, body);
   if (action === "validate") return handleValidate(supabase, admin, user, body);
   if (action === "feedback") return handleFeedback(supabase, admin, user, body);

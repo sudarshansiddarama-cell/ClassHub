@@ -505,10 +505,10 @@ label.f-label{
   .mcq-nav{flex-wrap:wrap}
   .mcq-nav .btn{flex:1 1 auto}
 }
-#mcq-practice .panel{max-width:640px;margin:0 auto 16px}
-.mcq-question-card{max-width:600px;margin:0 auto 16px}
-.mcq-result-card{max-width:600px;margin:0 auto 16px}
-.mcq-pdf-card,.mcq-session-card{max-width:640px;margin:0 auto}
+#mcq-practice .panel{max-width:520px;margin:0 auto 16px}
+.mcq-question-card{max-width:520px;margin:0 auto 16px}
+.mcq-result-card{max-width:520px;margin:0 auto 16px}
+.mcq-pdf-card,.mcq-session-card{max-width:520px;margin:0 auto}
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
   width:56px;height:56px;border-radius:50%;object-fit:cover;padding:0;
@@ -6111,7 +6111,7 @@ window.loadMcqPractice = async function(){
       }
     }
 
-    renderMcqPdfList(pdfs, sessionByPdf);
+    renderMcqPdfList(pdfs, sessionByPdf, attemptBySession);
     renderMcqSessionList(sessions, attemptBySession);
     showMcqView("start");
   }catch(error){
@@ -6123,7 +6123,7 @@ window.loadMcqPractice = async function(){
   }
 };
 
-function renderMcqPdfList(pdfs, sessionByPdf){
+function renderMcqPdfList(pdfs, sessionByPdf, attemptBySession){
   const list = document.getElementById("mcqPdfList");
   if(!list) return;
   list.replaceChildren();
@@ -6134,6 +6134,8 @@ function renderMcqPdfList(pdfs, sessionByPdf){
 
   pdfs.forEach(pdf=>{
     const session = sessionByPdf[pdf.id];
+    const attempt = session ? attemptBySession[session.id] : null;
+    const completed = !!attempt && !!attempt.completed_at;
     const card = makeElement("div","mcq-pdf-card");
 
     const info = makeElement("div","mcq-pdf-info");
@@ -6141,7 +6143,8 @@ function renderMcqPdfList(pdfs, sessionByPdf){
     const meta = [];
     if(pdf.subject) meta.push(pdf.subject);
     if(pdf.subcategory) meta.push(pdf.subcategory);
-    if(session && session.status === "ready") meta.push(`${session.total_questions} questions`);
+    if(completed) meta.push(`Score ${attempt.score}/${attempt.total}`);
+    else if(session && session.status === "ready") meta.push(`${session.total_questions} questions`);
     else meta.push(mcqStatusLabel(session ? session.status : "none"));
     info.appendChild(makeElement("small","",meta.join(" · ")));
     card.appendChild(info);
@@ -6149,12 +6152,14 @@ function renderMcqPdfList(pdfs, sessionByPdf){
     const actions = makeElement("div","mcq-pdf-actions");
     actions.appendChild(makeElement(
       "span",
-      "mcq-pdf-status " + mcqStatusClass(session ? session.status : "none"),
-      session && session.status === "ready" ? `${session.total_questions} Qs` : mcqStatusLabel(session ? session.status : "none")
+      "mcq-pdf-status " + (completed ? "ready" : mcqStatusClass(session ? session.status : "none")),
+      completed ? "Completed" : (session && session.status === "ready" ? `${session.total_questions} Qs` : mcqStatusLabel(session ? session.status : "none"))
     ));
 
     let button;
-    if(session && session.status === "ready"){
+    if(completed){
+      button = makeButton("Practice Again",()=>startMcqPractice(session.id),"btn");
+    }else if(session && session.status === "ready"){
       button = makeButton("Start Practice",()=>startMcqPractice(session.id),"btn");
     }else if(session && session.status === "generating"){
       button = makeButton("Generating…",()=>{},"btn");
@@ -6218,10 +6223,11 @@ function renderMcqSessionList(sessions, attemptBySession){
 
     const actions = makeElement("div","mcq-pdf-actions");
     const inProgress = !!attempt && !attempt.completed_at;
+    const completed = !!attempt && !!attempt.completed_at;
     actions.appendChild(makeElement(
       "span",
-      "mcq-pdf-status " + (inProgress ? "generating" : mcqStatusClass(session.status)),
-      inProgress ? "In progress" : mcqStatusLabel(session.status)
+      "mcq-pdf-status " + (completed ? "ready" : inProgress ? "generating" : mcqStatusClass(session.status)),
+      completed ? "Completed" : inProgress ? "In progress" : mcqStatusLabel(session.status)
     ));
 
     let button;
@@ -6653,27 +6659,14 @@ function selectMcqOption(questionId, optionIndex){
    background and refresh the key once they are ready. */
 window.preloadSessionExplanations = async function(sessionId){
   if(!sessionId) return;
-  const loadKeys = async () => {
-    const result = await mcqFetch("getAnswerKeys",{session_id:sessionId});
-    if(!result || !Array.isArray(result.keys)) return;
-    if(mcqState.sessionId !== sessionId) return;
-    const map = {};
-    for(const key of result.keys){
-      if(key && key.question_id) map[key.question_id] = key;
-    }
-    mcqState.answerKeys = map;
-  };
-
-  try{ await loadKeys(); }catch(e){ /* fall back to server validate */ }
 
   try{
     const result = await mcqFetch("generateExplanations",{session_id:sessionId});
     if(result && result.updated > 0){
       console.log("MCQ explanations preloaded:", result.updated);
-      try{ await loadKeys(); }catch(e){ /* keep current keys */ }
     }
   }catch(e){
-    // silent — Check Answer falls back to on-demand generation
+    // silent — Check Answer validates server-side
   }
 };
 
@@ -6686,30 +6679,8 @@ async function checkMcqAnswer(){
   }
 
   const selected = mcqState.answers[question.id];
-  const key = mcqState.answerKeys?.[question.id];
 
-  // Fast path: the answer key is already loaded, so score locally and show
-  // the preloaded explanation immediately. Persist in the background.
-  if(key && key.correct_option_index != null){
-    const isCorrect = key.correct_option_index === selected;
-    const outcome = {
-      question_id: question.id,
-      selected_option_index: selected,
-      is_correct: isCorrect,
-      correct_option_index: key.correct_option_index,
-      explanation: key.explanation || "",
-      locked: false
-    };
-
-    mcqState.checked[question.id] = true;
-    mcqState.results[question.id] = outcome;
-    renderMcqPractice();
-    refreshMissingExplanation(question, outcome);
-    persistMcqResponse(question.id, selected);
-    return;
-  }
-
-  // Fallback: no local key yet — ask the server to validate.
+  // Always validate server-side so answer keys are never trusted to the browser.
   mcqState.checking = true;
   const checkButton = document.getElementById("mcqCheckBtn");
   checkButton.disabled = true;
@@ -6727,11 +6698,6 @@ async function checkMcqAnswer(){
     const outcome = response.results && response.results[0];
     if(!outcome) throw new Error("The server did not return feedback. Please try again.");
 
-    const correctIdx = outcome.correct_option_index !== undefined
-      ? outcome.correct_option_index
-      : selected;
-    refreshMissingExplanation(question, outcome, correctIdx);
-
     mcqState.checked[question.id] = true;
     mcqState.results[question.id] = outcome;
   }catch(error){
@@ -6745,16 +6711,8 @@ async function checkMcqAnswer(){
 
 /* Save one checked answer without blocking the UI. The final submit sends
    every answer again, so a failed background save is harmless. */
-function persistMcqResponse(questionId, selected){
-  if(!mcqState.attemptId) return;
-  mcqFetch("validate",{
-    attempt_id: mcqState.attemptId,
-    responses:[{question_id:questionId, selected_option_index:selected}]
-  }).catch(error=>console.warn("MCQ background save failed:", error));
-}
 
-/* If a stored explanation is still a placeholder, fetch a real one in the
-   background and swap it in when ready. */
+function mcqNextQuestion(){
 async function refreshMissingExplanation(question, outcome, correctIdx){
   const current = String(outcome.explanation || "").trim();
   if(current.length >= 60 && !/^Answer verified/i.test(current)) return;
@@ -6768,9 +6726,6 @@ async function refreshMissingExplanation(question, outcome, correctIdx){
     });
     if(result && result.explanation){
       outcome.explanation = result.explanation;
-      if(mcqState.answerKeys?.[question.id]){
-        mcqState.answerKeys[question.id].explanation = result.explanation;
-      }
       if(mcqState.results[question.id]) mcqState.results[question.id].explanation = result.explanation;
       renderMcqPractice();
     }
@@ -6779,17 +6734,17 @@ async function refreshMissingExplanation(question, outcome, correctIdx){
   }
 }
 
-function mcqNextQuestion(){
-  if(mcqState.currentIndex < mcqState.questions.length - 1){
-    mcqState.currentIndex++;
+function mcqPrevQuestion(){
+  if(mcqState.currentIndex > 0){
+    mcqState.currentIndex--;
     renderMcqPractice();
     window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
   }
 }
 
-function mcqPrevQuestion(){
-  if(mcqState.currentIndex > 0){
-    mcqState.currentIndex--;
+async function mcqNextQuestion(){
+  if(mcqState.currentIndex < mcqState.questions.length - 1){
+    mcqState.currentIndex++;
     renderMcqPractice();
     window.scrollTo({top:0,behavior:reduceMotion ? "auto" : "smooth"});
   }
