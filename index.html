@@ -406,15 +406,15 @@ label.f-label{
 .char-count{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-left:auto}
 
 /* ---------- MCQ PRACTICE ---------- */
-.mcq-grid{display:flex;flex-direction:column;gap:12px}
-.mcq-pdf-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s}
+.mcq-grid{display:flex;flex-direction:column;gap:8px}
+.mcq-pdf-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s;max-width:520px}
 .mcq-pdf-card:hover{background:var(--surface-hover);border-color:var(--border-strong)}
 .mcq-pdf-info{min-width:0;flex:1}
-.mcq-pdf-info strong{display:block;font-size:13px;font-weight:500;overflow-wrap:anywhere}
-.mcq-pdf-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:10px;margin-top:2px}
+.mcq-pdf-info strong{display:block;font-size:12.5px;font-weight:500;overflow-wrap:anywhere;line-height:1.3}
+.mcq-pdf-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9px;margin-top:1px}
 .mcq-pdf-meta{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
 .mcq-pdf-actions{display:flex;gap:6px;flex-shrink:0}
-.mcq-pdf-status{font-family:var(--font-mono);font-size:9.5px;padding:2px 7px;border-radius:99px;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.mcq-pdf-status{font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:99px;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
 .mcq-pdf-status.ready{color:var(--green);border-color:var(--green)}
 .mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
 .mcq-pdf-status.failed{color:var(--red);border-color:var(--red)}
@@ -423,8 +423,24 @@ label.f-label{
 .mcq-session-info{min-width:0;flex:1}
 .mcq-session-info strong{display:block;font-size:12.5px;font-weight:500}
 .mcq-session-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9.5px;margin-top:1px}
-.mcq-empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
-.mcq-empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
+.mcq-empty{text-align:center;color:var(--muted);padding:16px 8px;font-size:11.5px;font-family:var(--font-mono);line-height:1.5}
+.mcq-empty .ic{width:16px;height:16px;stroke-width:1.5;margin-bottom:6px;color:var(--muted2)}
+
+/* MCQ Search & Rate Limit */
+.mcq-search-wrap{margin:0 0 10px}
+.mcq-search{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px}
+.mcq-search:focus{border-color:var(--accent);outline:none}
+.mcq-rate-limit{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:6px 0 10px;text-align:right}
+
+/* Generation Progress Modal */
+.mcq-gen-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:16px}
+.mcq-gen-modal{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.mcq-gen-title{font-size:16px;font-weight:600;margin:0 0 6px}
+.mcq-gen-sub{font-size:12px;color:var(--muted);margin:0 0 16px}
+.mcq-gen-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin:12px 0}
+.mcq-gen-fill{height:100%;width:0%;background:var(--accent);transition:width .3s ease}
+.mcq-gen-stage{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:8px 0;text-align:center}
+.mcq-gen-cancel{width:100%;margin-top:16px}
 
 /* ---------- MCQ NOTEPAD OVERLAY ---------- */
 .mcq-notepad-overlay{
@@ -1398,7 +1414,9 @@ Q: Next question... Ans: A
           <label class="f-label" for="mcqTopicInput">Chapter / topic name</label>
           <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Karana Dravya, Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
           <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by chapter name</button>
+          <div id="mcqRateLimit" class="mcq-rate-limit"></div>
           <p class="muted" style="margin-top:18px">Or pick one of your uploaded PDFs:</p>
+          <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
           <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading your PDFs…</div></div>
         </div>
         <div class="panel">
@@ -1473,6 +1491,17 @@ Q: Next question... Ans: A
           <button class="btn full" onclick="showMcqView('result')">Back to Results</button>
           <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
           <button class="btn ghost full" onclick="openSection('mcq-practice')">Return to MCQ Practice</button>
+        </div>
+      </div>
+
+      <!-- GENERATION PROGRESS MODAL (hidden by default) -->
+      <div id="mcqGenOverlay" class="mcq-gen-overlay" style="display:none" aria-modal="true" role="dialog">
+        <div class="mcq-gen-modal">
+          <h3 class="mcq-gen-title" id="mcqGenModalTitle">Generating questions…</h3>
+          <p class="mcq-gen-sub" id="mcqGenModalMsg">Reading the PDF and asking the AI to write questions.</p>
+          <div class="mcq-gen-bar"><div class="mcq-gen-fill" id="mcqGenModalFill" style="width:0%"></div></div>
+          <p class="mcq-gen-stage" id="mcqGenModalStage">Initializing…</p>
+          <button class="btn secondary mcq-gen-cancel" onclick="cancelMcqGenerate()">Cancel</button>
         </div>
       </div>
     </section>
@@ -5947,9 +5976,31 @@ function setMcqGenProgress(title, detail, progress){
   const titleEl = document.getElementById("mcqGenTitle");
   const msgEl = document.getElementById("mcqGenMsg");
   const progEl = document.getElementById("mcqGenProgress");
+  const modalTitle = document.getElementById("mcqGenModalTitle");
+  const modalMsg = document.getElementById("mcqGenModalMsg");
+  const modalFill = document.getElementById("mcqGenModalFill");
+  const modalStage = document.getElementById("mcqGenModalStage");
   if(titleEl) titleEl.textContent = title;
   if(msgEl) msgEl.textContent = detail;
   if(progEl) progEl.textContent = progress || "";
+  if(modalTitle) modalTitle.textContent = title;
+  if(modalMsg) modalMsg.textContent = detail;
+  if(modalStage) modalStage.textContent = progress || "";
+  if(modalFill){
+    const pct = (typeof progress === "number" ? progress : parseFloat(String(progress || "0").replace("%",""))) || 0;
+    modalFill.style.width = Math.min(100, Math.max(0, pct)) + "%";
+  }
+}
+
+/* PDF Search Filter */
+function filterMcqPdfs(query){
+  const q = (query || "").toLowerCase().trim();
+  document.querySelectorAll("#mcqPdfList .mcq-pdf-card").forEach(card=>{
+    const name = card.querySelector(".mcq-pdf-info strong");
+    const meta = card.querySelector(".mcq-pdf-info small");
+    const text = (name?.textContent || "") + " " + (meta?.textContent || "");
+    card.style.display = !q || text.toLowerCase().includes(q) ? "flex" : "none";
+  });
 }
 
 function formatMcqTime(seconds){
@@ -6068,6 +6119,7 @@ function mcqStatusClass(status){
 window.loadMcqPractice = async function(){
   const pdfList = document.getElementById("mcqPdfList");
   const sessionList = document.getElementById("mcqSessionList");
+  const rateEl = document.getElementById("mcqRateLimit");
   if(!pdfList || !sessionList) return;
 
   // Clear any stuck generation state from a previous failed attempt.
@@ -6078,6 +6130,7 @@ window.loadMcqPractice = async function(){
     showMcqView("start");
     pdfList.replaceChildren(makeEmptyState("Sign in with Google to generate MCQ practice from your PDFs.","i-folder"));
     sessionList.replaceChildren(makeEmptyState("Sign in to see your practice sessions.","i-history"));
+    if(rateEl) rateEl.textContent = "";
     return;
   }
 
@@ -6114,12 +6167,18 @@ window.loadMcqPractice = async function(){
     renderMcqPdfList(pdfs, sessionByPdf, attemptBySession);
     renderMcqSessionList(sessions, attemptBySession);
     showMcqView("start");
+    
+    // Show rate limit (generations this hour)
+    const recentGenerations = sessions.filter(s=>Date.now() - new Date(s.created_at).getTime() < 3600000).length;
+    const remaining = Math.max(0, 20 - recentGenerations);
+    if(rateEl) rateEl.textContent = `🔄 ${remaining} generations left this hour`;
   }catch(error){
     console.error("MCQ start:", error);
     const message = mcqErrorMessage(error,"Could not load MCQ practice.");
     setMcqStatus(message,"error");
     pdfList.replaceChildren(makeEmptyState(message,"i-folder"));
     sessionList.replaceChildren(makeEmptyState(message,"i-history"));
+    if(rateEl) rateEl.textContent = "";
   }
 };
 
@@ -6292,9 +6351,11 @@ window.generateMcq = async function(pdfId, count){
   mcqState.generating = true;
   mcqGenController = new AbortController();
   const questionsCount = count && [10,20,30,50].includes(Number(count)) ? Number(count) : mcqGenerateCount;
-  showMcqView("generating");
-  setMcqStatus("");
-  setMcqGenProgress("Generating questions…", "Reading the PDF and asking the AI to write " + questionsCount + " questions from its content…", "");
+  
+  // Show modal overlay
+  const overlay = document.getElementById("mcqGenOverlay");
+  if(overlay) overlay.style.display = "flex";
+  setMcqGenProgress("Generating questions…", "Reading the PDF and asking the AI to write " + questionsCount + " questions from its content…", 10);
 
   try{
     let result;
@@ -6302,10 +6363,10 @@ window.generateMcq = async function(pdfId, count){
       result = await mcqFetch("generate",{pdf_id:pdfId, count:questionsCount}, mcqGenController.signal);
     }catch(error){
       if(error.code !== "NO_EXTRACTABLE_TEXT") throw error;
+      setMcqGenProgress("Preparing PDF…", "Extracting text from the PDF (scanned pages use OCR)…", 30);
       await ensurePdfTextForMcq(pdfId);
       throwIfAborted(mcqGenController.signal);
-      showMcqView("generating");
-      setMcqGenProgress("Writing questions…", "The PDF text is ready. Asking the AI to write " + questionsCount + " questions…", "");
+      setMcqGenProgress("Writing questions…", "The PDF text is ready. Asking the AI to write " + questionsCount + " questions…", 60);
       result = await mcqFetch("generate",{pdf_id:pdfId, count:questionsCount}, mcqGenController.signal);
     }
 
@@ -6363,6 +6424,8 @@ window.generateMcq = async function(pdfId, count){
   }finally{
     mcqState.generating = false;
     mcqGenController = null;
+    const overlay = document.getElementById("mcqGenOverlay");
+    if(overlay) overlay.style.display = "none";
   }
 };
 
@@ -6381,12 +6444,14 @@ window.startTopicPractice = async function(count){
   const questionsCount = count && [10,20,30,50].includes(Number(count)) ? Number(count) : mcqGenerateCount;
   mcqState.generating = true;
   mcqGenController = new AbortController();
-  showMcqView("generating");
-  setMcqStatus("");
+  
+  // Show modal overlay
+  const overlay = document.getElementById("mcqGenOverlay");
+  if(overlay) overlay.style.display = "flex";
   setMcqGenProgress(
     "Preparing questions…",
     "Looking for your uploaded MCQs first, then asking the AI to fill the rest…",
-    ""
+    10
   );
 
   try{
@@ -6440,6 +6505,8 @@ window.startTopicPractice = async function(count){
   }finally{
     mcqState.generating = false;
     mcqGenController = null;
+    const overlay = document.getElementById("mcqGenOverlay");
+    if(overlay) overlay.style.display = "none";
   }
 };
 
@@ -6880,6 +6947,8 @@ function retryMcqPractice(){
 
 function cancelMcqGenerate(){
   if(mcqGenController) mcqGenController.abort();
+  const overlay = document.getElementById("mcqGenOverlay");
+  if(overlay) overlay.style.display = "none";
 }
 
 /* ================= REALTIME ================= */
