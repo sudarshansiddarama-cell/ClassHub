@@ -305,6 +305,7 @@ label.f-label{
   font-weight:400;transition:background-color .12s,border-color .12s,color .12s;white-space:nowrap;
 }
 .link-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border-strong)}
+.link-btn.danger{color:var(--red);border-color:var(--red)}
 .empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
 
@@ -549,6 +550,24 @@ label.f-label{
   font-size:11.5px;line-height:1.45;cursor:pointer;user-select:none;
 }
 .privacy-row input{width:14px;height:14px;accent-color:var(--accent);margin-top:2px}
+
+/* ---------- ASSIGNMENTS ---------- */
+.assignment-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.assignment-chip{
+  font-family:var(--font-mono);font-size:9.5px;padding:2px 8px;border-radius:99px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);
+}
+.assignment-chip.due{color:var(--accent);background:var(--accent-soft);border-color:transparent}
+
+/* ---------- AI CONTEXT TOGGLES ---------- */
+.ai-context-row{display:flex;flex-wrap:wrap;gap:6px;max-width:900px;margin:0 auto 6px}
+.ai-context-chip{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+  font-family:var(--font-mono);font-size:10px;color:var(--muted);
+  border:1px solid var(--border);border-radius:99px;padding:4px 9px;
+}
+.ai-context-chip input{width:12px;height:12px;margin:0;accent-color:var(--accent)}
+.ai-context-chip:has(input:checked){color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 
 /* ---------- AUTH ---------- */
 .auth-bar{
@@ -1163,6 +1182,7 @@ body.sheet-open{overflow:hidden}
     <button class="side-link" data-page="pdfs" onclick="openSection('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Test Papers</button>
     <button class="side-link" data-page="photos" onclick="openSection('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
     <button class="side-link" data-page="notices" onclick="openSection('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
+    <button class="side-link" data-page="assignments" onclick="openSection('assignments')"><svg class="ic"><use href="#i-grad"/></svg>Assignments</button>
     <button class="side-link" data-page="chat" onclick="openSection('chat')"><svg class="ic"><use href="#i-chat"/></svg>Class Chat</button>
     <button class="side-link" data-page="ai" onclick="openSection('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
     <button class="side-link" data-page="community" onclick="openSection('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
@@ -1239,26 +1259,32 @@ body.sheet-open{overflow:hidden}
           <span class="action-copy"><strong>Notices</strong><small>Important class updates</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
-        <button class="action-row" type="button" onclick="openSection('chat')">
+        <button class="action-row" type="button" onclick="openSection('assignments')">
           <span class="action-index">07</span>
+          <span class="action-icon"><svg class="ic"><use href="#i-grad"/></svg></span>
+          <span class="action-copy"><strong>Assignments</strong><small>Homework, due dates &amp; submissions</small></span>
+          <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
+        </button>
+        <button class="action-row" type="button" onclick="openSection('chat')">
+          <span class="action-index">08</span>
           <span class="action-icon"><svg class="ic"><use href="#i-chat"/></svg></span>
           <span class="action-copy"><strong>Class Chat</strong><small>Talk with classmates</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('community')">
-          <span class="action-index">08</span>
+          <span class="action-index">09</span>
           <span class="action-icon"><svg class="ic"><use href="#i-users"/></svg></span>
           <span class="action-copy"><strong>Community</strong><small>Posts, likes &amp; comments</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('photos')">
-          <span class="action-index">09</span>
+          <span class="action-index">10</span>
           <span class="action-icon"><svg class="ic"><use href="#i-image"/></svg></span>
           <span class="action-copy"><strong>Case Studies</strong><small>Folder-wise patient case photos</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
         </button>
         <button class="action-row" type="button" onclick="openSection('accounts')">
-          <span class="action-index">10</span>
+          <span class="action-index">11</span>
           <span class="action-icon"><svg class="ic"><use href="#i-users"/></svg></span>
           <span class="action-copy"><strong>Accounts</strong><small>Discover classmates' profiles</small></span>
           <span class="action-arrow"><svg class="ic"><use href="#i-right"/></svg></span>
@@ -1339,9 +1365,37 @@ body.sheet-open{overflow:hidden}
         <button class="btn secondary full" type="button" onclick="testNoticeAlert()">
           <svg class="ic ic-sm"><use href="#i-bell"/></svg>Test notification &amp; sound
         </button>
+        <button class="btn secondary full" type="button" id="pushBtn" onclick="enablePushNotifications()">
+          <svg class="ic ic-sm"><use href="#i-bell"/></svg>Enable background push notifications
+        </button>
+        <div id="pushStatus" class="status" aria-live="polite"></div>
         <div id="noticeStatus" class="status" aria-live="polite"></div>
       </div>
       <div id="noticesList" class="panel"><div class="empty">Loading notices…</div></div>
+    </section>
+
+    <!-- ASSIGNMENTS -->
+    <section id="assignments" class="page">
+      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <div class="section-head">
+        <h1 class="page-title">Assignments</h1>
+        <p class="page-sub">Homework and deadlines posted by the class representative.</p>
+      </div>
+      <div class="panel">
+        <div id="assignmentCompose" class="auth-hidden">
+          <label class="f-label" for="assignmentTitle">Assignment</label>
+          <input id="assignmentTitle" class="field" maxlength="120" placeholder="e.g. Padarth Vijnana — Chapter 3 notes">
+          <label class="f-label" for="assignmentSubject">Subject</label>
+          <input id="assignmentSubject" class="field" maxlength="60" placeholder="e.g. Padarth Vijnana">
+          <label class="f-label" for="assignmentDue">Due date</label>
+          <input id="assignmentDue" class="field" type="date">
+          <label class="f-label" for="assignmentDetails">Details</label>
+          <textarea id="assignmentDetails" class="field" maxlength="4000" placeholder="What to submit and how…"></textarea>
+          <button class="btn full" id="addAssignmentBtn" onclick="addAssignment()"><svg class="ic ic-sm"><use href="#i-send"/></svg>Post Assignment</button>
+        </div>
+        <div id="assignmentStatus" class="status" aria-live="polite"></div>
+      </div>
+      <div id="assignmentsList" class="panel"><div class="empty">Loading assignments…</div></div>
     </section>
 
     <!-- COMMUNITY -->
@@ -1606,6 +1660,14 @@ Q: Next question... Ans: A
             </div>
           </div>
           <div class="ai-compose-wrap">
+            <div class="ai-context-row auth-hidden" id="aiContextRow">
+              <label class="ai-context-chip" title="Search your class PDFs and attach the best excerpts">
+                <input type="checkbox" id="aiUsePdfs" onchange="onAiContextToggle()">Class PDFs
+              </label>
+              <label class="ai-context-chip" title="Look up the question on Wikipedia and DuckDuckGo">
+                <input type="checkbox" id="aiUseWeb" onchange="onAiContextToggle()">Web
+              </label>
+            </div>
             <form id="aiForm" class="ai-compose auth-hidden">
               <textarea id="aiInput" class="field" rows="1" maxlength="4000" placeholder="Ask about a topic, make a study plan…" aria-label="Message the AI assistant" autocomplete="off"></textarea>
               <button class="btn send-btn" id="aiSendBtn" type="submit" aria-label="Send message"><svg class="ic"><use href="#i-send"/></svg></button>
@@ -1640,6 +1702,7 @@ Q: Next question... Ans: A
       <button class="more-item" type="button" onclick="goFromMore('pdfs')"><svg class="ic"><use href="#i-folder"/></svg>Test Papers</button>
       <button class="more-item" type="button" onclick="goFromMore('photos')"><svg class="ic"><use href="#i-image"/></svg>Case Studies</button>
       <button class="more-item" type="button" onclick="goFromMore('notices')"><svg class="ic"><use href="#i-bell"/></svg>Notices</button>
+      <button class="more-item" type="button" onclick="goFromMore('assignments')"><svg class="ic"><use href="#i-grad"/></svg>Assignments</button>
       <button class="more-item" type="button" onclick="goFromMore('ai')"><svg class="ic"><use href="#i-spark"/></svg>AI Assistant</button>
       <button class="more-item" type="button" onclick="goFromMore('community')"><svg class="ic"><use href="#i-users"/></svg>Community</button>
       <button class="more-item" type="button" onclick="goFromMore('mcq-practice')"><svg class="ic"><use href="#i-mcq"/></svg>MCQ Practice</button>
@@ -1754,6 +1817,10 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const MAX_PDF_SIZE = 50 * 1024 * 1024;
 const CR_USER_ID = "953bb1d4-b22e-4458-b618-d8d0d8681231";
+
+/* VAPID public key for Web Push. The matching private key must be kept
+   server-side (send-push Edge Function) and is NOT committed here. */
+const VAPID_PUBLIC_KEY = "BDJoCM67OzoUyviLXZ5TqL62sJ4FfAXQ-ocjyylaUQKTWBuZF-8RrZcxTZRSSdApFMzPqEu6h-TQxdetmENzvrs";
 
 let currentUser = null;
 let currentPage = "home";
@@ -1901,7 +1968,7 @@ function setAvatar(imgId, fbId, url, name){
 }
 
 /* ================= NAVIGATION ================= */
-const MORE_PAGES = new Set(["pdfs","photos","notices","ai","community","accounts","profile","mcq-practice"]);
+const MORE_PAGES = new Set(["pdfs","photos","notices","assignments","ai","community","accounts","profile","mcq-practice"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -1960,6 +2027,7 @@ function openSection(pageId){
   if(pageId==="pdfs") renderTestPapersView();
   if(pageId==="photos") renderCaseStudiesView();
   if(pageId==="notices") loadNotices();
+  if(pageId==="assignments") loadAssignments();
   if(pageId==="chat"){ loadChatMessages(); setTimeout(scrollChatToBottom, 300); }
   if(pageId==="ai") openAiChat();
   if(pageId==="profile") loadStudentProfile();
@@ -2045,6 +2113,9 @@ async function updateAuthUI(user){
   document.getElementById("chatForm")?.classList.toggle("auth-hidden", !user);
   const noticeCompose = document.getElementById("noticeCompose");
   if(noticeCompose) noticeCompose.classList.toggle("auth-hidden", !user || user.id !== CR_USER_ID);
+  const assignmentCompose = document.getElementById("assignmentCompose");
+  if(assignmentCompose) assignmentCompose.classList.toggle("auth-hidden", !user || user.id !== CR_USER_ID);
+  document.getElementById("aiContextRow")?.classList.toggle("auth-hidden", !user);
 
   if(!user){
     name.textContent = "Welcome to ClassHub";
@@ -2337,8 +2408,48 @@ function pdfItem(file){
     rescan.addEventListener("click", ()=>rescanPdf(file, rescan));
     actions.appendChild(rescan);
   }
+  if(file.id && currentUser && currentUser.id === CR_USER_ID){
+    const del = makeElement("button","link-btn danger","Delete");
+    del.type = "button";
+    del.title = "Delete this PDF (CR only)";
+    del.addEventListener("click", ()=>deletePdf(file, del));
+    actions.appendChild(del);
+  }
   item.append(info,actions);
   return item;
+}
+function pdfStoragePath(url){
+  const marker = "/storage/v1/object/public/pdfs/";
+  const raw = String(url || "");
+  const index = raw.indexOf(marker);
+  if(index < 0) return null;
+  return decodeURIComponent(raw.slice(index + marker.length).split("?")[0]);
+}
+async function deletePdf(file, button){
+  if(!currentUser || currentUser.id !== CR_USER_ID){
+    showToast("Only the CR can delete PDFs");
+    return;
+  }
+  if(!confirm("Delete \"" + (file.file_name || "this PDF") + "\"?\n\nThis removes the file for everyone and cannot be undone.")) return;
+  button.disabled = true;
+  try{
+    const {data,error} = await db.from("pdfs").delete().eq("id", file.id).select("id");
+    if(error) throw error;
+    if(!data || !data.length) throw new Error("Only the CR can delete PDFs.");
+    const path = pdfStoragePath(file.file_url);
+    if(path){
+      const {error:storageError} = await db.storage.from("pdfs").remove([path]);
+      if(storageError) console.warn("PDF storage delete:", storageError.message);
+    }
+    lastNotePDFs = lastNotePDFs.filter(f=>f.id !== file.id);
+    lastFolderPDFs = lastFolderPDFs.filter(f=>f.id !== file.id);
+    if(document.getElementById("notePDFList")) renderNotePDFList(currentSearchFilter("notesView"));
+    if(document.getElementById("testFolderPDFList")) renderFolderPDFList();
+    showToast("PDF deleted");
+  }catch(error){
+    console.error("Delete PDF:", error);
+    showToast(friendlyError(error,"Could not delete PDF."));
+  }finally{ button.disabled = false; }
 }
 async function loadCategorizedNotePDFs(){
   const list = document.getElementById("notePDFList");
@@ -4722,6 +4833,7 @@ async function loadNotices(){
   try{
     const {data,error} = await db.from("notices").select("*").order("created_at",{ascending:false});
     if(error) throw error;
+    const rows = (data || []).filter(n=>!isAssignmentNotice(n));
     const lastSeen = Number(localStorage.getItem("classhub_last_seen_notice") || 0);
     const viewingNotices = currentPage === "notices";
     const seenCutoff = viewingNotices ? Date.now() : lastSeen;
@@ -4730,12 +4842,12 @@ async function loadNotices(){
       updateBellBadge();
       localStorage.setItem("classhub_last_seen_notice", String(seenCutoff));
     }else{
-      unreadNotices = (data || []).filter(n=>new Date(n.created_at).getTime() > lastSeen).length;
+      unreadNotices = rows.filter(n=>new Date(n.created_at).getTime() > lastSeen).length;
       updateBellBadge();
     }
     list.replaceChildren();
-    if(!data || !data.length){ list.appendChild(makeEmptyState("No notices yet.","i-bell")); return; }
-    data.forEach(notice=>{
+    if(!rows.length){ list.appendChild(makeEmptyState("No notices yet.","i-bell")); return; }
+    rows.forEach(notice=>{
       const card = makeElement("div","item");
       const icon = makeElement("div","item-icon");
       icon.style.background = "var(--green-soft)";
@@ -4812,6 +4924,226 @@ function testNoticeAlert(){
   }else{
     setStatus("noticeStatus","Notifications are BLOCKED in this browser — click the 🔒/tune icon in the address bar → Site settings → Notifications → Allow, then reload.","error");
   }
+}
+
+/* ================= PUSH NOTIFICATIONS ================= */
+/* True Web Push (works when the app is closed) needs a `push_subscriptions`
+   table, VAPID secrets, and a `send-push` Edge Function deployed to Supabase.
+   Those backend steps are blocked on this device (invalid Supabase token, no
+   CLI on Android). The UI below subscribes and stores the subscription; once
+   the backend is deployed the pushBtn will work end to end. */
+async function enablePushNotifications(){
+  const btn = document.getElementById("pushBtn");
+  const status = document.getElementById("pushStatus");
+  if(!("serviceWorker" in navigator) || !("PushManager" in window)){
+    setStatusText(status,"Push isn't supported in this browser. In-app notice toasts still work.","error");
+    btn.disabled = true; btn.textContent = "Push not supported";
+    return;
+  }
+  if(Notification.permission !== "granted"){
+    const perm = await Notification.requestPermission();
+    if(perm !== "granted"){
+      setStatusText(status,"Notification permission was denied. In-app alerts still work.","error");
+      return;
+    }
+  }
+  btn.disabled = true;
+  btn.textContent = "Enabling push…";
+  try{
+    const registration = await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    await savePushSubscription(subscription);
+    setStatusText(status,"Push enabled ✅ — you'll get alerts even when ClassHub is closed.","success");
+    btn.textContent = "Push enabled";
+    btn.disabled = true;
+    showToast("Push notifications enabled");
+  }catch(error){
+    console.error("Push enable failed:", error);
+    setStatusText(status,"Push setup failed: " + friendlyError(error,"try again."),"error");
+    btn.disabled = false; btn.textContent = "Enable background push notifications";
+  }
+}
+function setStatusText(el,text,kind){
+  if(!el) return;
+  el.textContent = text;
+  el.className = "status " + (kind||"");
+}
+function urlBase64ToUint8Array(base64String){
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,"+").replace(/_/g,"/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+async function savePushSubscription(subscription){
+  const endpoint = subscription.endpoint;
+  const key = subscription.getKey ? subscription.getKey("p256dh") : null;
+  const auth = subscription.getKey ? subscription.getKey("auth") : null;
+  const payload = {
+    endpoint,
+    p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : null,
+    auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null
+  };
+  /* Store locally first so the UI works offline; send to Supabase once the
+     push_subscriptions table and send-push function are deployed. */
+  try{
+    localStorage.setItem("classhub_push_subscription", JSON.stringify(payload));
+  }catch(e){}
+  if(currentUser){
+    try{
+      await db.from("push_subscriptions").upsert({
+        user_id: currentUser.id,
+        endpoint,
+        p256dh: payload.p256dh,
+        auth: payload.auth,
+        updated_at: new Date().toISOString()
+      },{onConflict:"endpoint"});
+    }catch(e){
+      /* Table not deployed yet — local fallback above keeps the UI functional. */
+      console.warn("push_subscriptions table not deployed yet:", e.message);
+    }
+  }
+}
+
+/* ================= ASSIGNMENTS ================= */
+/* Assignments reuse the notices table (CR insert/delete policies already exist).
+   The title carries a prefix and the content stores JSON, so no migration is needed. */
+const ASSIGNMENT_PREFIX = "[Assignment] ";
+function isAssignmentNotice(notice){
+  return /^\[Assignment\]/i.test(String((notice && notice.title) || ""));
+}
+function assignmentData(notice){
+  const title = String((notice && notice.title) || "").replace(/^\[Assignment\]\s*/i,"").trim();
+  let meta = {};
+  try{
+    const parsed = JSON.parse((notice && notice.content) || "{}");
+    if(parsed && typeof parsed === "object") meta = parsed;
+    else if(typeof parsed === "string") meta = {details:parsed};
+  }catch(error){
+    meta = {details:String((notice && notice.content) || "")};
+  }
+  return {
+    title: title || "Assignment",
+    subject: String(meta.subject || "").trim(),
+    due: String(meta.due || "").trim(),
+    details: String(meta.details || "").trim()
+  };
+}
+function assignmentDueLabel(due){
+  if(!due) return "";
+  const date = new Date(due + "T00:00:00");
+  if(Number.isNaN(date.getTime())) return due;
+  return "Due " + date.toLocaleDateString([], {day:"numeric",month:"short",year:"numeric"});
+}
+async function addAssignment(){
+  if(!currentUser || currentUser.id !== CR_USER_ID){
+    setStatus("assignmentStatus","Only the class representative can post assignments.","error");
+    return;
+  }
+  const title = document.getElementById("assignmentTitle").value.trim();
+  const subject = document.getElementById("assignmentSubject").value.trim();
+  const due = document.getElementById("assignmentDue").value;
+  const details = document.getElementById("assignmentDetails").value.trim();
+  if(!title){ setStatus("assignmentStatus","Enter an assignment title.","error"); return; }
+  const button = document.getElementById("addAssignmentBtn");
+  button.disabled = true;
+  setStatus("assignmentStatus","Posting assignment…");
+  try{
+    const content = JSON.stringify({subject,due,details});
+    const {error} = await db.from("notices").insert({title:ASSIGNMENT_PREFIX + title, content});
+    if(error) throw error;
+    document.getElementById("assignmentTitle").value = "";
+    document.getElementById("assignmentSubject").value = "";
+    document.getElementById("assignmentDue").value = "";
+    document.getElementById("assignmentDetails").value = "";
+    setStatus("assignmentStatus","Assignment posted.","success");
+    showToast("Assignment posted");
+    await loadAssignments();
+  }catch(error){
+    console.error("Post assignment:", error);
+    setStatus("assignmentStatus","Could not post assignment: " + friendlyError(error),"error");
+  }finally{ button.disabled = false; }
+}
+async function loadAssignments(){
+  const list = document.getElementById("assignmentsList");
+  if(!list) return;
+  skeletonList(list);
+  try{
+    const {data,error} = await db.from("notices").select("*")
+      .like("title", ASSIGNMENT_PREFIX + "%").order("created_at",{ascending:false});
+    if(error) throw error;
+    const rows = (data || []).filter(isAssignmentNotice);
+    const lastSeen = Number(localStorage.getItem("classhub_last_seen_assignment") || 0);
+    const viewing = currentPage === "assignments";
+    const seenCutoff = viewing ? Date.now() : lastSeen;
+    if(viewing) localStorage.setItem("classhub_last_seen_assignment", String(seenCutoff));
+    list.replaceChildren();
+    if(!rows.length){ list.appendChild(makeEmptyState("No assignments yet.","i-grad")); return; }
+    rows.forEach(notice=>{
+      const assignment = assignmentData(notice);
+      const card = makeElement("div","item");
+      const icon = makeElement("div","item-icon");
+      icon.style.background = "var(--accent-soft)";
+      icon.style.color = "var(--accent)";
+      icon.innerHTML = `<svg class="ic"><use href="#i-grad"/></svg>`;
+      const info = makeElement("div","item-info");
+      const heading = makeElement("strong","",assignment.title);
+      if(new Date(notice.created_at).getTime() > seenCutoff){
+        const tag = makeElement("span","","NEW");
+        tag.style.cssText = "font-size:9.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:99px;margin-left:7px;vertical-align:2px";
+        heading.appendChild(tag);
+      }
+      info.appendChild(heading);
+      info.appendChild(makeElement("small","",formatDate(notice.created_at)));
+      if(assignment.subject || assignment.due){
+        const meta = makeElement("div","assignment-meta");
+        if(assignment.subject) meta.appendChild(makeElement("span","assignment-chip",assignment.subject));
+        if(assignment.due) meta.appendChild(makeElement("span","assignment-chip due",assignmentDueLabel(assignment.due)));
+        info.appendChild(meta);
+      }
+      if(assignment.details){
+        const p = makeElement("p","muted",assignment.details);
+        p.style.margin = "7px 0 0";
+        p.style.whiteSpace = "pre-wrap";
+        info.appendChild(p);
+      }
+      card.appendChild(icon);
+      card.appendChild(info);
+      if(currentUser && currentUser.id === CR_USER_ID){
+        const actions = makeElement("div","item-actions");
+        const del = makeElement("button","link-btn danger","Delete");
+        del.type = "button";
+        del.title = "Delete this assignment";
+        del.addEventListener("click",()=>deleteAssignment(notice.id, del));
+        actions.appendChild(del);
+        card.appendChild(actions);
+      }
+      list.appendChild(card);
+    });
+  }catch(error){
+    console.error("Assignments:", error);
+    list.replaceChildren(makeEmptyState(friendlyError(error,"Could not load assignments. Please try again.")));
+  }
+}
+async function deleteAssignment(id, button){
+  if(!currentUser || currentUser.id !== CR_USER_ID){
+    showToast("Only the CR can delete assignments");
+    return;
+  }
+  if(!confirm("Delete this assignment?")) return;
+  button.disabled = true;
+  try{
+    const {data,error} = await db.from("notices").delete().eq("id", id).select("id");
+    if(error) throw error;
+    if(!data || !data.length) throw new Error("Only the CR can delete assignments.");
+    showToast("Assignment deleted");
+    await loadAssignments();
+  }catch(error){
+    console.error("Delete assignment:", error);
+    showToast(friendlyError(error,"Could not delete assignment."));
+  }finally{ button.disabled = false; }
 }
 
 /* ================= CLASS CHAT ================= */
@@ -4967,6 +5299,97 @@ const AI_SUGGESTIONS = [
   "Compare Vata, Pitta and Kapha"
 ];
 
+/* AI context: Class PDFs + Web (client-side so no backend deployment needed).
+   Excerpts are prepended to the outgoing message and stripped before display. */
+const AI_PDF_EXCERPT_CHARS = 1200;
+const AI_WEB_EXCERPT_CHARS = 1200;
+const AI_HIDDEN_MARKER = "[[AI_CONTEXT_HIDDEN]]";
+let aiPdfContext = false;
+let aiWebContext = false;
+function onAiContextToggle(){
+  aiPdfContext = document.getElementById("aiUsePdfs")?.checked || false;
+  aiWebContext = document.getElementById("aiUseWeb")?.checked || false;
+}
+async function gatherAiContext(message){
+  const parts = [];
+  if(aiPdfContext){
+    try{
+      const excerpt = await findPdfExcerpt(message);
+      if(excerpt) parts.push("Class PDF excerpt:\n" + excerpt);
+    }catch(e){ console.warn("PDF context failed:", e.message); }
+  }
+  if(aiWebContext){
+    try{
+      const excerpt = await fetchWebExcerpt(message);
+      if(excerpt) parts.push("Web excerpt:\n" + excerpt);
+    }catch(e){ console.warn("Web context failed:", e.message); }
+  }
+  return parts.join("\n\n");
+}
+function cleanAiContext(text){
+  if(!text) return text;
+  return text.split(AI_HIDDEN_MARKER).join("");
+}
+async function findPdfExcerpt(query){
+  const q = (query || "").trim().toLowerCase();
+  if(!q) return null;
+  const words = q.split(/\s+/).filter(w=>w.length > 2);
+  const candidates = lastNotePDFs.length ? lastNotePDFs : (lastFolderPDFs || []);
+  const scored = [];
+  for(const file of candidates){
+    const text = String(file.content_text || "");
+    if(!text) continue;
+    let score = 0;
+    for(const w of words){
+      const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "gi");
+      score += (text.match(re) || []).length;
+    }
+    if(score > 0) scored.push({file, score, text});
+  }
+  scored.sort((a,b)=>b.score - a.score);
+  if(!scored.length) return null;
+  const top = scored[0];
+  const re = new RegExp(words[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "i");
+  const m = top.text.match(re);
+  if(!m) return null;
+  let start = Math.max(0, m.index - 200);
+  start = Math.max(0, top.text.lastIndexOf("\n", start));
+  const end = Math.min(top.text.length, start + AI_PDF_EXCERPT_CHARS);
+  let snippet = top.text.slice(start, end).replace(/\s+/g," ").trim();
+  if(snippet.length > AI_PDF_EXCERPT_CHARS) snippet = snippet.slice(0, AI_PDF_EXCERPT_CHARS) + "…";
+  const title = top.file_name || "PDF";
+  return `From "${title}" (best match): ${snippet}`;
+}
+async function fetchWebExcerpt(query){
+  const q = encodeURIComponent((query || "").trim());
+  if(!q) return null;
+  let url = `https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`;
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.AbstractText) return data.AbstractText.slice(0, AI_WEB_EXCERPT_CHARS);
+    if(data.RelatedTopics && data.RelatedTopics.length){
+      const first = data.RelatedTopics[0];
+      if(first.Text) return first.Text.slice(0, AI_WEB_EXCERPT_CHARS);
+    }
+  }catch(e){}
+  /* Wikipedia fallback */
+  try{
+    const wurl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&srlimit=1`;
+    const wres = await fetch(wurl);
+    const wdata = await wres.json();
+    const hit = wdata.query && wdata.query.search && wdata.query.search[0];
+    if(hit){
+      const wurl2 = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(hit.title)}&format=json&origin=*`;
+      const wres2 = await fetch(wurl2);
+      const wdata2 = await wres2.json();
+      const pages = wdata2.query && wdata2.query.pages;
+      const page = pages ? pages[Object.keys(pages)[0]] : null;
+      if(page && page.extract) return page.extract.slice(0, AI_WEB_EXCERPT_CHARS);
+    }
+  }catch(e){}
+  return null;
+}
 let aiConversations = [];
 let aiActiveConversationId = null;
 let aiStreaming = false;
@@ -5365,6 +5788,8 @@ async function sendAiMessage(textOverride){
   }
 
   const userRow = appendAiMessage("user",message,{scroll:true});
+  const context = await gatherAiContext(message);
+  const displayMessage = context ? message + AI_HIDDEN_MARKER + context : message;
   const assistantRow = appendAiMessage("assistant","",{scroll:true});
   if(!assistantRow) return;
   const typing = makeElement("span","ai-typing");
@@ -5382,6 +5807,8 @@ async function sendAiMessage(textOverride){
     const token = sessionData?.session?.access_token;
     if(!token) throw new Error("Please sign in again.");
 
+    const sendMessage = cleanAiContext(displayMessage);
+
     const response = await fetch(AI_CHAT_ENDPOINT,{
       method:"POST",
       headers:{
@@ -5389,7 +5816,7 @@ async function sendAiMessage(textOverride){
         "Authorization":`Bearer ${token}`,
         "apikey":SUPABASE_KEY
       },
-      body:JSON.stringify({conversationId,message}),
+      body:JSON.stringify({conversationId,message:sendMessage}),
       signal:controller.signal
     });
 
@@ -7113,6 +7540,15 @@ function subscribeToNotices(){
       const notice = payload.new || {};
       if(notice.id === lastNoticeId) return;
       lastNoticeId = notice.id;
+      if(isAssignmentNotice(notice)){
+        const assignment = assignmentData(notice);
+        showNoticeToast("New assignment", assignment.title);
+        if(document.hidden && "Notification" in window && Notification.permission==="granted"){
+          try{ new Notification("New assignment: " + assignment.title,{body:(assignment.due ? assignmentDueLabel(assignment.due) : assignment.details).slice(0,140)}); }catch(e){}
+        }
+        if(currentPage === "assignments") loadAssignments();
+        return;
+      }
       if(currentPage !== "notices" || document.hidden){
         unreadNotices++;
         updateBellBadge();
@@ -7203,6 +7639,11 @@ function subscribeToCommunity(){
 
 /* ================= STARTUP ================= */
 async function initialiseClassHub(){
+  /* Register the service worker for push notifications (works offline). */
+  if("serviceWorker" in navigator){
+    try{ await navigator.serviceWorker.register("/sw.js",{scope:"/"}); }
+    catch(e){ console.warn("Service worker registration failed:", e.message); }
+  }
   document.addEventListener("click", function primeAlerts(){
     try{
       if(!noticeSoundContext){
