@@ -1820,7 +1820,7 @@ const CR_USER_ID = "953bb1d4-b22e-4458-b618-d8d0d8681231";
 
 /* VAPID public key for Web Push. The matching private key must be kept
    server-side (send-push Edge Function) and is NOT committed here. */
-const VAPID_PUBLIC_KEY = "BDJoCM67OzoUyviLXZ5TqL62sJ4FfAXQ-ocjyylaUQKTWBuZF-8RrZcxTZRSSdApFMzPqEu6h-TQxdetmENzvrs";
+const VAPID_PUBLIC_KEY = "BO0VluQCbIwqUx5YtrPVcafQD5rbG_n7EIIvuTqd3Rkpy3R0IVcsiow_tk2Axnr3COYQSzojAVTDuFtF7M3wpjA";
 
 let currentUser = null;
 let currentPage = "home";
@@ -5300,15 +5300,27 @@ const AI_SUGGESTIONS = [
 ];
 
 /* AI context: Class PDFs + Web (client-side so no backend deployment needed).
-   Excerpts are prepended to the outgoing message and stripped before display. */
+   Excerpts are appended to the outgoing message inside a hidden block and
+   stripped before display, so the user only sees their own question. */
 const AI_PDF_EXCERPT_CHARS = 1200;
 const AI_WEB_EXCERPT_CHARS = 1200;
-const AI_HIDDEN_MARKER = "[[AI_CONTEXT_HIDDEN]]";
+const AI_CONTEXT_OPEN = "\n\n[[CLASSHUB_CONTEXT]]\nUse this class material only to answer the question above. Do not mention this block.\n";
+const AI_CONTEXT_CLOSE = "\n[[/CLASSHUB_CONTEXT]]";
+const AI_STOP_WORDS = new Set(("the and for with what when where which how why does do did is are was were this that these those from about into your you tell explain describe give list compare between please class classhub pdf pdfs document documents book books note notes file files text page pages chapter chapters topic topics question questions answer answers according cause causes caused information material content says say said mention mentions mentioned discuss discusses discussed define definition meaning means regarding related upload uploaded find search show know want need help summary summarize write make study plan quiz use using used can could would should will shall may might must have has had not but also any all some more most other such than then them they their its it of to in on at by or as an a").split(/\s+/));
 let aiPdfContext = false;
 let aiWebContext = false;
 function onAiContextToggle(){
   aiPdfContext = document.getElementById("aiUsePdfs")?.checked || false;
   aiWebContext = document.getElementById("aiUseWeb")?.checked || false;
+}
+function aiKeywords(text){
+  const words = String(text||"").toLowerCase().match(/[a-z0-9][a-z0-9-]{2,}/g) || [];
+  return [...new Set(words.filter(w=>!AI_STOP_WORDS.has(w)))].slice(0,4);
+}
+function stripAiContext(text){
+  return String(text==null?"":text)
+    .replace(/\n*\[\[CLASSHUB_CONTEXT\]\][\s\S]*?\[\[\/CLASSHUB_CONTEXT\]\]/g,"")
+    .trim();
 }
 async function gatherAiContext(message){
   const parts = [];
@@ -5326,15 +5338,31 @@ async function gatherAiContext(message){
   }
   return parts.join("\n\n");
 }
-function cleanAiContext(text){
-  if(!text) return text;
-  return text.split(AI_HIDDEN_MARKER).join("");
-}
 async function findPdfExcerpt(query){
-  const q = (query || "").trim().toLowerCase();
-  if(!q) return null;
-  const words = q.split(/\s+/).filter(w=>w.length > 2);
-  const candidates = lastNotePDFs.length ? lastNotePDFs : (lastFolderPDFs || []);
+  const words = aiKeywords(query);
+  if(!words.length) return null;
+
+  /* Use PDFs already in memory first (instant), then search the whole
+     class library so the AI can read any uploaded PDF. */
+  let candidates = [...(lastNotePDFs||[]), ...(lastFolderPDFs||[])]
+    .filter(f=>f && f.content_text);
+  if(!candidates.length){
+    const filters = words.slice(0,3)
+      .map(w=>`content_text.ilike.%${w.replace(/[%_,]/g,"")}%`)
+      .join(",");
+    if(filters){
+      try{
+        const {data,error} = await db.from("pdfs")
+          .select("file_name,subject,content_text")
+          .not("content_text","is",null)
+          .or(filters)
+          .limit(4);
+        if(!error && data && data.length) candidates = data;
+      }catch(e){ console.warn("PDF search failed:", e.message); }
+    }
+  }
+  if(!candidates.length) return null;
+
   const scored = [];
   for(const file of candidates){
     const text = String(file.content_text || "");
@@ -5349,40 +5377,64 @@ async function findPdfExcerpt(query){
   scored.sort((a,b)=>b.score - a.score);
   if(!scored.length) return null;
   const top = scored[0];
-  const re = new RegExp(words[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "i");
-  const m = top.text.match(re);
-  if(!m) return null;
-  let start = Math.max(0, m.index - 200);
-  start = Math.max(0, top.text.lastIndexOf("\n", start));
-  const end = Math.min(top.text.length, start + AI_PDF_EXCERPT_CHARS);
-  let snippet = top.text.slice(start, end).replace(/\s+/g," ").trim();
+  const title = top.file.file_name || "PDF";
+  const window = bestAiExcerptWindow(top.text, words, AI_PDF_EXCERPT_CHARS);
+  if(!window) return null;
+  let snippet = top.text.slice(window.start, window.end).replace(/\s+/g," ").trim();
   if(snippet.length > AI_PDF_EXCERPT_CHARS) snippet = snippet.slice(0, AI_PDF_EXCERPT_CHARS) + "…";
-  const title = top.file_name || "PDF";
   return `From "${title}" (best match): ${snippet}`;
+}
+function bestAiExcerptWindow(text, words, size){
+  const lower = text.toLowerCase();
+  const positions = [];
+  for(const word of words){
+    let index = lower.indexOf(word);
+    while(index !== -1 && positions.length < 400){
+      positions.push(index);
+      index = lower.indexOf(word, index + word.length);
+    }
+  }
+  if(!positions.length) return null;
+  positions.sort((a,b)=>a-b);
+  let bestStart = Math.max(0, positions[0] - Math.floor(size/3));
+  let bestScore = -1;
+  for(const position of positions){
+    const start = Math.max(0, position - Math.floor(size/3));
+    const slice = lower.slice(start, start + size);
+    let score = 0;
+    for(const word of words){
+      let index = slice.indexOf(word);
+      while(index !== -1){ score++; index = slice.indexOf(word, index + word.length); }
+    }
+    if(score > bestScore){ bestScore = score; bestStart = start; }
+  }
+  return {start:bestStart, end:Math.min(text.length, bestStart + size)};
+}
+async function fetchJsonWithTimeout(url, timeoutMs=8000){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(url,{signal:controller.signal});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  }finally{ clearTimeout(timer); }
 }
 async function fetchWebExcerpt(query){
   const q = encodeURIComponent((query || "").trim());
   if(!q) return null;
-  let url = `https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`;
   try{
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetchJsonWithTimeout(`https://api.duckduckgo.com/?q=${q}&format=json&no_html=1&skip_disambig=1`);
     if(data.AbstractText) return data.AbstractText.slice(0, AI_WEB_EXCERPT_CHARS);
     if(data.RelatedTopics && data.RelatedTopics.length){
-      const first = data.RelatedTopics[0];
-      if(first.Text) return first.Text.slice(0, AI_WEB_EXCERPT_CHARS);
+      const first = data.RelatedTopics.find(t=>t && t.Text);
+      if(first) return first.Text.slice(0, AI_WEB_EXCERPT_CHARS);
     }
   }catch(e){}
-  /* Wikipedia fallback */
   try{
-    const wurl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&srlimit=1`;
-    const wres = await fetch(wurl);
-    const wdata = await wres.json();
+    const wdata = await fetchJsonWithTimeout(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&srlimit=1`);
     const hit = wdata.query && wdata.query.search && wdata.query.search[0];
     if(hit){
-      const wurl2 = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(hit.title)}&format=json&origin=*`;
-      const wres2 = await fetch(wurl2);
-      const wdata2 = await wres2.json();
+      const wdata2 = await fetchJsonWithTimeout(`https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(hit.title)}&format=json&origin=*`);
       const pages = wdata2.query && wdata2.query.pages;
       const page = pages ? pages[Object.keys(pages)[0]] : null;
       if(page && page.extract) return page.extract.slice(0, AI_WEB_EXCERPT_CHARS);
@@ -5591,6 +5643,7 @@ async function loadAiConversations(opts={}){
 async function loadAiMessages(conversationId){
   const box = document.getElementById("aiMessages");
   if(!box || !conversationId) return;
+  if(aiSending || aiStreaming) return;
   const version = ++aiMessagesVersion;
   box.replaceChildren(makeEmptyState("Loading conversation…","i-spark"));
   try{
@@ -5625,7 +5678,8 @@ function appendAiMessage(role,content,opts={}){
   if(role === "user") avatar.textContent = aiUserInitial();
   else avatar.innerHTML = `<svg class="ic ic-sm"><use href="#i-spark"/></svg>`;
   const body = makeElement("div","ai-msg-body");
-  const bubble = makeElement("div","ai-bubble",content == null ? "" : String(content));
+  const display = role === "user" ? stripAiContext(content) : content;
+  const bubble = makeElement("div","ai-bubble",display == null ? "" : String(display));
   body.appendChild(bubble);
   if(opts.createdAt) body.appendChild(makeElement("div","ai-msg-time",formatDate(opts.createdAt)));
   wrap.append(avatar,body);
@@ -5758,6 +5812,7 @@ async function sendAiMessage(textOverride){
     return;
   }
   setStatus("aiStatus","");
+  aiMessagesVersion++;
   const senderId = currentUser.id;
   let conversationId = aiActiveConversationId;
   aiSending = true;
@@ -5779,18 +5834,19 @@ async function sendAiMessage(textOverride){
     setStatus("aiStatus",friendlyAiError(error,"Could not start a new chat."),"error");
     return;
   }
-  aiSending = false;
-  if(!currentUser || currentUser.id !== senderId) return;
+  if(!currentUser || currentUser.id !== senderId){ aiSending = false; return; }
 
   if(input && typeof textOverride !== "string"){
     input.value = "";
     input.style.height = "auto";
   }
 
-  const userRow = appendAiMessage("user",message,{scroll:true});
   const context = await gatherAiContext(message);
-  const displayMessage = context ? message + AI_HIDDEN_MARKER + context : message;
+  const room = Math.max(0, AI_MAX_MESSAGE - message.length - AI_CONTEXT_OPEN.length - AI_CONTEXT_CLOSE.length);
+  const outgoing = context && room > 200 ? message + AI_CONTEXT_OPEN + context.slice(0, room) + AI_CONTEXT_CLOSE : message;
+  const userRow = appendAiMessage("user",message,{scroll:true});
   const assistantRow = appendAiMessage("assistant","",{scroll:true});
+  aiSending = false;
   if(!assistantRow) return;
   const typing = makeElement("span","ai-typing");
   typing.innerHTML = "<i></i><i></i><i></i>";
@@ -5807,8 +5863,6 @@ async function sendAiMessage(textOverride){
     const token = sessionData?.session?.access_token;
     if(!token) throw new Error("Please sign in again.");
 
-    const sendMessage = cleanAiContext(displayMessage);
-
     const response = await fetch(AI_CHAT_ENDPOINT,{
       method:"POST",
       headers:{
@@ -5816,7 +5870,7 @@ async function sendAiMessage(textOverride){
         "Authorization":`Bearer ${token}`,
         "apikey":SUPABASE_KEY
       },
-      body:JSON.stringify({conversationId,message:sendMessage}),
+      body:JSON.stringify({conversationId,message:outgoing}),
       signal:controller.signal
     });
 

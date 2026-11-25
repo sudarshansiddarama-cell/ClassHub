@@ -15,7 +15,7 @@
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import webpush from "npm:web-push@7";
+import webpush from "npm:web-push@3.6.7";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -45,13 +45,10 @@ function json(status: number, body: unknown, init?: ResponseInit) {
   });
 }
 
-async function verifyServiceRole(req: Request): Promise<boolean> {
+function verifyServiceRole(req: Request): boolean {
   const auth = req.headers.get("authorization") || "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
-  if (!token) return false;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const { data } = await supabase.auth.getUser(token);
-  return !!data?.user;
+  return !!SUPABASE_SERVICE_ROLE_KEY && token === SUPABASE_SERVICE_ROLE_KEY;
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -61,7 +58,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return json(405, { error: "Method not allowed." });
   }
-  if (!(await verifyServiceRole(req))) {
+  if (!verifyServiceRole(req)) {
     return json(401, { error: "Service-role authentication required." });
   }
   if (!VAPID_PRIVATE_KEY || !VAPID_PUBLIC_KEY) {
@@ -119,12 +116,6 @@ export default async function handler(req: Request): Promise<Response> {
       // 410 Gone / 404 Not Found = subscription invalid; prune it.
       if (statusCode === 410 || statusCode === 404) {
         removed.push(sub.endpoint);
-        try {
-          await supabase
-            .from("push_subscriptions")
-            .delete()
-            .eq("endpoint", sub.endpoint);
-        } catch {}
       }
       failed += 1;
       console.warn("send-push: delivery failed", sub.endpoint, statusCode, err?.message);

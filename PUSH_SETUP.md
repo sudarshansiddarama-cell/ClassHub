@@ -1,60 +1,54 @@
-# ClassHub — Push Notifications (manual backend steps)
+# ClassHub — Push Notifications setup
 
-Frontend code is complete and committed. True Web Push (alerts when ClassHub is
-closed) cannot be activated on this device because:
+The frontend and service worker are done. Background push needs one backend
+deployment: a table, the `send-push` Edge Function, and VAPID secrets.
 
-- the saved Supabase access token is invalid (`401 Invalid access token`);
-- the Supabase CLI binary fails on Android (`unexpected e_type: 2`);
-- there is no `psql`, `proot`, service-role key, or DB URL available.
+The Supabase CLI cannot run on Android, so use the Management API script:
 
-To make push work, apply the following manually on a machine with a valid
-Supabase token / access to the Supabase Dashboard.
+```bash
+# 1. Create a personal access token at
+#    https://supabase.com/dashboard/account/tokens
+echo 'sbp_...' > ~/.supabase_access_token
+chmod 600 ~/.supabase_access_token
 
-## 1. Database migration
-
-Run `supabase/migrations/20261124000000_add_push_subscriptions.sql` in the
-Supabase SQL Editor (or via `supabase db push` once the CLI works).
-
-This creates `public.push_subscriptions` with RLS so each user manages only
-their own subscription.
-
-## 2. Edge Function
-
-Deploy `supabase/functions/send-push/index.ts`:
-
-```
-supabase functions deploy send-push
+# 2. Deploy everything (migration + secrets + function + trigger)
+node scripts/deploy-supabase.mjs
 ```
 
-Set these secrets in the Supabase project:
+The script:
 
-| Secret | Value |
-|--------|-------|
-| `VAPID_PRIVATE_KEY` | base64url EC private key matching `VAPID_PUBLIC_KEY` |
-| `VAPID_PUBLIC_KEY`  | `BDJoCM67OzoUyviLXZ5TqL62sJ4FfAXQ-ocjyylaUQKTWBuZF-8RrZcxTZRSSdApFMzPqEu6h-TQxdetmENzvrs` |
-| `VAPID_EMAIL`       | `mailto:classhub@example.com` (or your address) |
+1. verifies the token and project `oekunhqzhwwjfrcaiuit`;
+2. applies `supabase/migrations/20261124000000_add_push_subscriptions.sql`;
+3. sets `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_EMAIL` secrets;
+4. deploys `supabase/functions/send-push/index.ts`;
+5. creates a `notices` INSERT trigger that calls `send-push` through `pg_net`,
+   keeping the service-role key in Supabase Vault.
 
-The `VAPID_PUBLIC_KEY` is already embedded in `index.html`; keep the private key
-server-side only — never commit it.
+Useful flags: `--dry-run`, `--skip-sql`, `--skip-secrets`,
+`--skip-function`, `--skip-webhook`.
 
-## 3. Trigger push on new notice/assignment (optional)
+## Manual alternative
 
-The frontend stores subscriptions locally and (once the table exists) writes them
-to `push_subscriptions`. To actually send pushes, call the `send-push` function
-from a trusted backend after inserting a notice/assignment, e.g.:
+If the script is unavailable, do the same steps in the dashboard:
 
-```
-POST /functions/v1/send-push
-Authorization: Bearer <service-role key>
-{ "title": "New assignment", "body": "Padarth Vijnana — Chapter 3 notes", "tag": "classhub-push", "url": "/assignments" }
-```
+1. Run the migration in the SQL Editor.
+2. `supabase functions deploy send-push` (from a machine where the CLI works).
+3. Add the three VAPID secrets under Project Settings → Edge Functions.
+4. Add a Database Webhook on `notices` INSERT pointing to
+   `/functions/v1/send-push` with an `Authorization: Bearer <service-role key>`
+   header and body `{ "title": "{{ record.title }}", "body": "{{ record.content }}" }`.
 
-## 4. Verify
+`VAPID_PUBLIC_KEY` is already embedded in `index.html`. The matching private
+key lives only in `~/.classhub_vapid_private` and in Supabase secrets — never
+commit it.
 
-- Open ClassHub, sign in, go to Notices, click "Enable background push notifications".
-- Grant notification permission.
-- Close the tab / browser and send a push via the send-push function; the
-  service worker (`sw.js`) shows the notification and clicking it opens ClassHub.
+## Verify
 
-Until steps 1–3 are done, the push button stores the subscription locally and
-shows "setup not deployed"; in-app notice toasts and sounds still work.
+1. Open ClassHub, sign in, go to Notices, click
+   "Enable background push notifications" and allow notifications.
+2. Close the tab.
+3. Publish a notice as CR (or insert a row into `notices`).
+4. The service worker (`sw.js`) shows the notification; tapping it opens ClassHub.
+
+Until deployment, the push button stores the subscription locally and shows
+"setup not deployed"; in-app notice toasts and sounds still work.
