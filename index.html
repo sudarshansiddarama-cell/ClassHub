@@ -1723,7 +1723,7 @@ Q: Next question... Ans: A
   <div class="pv-body" id="pvBody"><div class="pv-msg">Loading…</div></div>
   <div class="pv-read" id="pvRead">
     <div class="rd-head">
-      <button class="pv-btn" type="button" onclick="closeReadingMode()" aria-label="Back to PDF view"><svg class="ic ic-sm"><use href="#i-back"/></svg>PDF</button>
+      <button class="pv-btn" type="button" onclick="closePdfViewer()" aria-label="Back to results"><svg class="ic ic-sm"><use href="#i-back"/></svg>Results</button>
       <div class="rd-title" id="rdTitle"></div>
       <button class="pv-btn" type="button" id="rdSizeBtn" onclick="readerToggleSettings()" aria-expanded="false" aria-controls="rdSettings" aria-label="Reading settings">Aa</button>
     </div>
@@ -4800,7 +4800,7 @@ document.addEventListener("keydown", e=>{
       document.getElementById("rdSizeBtn")?.focus();
       return;
     }
-    if(reader.on) closeReadingMode(); else closePdfViewer();
+    closePdfViewer();
     return;
   }
   if(e.key === "Tab"){ trapFocus(e, document.getElementById("pdfViewer")); return; }
