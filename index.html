@@ -2356,10 +2356,12 @@ async function rescanPdf(file, button){
     button.textContent = "Saving…";
     setPdfProgress("Saving searchable text…", 0.97);
     throwIfAborted(controller.signal);
-    const {data, error} = await db.from("pdfs").update({content_text:text, rescanned:true}).eq("id", file.id).select("id");
+    const {data, error} = await db.from("pdfs").update({content_text:text, rescanned:true, formatted_pages:null}).eq("id", file.id).select("id");
     if(error) throw error;
     if(!data || !data.length) throw new Error("you do not have permission to update this book");
     file.rescanned = true;
+    if(currentUser) formatPdfBook(file.id, {contentText:text})
+      .catch(error=>console.warn("Background book formatting failed:", error.message));
     button.remove();
     setPdfProgress("Done", 1);
     showToast("Re-scan finished");
@@ -2393,7 +2395,7 @@ function pdfItem(file){
     read.title = saved ? "Continue reading from page " + saved.page : "Read this book as text";
     read.addEventListener("click", ()=>openPdfViewer({
       url:file.file_url, page:saved ? saved.page : 1, title:file.file_name || "PDF",
-      startReading:true, resumeReading:true
+      startReading:true, resumeReading:true, pdfId:file.id || null
     }));
     actions.appendChild(read);
     const link = makeElement("a","link-btn","Open");
@@ -2456,7 +2458,8 @@ async function loadCategorizedNotePDFs(){
   if(!list || !selectedNoteSubject) return;
   skeletonList(list);
   try{
-    let query = db.from("pdfs").select("*").eq("subject",selectedNoteSubject)
+    let query = db.from("pdfs").select("id,file_name,file_url,subject,subcategory,collection_type,folder_id,created_at,rescanned")
+      .eq("subject",selectedNoteSubject)
       .order("created_at",{ascending:false});
     if(selectedNoteSubcategory) query = query.eq("subcategory",selectedNoteSubcategory);
     else query = query.is("subcategory",null);
@@ -2566,13 +2569,13 @@ async function uploadNotePDF(input,button){
     /* PostgreSQL rejects NUL bytes (\u0000) with 22P05 "unsupported Unicode escape sequence" */
     const safeContentText = content_text ? String(content_text).replace(/\u0000/g, "") : null;
     /* ---- DATABASE INSERT (table: public.pdfs) ---- */
-    const {error:insertError} = await db.from("pdfs").insert({
+    const {data:inserted, error:insertError} = await db.from("pdfs").insert({
       file_name:String(file.name || "PDF").replace(/\u0000/g, ""),
       file_url:urlData.publicUrl,
       subject:subject, subcategory:subcategory,
       collection_type:null, folder_id:null,
       content_text: safeContentText
-    });
+    }).select("id").single();
     if(insertError){
       /* Log the complete Supabase error object: message, code, details, hint */
       console.error("Notes database insert error details:", {
@@ -2584,6 +2587,10 @@ async function uploadNotePDF(input,button){
       throw new Error("Database save failed ("+(insertError && insertError.code ? insertError.code : "unknown")+": "+(insertError && (insertError.message || insertError.details || String(insertError)))+")");
     }
     saved = true;
+    if(inserted && inserted.id && hasSearchableText(content_text)){
+      formatPdfBook(inserted.id, {contentText:safeContentText})
+        .catch(error=>console.warn("Background book formatting failed:", error.message));
+    }
     input.value = "";
     setPdfProgress("Done", 1);
     if(hasSearchableText(content_text)){
@@ -2774,14 +2781,18 @@ async function uploadTestPDF(input,button){
     }, controller.signal);
     setPdfProgress("Saving to your library…", 0.97);
     throwIfAborted(controller.signal);
-    const {error:insertError} = await db.from("pdfs").insert({
+    const {data:inserted, error:insertError} = await db.from("pdfs").insert({
       file_name:file.name, file_url:urlData.publicUrl,
       subject:null, subcategory:null,
       collection_type:category, folder_id:folder.id,
       content_text: content_text || null
-    });
+    }).select("id").single();
     if(insertError) throw insertError;
     saved = true;
+    if(inserted && inserted.id && hasSearchableText(content_text)){
+      formatPdfBook(inserted.id, {contentText:content_text || ""})
+        .catch(error=>console.warn("Background book formatting failed:", error.message));
+    }
     input.value = "";
     setPdfProgress("Done", 1);
     if(hasSearchableText(content_text)){
@@ -2816,7 +2827,7 @@ async function loadTestFolderPDFs(){
   if(!list || !selectedTestFolder) return;
   skeletonList(list);
   try{
-    const {data,error} = await db.from("pdfs").select("*")
+    const {data,error} = await db.from("pdfs").select("id,file_name,file_url,subject,subcategory,collection_type,folder_id,created_at,rescanned")
       .eq("folder_id",selectedTestFolder.id).order("created_at",{ascending:false});
     if(error) throw error;
     lastFolderPDFs = data || [];
@@ -3142,7 +3153,8 @@ function buildBookResultCard(book, query){
       pg.appendChild(makeElement("b","",String(hit.page)));
       rowBtn.append(snip, pg);
       rowBtn.addEventListener("click", ()=>openPdfViewer({
-        url:row.file_url, page:hit.page, matcher, title:row.file_name || "PDF document", hitPages:pageSet
+        url:row.file_url, page:hit.page, matcher, title:row.file_name || "PDF document", hitPages:pageSet,
+        pdfId:row.id || null
       }));
       list.appendChild(rowBtn);
     });
@@ -3160,17 +3172,222 @@ function buildBookResultCard(book, query){
 /* ================= IN-APP PDF VIEWER ================= */
 const viewer = {
   url:null, pdf:null, page:1, total:0, zoom:1,
-  matcher:null, hitPages:[], title:"", renderId:0, renderTask:null
+  matcher:null, hitPages:[], title:"", renderId:0, renderTask:null,
+  pdfId:null, formattedPages:null, loadId:0
 };
+
+/* AI-formatted page text. Each page is cleaned once by the format-pdf Edge
+   Function and cached in pdfs.formatted_pages, so the reader never waits. */
+const PDF_FORMAT_ENDPOINT = `${SUPABASE_URL}/functions/v1/format-pdf`;
+const PDF_FORMAT_CONCURRENCY = 2;
+const pdfFormatInFlight = new Map();
+const pdfFormatJobs = new Map();
+
+function pdfPageCountFromText(text){
+  const matches = String(text||"").match(/\[\[PAGE (\d+)\]\]/g) || [];
+  let max = 0;
+  for(const marker of matches){
+    const n = parseInt(marker.replace(/[^0-9]/g,""), 10);
+    if(n > max) max = n;
+  }
+  return max;
+}
+async function loadPdfFormatRow(pdfId, url, withText){
+  try{
+    const cols = withText ? "id,formatted_pages,content_text" : "id,formatted_pages";
+    let query = db.from("pdfs").select(cols).limit(1);
+    query = pdfId ? query.eq("id", pdfId) : query.eq("file_url", url);
+    const {data,error} = await query.maybeSingle();
+    if(error) throw error;
+    return data || null;
+  }catch(error){
+    console.warn("Formatted pages load failed:", error.message);
+    return null;
+  }
+}
+async function formatPdfPage(pdfId, page){
+  const key = pdfId + ":" + page;
+  if(pdfFormatInFlight.has(key)) return pdfFormatInFlight.get(key);
+  const promise = (async()=>{
+    const {data:sessionData,error:sessionError} = await db.auth.getSession();
+    if(sessionError) throw sessionError;
+    const token = sessionData?.session?.access_token;
+    if(!token) throw new Error("Please sign in again.");
+    const response = await fetch(PDF_FORMAT_ENDPOINT,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body:JSON.stringify({pdfId,page})
+    });
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(data.error || ("AI formatting failed ("+response.status+")"));
+    return data;
+  })().finally(()=>pdfFormatInFlight.delete(key));
+  pdfFormatInFlight.set(key, promise);
+  return promise;
+}
+async function formatPdfBook(pdfId, options){
+  options = options || {};
+  if(!pdfId) return {done:true, formatted:0};
+  if(pdfFormatJobs.has(pdfId)) return pdfFormatJobs.get(pdfId);
+  const job = (async()=>{
+    try{
+      const row = options.row || await loadPdfFormatRow(pdfId, null, !options.contentText);
+      const contentText = options.contentText || (row && row.content_text) || "";
+      const total = options.totalPages || pdfPageCountFromText(contentText);
+      if(!total) return {done:true, total:0, formatted:0};
+      const already = (row && row.formatted_pages) || options.formattedPages || {};
+      const queue = [];
+      for(let page=1;page<=total;page++){
+        if(!already[String(page)]) queue.push(page);
+      }
+      let formatted = 0;
+      const worker = async()=>{
+        while(queue.length){
+          const page = queue.shift();
+          try{
+            const result = await formatPdfPage(pdfId, page);
+            if(result && result.text){
+              formatted++;
+              if(options.onPage) options.onPage(page, result.text);
+            }
+          }catch(error){
+            console.warn("AI format page "+page+" failed:", error.message);
+          }
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(PDF_FORMAT_CONCURRENCY, queue.length)}, worker));
+      return {done:true, total:total, formatted:formatted};
+    }catch(error){
+      console.warn("AI format book failed:", error.message);
+      return {done:false, error:error.message};
+    }
+  })();
+  pdfFormatJobs.set(pdfId, job);
+  job.finally(()=>{ if(pdfFormatJobs.get(pdfId) === job) pdfFormatJobs.delete(pdfId); });
+  return job;
+}
+function readerParseFormattedPage(text){
+  const blocks = [];
+  const lines = String(text||"").replace(/\r\n/g,"\n").split("\n");
+  let paragraph = [];
+  const flush = ()=>{
+    if(!paragraph.length) return;
+    const joined = paragraph.join(" ").replace(/\s+/g," ").trim();
+    if(joined) blocks.push({type:"p", text:joined});
+    paragraph = [];
+  };
+  for(const raw of lines){
+    const line = raw.trim();
+    if(!line){ flush(); continue; }
+    let match = line.match(/^(#{1,6})\s+(.+)$/);
+    if(match){ flush(); blocks.push({type:"h", level:Math.min(3, match[1].length), text:match[2].trim()}); continue; }
+    match = line.match(/^[-*•]\s+(.+)$/);
+    if(match){ flush(); blocks.push({type:"list", text:"• " + match[1].trim()}); continue; }
+    match = line.match(/^(\d+[.)])\s+(.+)$/);
+    if(match){ flush(); blocks.push({type:"list", text:match[1] + " " + match[2].trim()}); continue; }
+    paragraph.push(line);
+  }
+  flush();
+  return blocks;
+}
+
+/* --- using the cached formatted text in reading mode --- */
+const readerFormatRequested = new Set();
+const readerFormatQueue = [];
+const READER_FORMAT_CONCURRENCY = 1;
+let readerFormatActive = 0;
+
+function readerFormattedTextFor(n){
+  const pages = viewer.formattedPages;
+  const text = pages && pages[String(n)];
+  return typeof text === "string" && text.trim() ? text : "";
+}
+function readerBlocksAreDevanagari(blocks){
+  let dev = 0, total = 0;
+  for(const b of blocks){
+    if(!b || b.type === "image" || b.type === "note" || b.canvas) continue;
+    const text = String(b.text || "");
+    for(const ch of text){
+      if(/\s/.test(ch)) continue;
+      total++;
+      if(/[\u0900-\u097F]/.test(ch)) dev++;
+    }
+  }
+  return total > 40 && dev / total >= 0.3;
+}
+function readerSwapFormattedPage(n, attempt){
+  attempt = attempt || 0;
+  if(!reader.on || !readerFormattedTextFor(n)) return;
+  if(reader.opening){
+    if(attempt < 8) setTimeout(()=>readerSwapFormattedPage(n, attempt + 1), 300);
+    return;
+  }
+  const sec = reader.sections[n - 1];
+  if(!sec || !sec.isConnected || !reader.built.has(n)) return;
+  if(sec.dataset.formatted !== "0") return;
+  if(sec.dataset.original === "1" || sec.dataset.original === "page") return;
+  const current = n === reader.page;
+  const frac = current ? readerReadFraction() : 0;
+  reader.built.delete(n);
+  buildReaderPage(n, current, true).then(()=>{
+    if(current && reader.on && reader.page === n) readerScrollTo(n, frac, {build:false});
+  }).catch(error=>console.warn("Formatted page swap failed:", error.message));
+}
+function readerPumpFormatQueue(){
+  while(readerFormatActive < READER_FORMAT_CONCURRENCY && readerFormatQueue.length){
+    const job = readerFormatQueue.shift();
+    readerFormatActive++;
+    formatPdfPage(job.pdfId, job.n).then(result=>{
+      if(!result || !result.text) return;
+      if(viewer.pdfId !== job.pdfId) return;
+      if(!viewer.formattedPages) viewer.formattedPages = {};
+      viewer.formattedPages[String(job.n)] = result.text;
+      readerSwapFormattedPage(job.n);
+    }).catch(error=>{
+      console.warn("AI format page " + job.n + " failed:", error.message);
+      setTimeout(()=>readerFormatRequested.delete(job.key), 60000);
+    }).finally(()=>{
+      readerFormatActive--;
+      readerPumpFormatQueue();
+    });
+  }
+}
+function readerRequestFormat(n){
+  const pdfId = viewer.pdfId;
+  if(!pdfId || !currentUser) return;
+  if(readerFormattedTextFor(n)) return;
+  const key = pdfId + ":" + n;
+  if(readerFormatRequested.has(key)) return;
+  readerFormatRequested.add(key);
+  readerFormatQueue.push({pdfId:pdfId, n:n, key:key});
+  readerPumpFormatQueue();
+}
+function viewerApplyFormatRow(row){
+  if(!row) return;
+  if(!viewer.pdfId && row.id) viewer.pdfId = row.id;
+  if(row.formatted_pages && typeof row.formatted_pages === "object"){
+    viewer.formattedPages = Object.assign({}, viewer.formattedPages || {}, row.formatted_pages);
+  }else if(!viewer.formattedPages){
+    viewer.formattedPages = {};
+  }
+  if(reader.on) readerSwapFormattedPage(reader.page);
+}
 
 function lockBodyScroll(on){ document.body.style.overflow = on ? "hidden" : ""; }
 
 let viewerLastFocus = null;
-async function openPdfViewer({url, page, matcher, title, hitPages, startReading, resumeReading}){
+async function openPdfViewer({url, page, matcher, title, hitPages, startReading, resumeReading, pdfId}){
   if(!url){ showToast("This book has no file link"); return; }
   const fileUrl = safeUrl(url);
   if(fileUrl === "#"){ showToast("This book has an invalid file link"); return; }
   if(reader.on) closeReadingMode(true);
+  const loadId = ++viewer.loadId;
+  const formatPromise = loadPdfFormatRow(pdfId || null, fileUrl).then(row=>{
+    if(viewer.loadId === loadId) viewerApplyFormatRow(row);
+    return row;
+  }).catch(()=>null);
+  viewer.pdfId = pdfId || null;
+  viewer.formattedPages = null;
   const el = document.getElementById("pdfViewer");
   viewerLastFocus = document.activeElement;
   el.classList.add("open");
@@ -3208,6 +3425,11 @@ async function openPdfViewer({url, page, matcher, title, hitPages, startReading,
     viewer.zoom = 1;
     const startPage = Math.min(Math.max(1, page || 1), viewer.total);
     await viewerShowPage(startPage);
+    /* Give the cached formatted text a short head start. If it is slow, the
+       reader opens with the raw text and swaps the formatted page in later. */
+    if(startReading && viewer.pdf && !viewer.formattedPages){
+      await Promise.race([formatPromise, new Promise(resolve=>setTimeout(resolve, 600))]);
+    }
     if(startReading && viewer.pdf) await openReadingMode(startPage, {resume:!!resumeReading});
   }catch(error){
     console.error("Viewer error:", error);
@@ -3232,7 +3454,9 @@ function closePdfViewer(){
     .forEach(node=>{ if(node) node.inert = false; });
   if(viewer.renderTask){ try{ viewer.renderTask.cancel(); }catch(e){} }
   if(viewer.pdf){ try{ viewer.pdf.destroy(); }catch(e){} }
+  viewer.loadId++;
   viewer.pdf = null; viewer.url = null; viewer.textCache = new Map();
+  viewer.pdfId = null; viewer.formattedPages = null;
   if(viewerLastFocus && document.contains(viewerLastFocus) && viewerLastFocus.focus) viewerLastFocus.focus();
   viewerLastFocus = null;
 }
@@ -3528,15 +3752,25 @@ async function readerBuildPageJob(n, s){
     if(s.closed || gen !== reader.gen) return;
     const info = await readerExtractPage(pg, n, gen);
     if(s.closed || gen !== reader.gen) return;
-    const blocks = info.blocks;
-    if(blocks.some(b=>b.crop)){
-      await readerPaintCrops(pg, blocks, gen);
+    const rawBlocks = info.blocks;
+    const hasCrop = rawBlocks.some(b=>b.crop);
+    if(hasCrop){
+      await readerPaintCrops(pg, rawBlocks, gen);
       if(s.closed || gen !== reader.gen) return;
     }
 
+    const autoOriginal = info.table || (info.graphics && info.lines <= 18);
+    /* Prefer the AI-cleaned page when it exists. Tables, diagrams, rotated
+       scans and Sanskrit pages keep the layout-aware raw extraction. */
+    const canUseFormatted = !hasCrop && !autoOriginal && !readerBlocksAreDevanagari(rawBlocks);
+    const formatted = readerFormattedTextFor(n);
+    const parsedFormatted = canUseFormatted && formatted ? readerParseFormattedPage(formatted) : [];
+    const formattedUsed = parsedFormatted.length > 0;
+    const formattedEmpty = canUseFormatted && !!formatted && !formattedUsed;
+    let blocks = formattedUsed ? parsedFormatted : rawBlocks;
+
     const frag = document.createDocumentFragment();
     if(n > 1) frag.appendChild(makeElement("div","rd-divider","Page " + n));
-    const autoOriginal = info.table || (info.graphics && info.lines <= 18);
     if(!blocks.length){
       const node = await readerPageImage(pg, gen);
       if(s.closed || gen !== reader.gen) return;
@@ -3552,6 +3786,8 @@ async function readerBuildPageJob(n, s){
     sec.style.minHeight = "";
     const imageOnly = blocks.some(b=>b.type === "image");
     sec.dataset.original = imageOnly ? "page" : "0";
+    sec.dataset.formatted = formattedUsed ? "1"
+      : (formattedEmpty ? "empty" : (canUseFormatted ? "0" : "skip"));
     reader.built.add(n);
     reader.failed.delete(n);
     updateReaderChrome();
@@ -3562,6 +3798,12 @@ async function readerBuildPageJob(n, s){
       /* Page was rebuilt (after reflow/prune): restore the user's choice
          to show the original page. */
       await readerSetOriginal(n, true, {pg:pg, gen:gen});
+    }
+    /* Nothing cached yet: format this page in the background and swap it in
+       when the AI answers. The raw text is already readable meanwhile. */
+    if(canUseFormatted && !formattedUsed && !formattedEmpty){
+      if(readerFormattedTextFor(n)) setTimeout(()=>readerSwapFormattedPage(n), 0);
+      else readerRequestFormat(n);
     }
   }catch(error){
     console.error("Reading mode: page " + n + " failed", error);
@@ -3628,6 +3870,7 @@ async function openReadingMode(startPage, options){
   reader.originalPages.clear();
   reader.sections = [];
   readerStartSession();
+  readerRequestFormat(targetPage);
 
   const el = document.getElementById("pdfViewer");
   const col = document.getElementById("rdCol");
@@ -6970,7 +7213,7 @@ async function ensurePdfTextForMcq(pdfId){
   }
 
   const {data:updated, error:updateError} = await db.from("pdfs")
-    .update({content_text:text, rescanned:true})
+    .update({content_text:text, rescanned:true, formatted_pages:null})
     .eq("id",pdfId)
     .select("id");
   if(updateError) throw updateError;

@@ -8,7 +8,7 @@
  *   1. verify the personal access token
  *   2. apply supabase/migrations/*.sql
  *   3. push VAPID secrets
- *   4. deploy the send-push Edge Function
+ *   4. deploy the send-push and format-pdf Edge Functions
  *   5. create the notices -> send-push webhook trigger (pg_net + Vault)
  *
  * Usage:
@@ -37,6 +37,7 @@ const dryRun = args.has("--dry-run");
 
 const MIGRATIONS = [
   "supabase/migrations/20261124000000_add_push_subscriptions.sql",
+  "supabase/migrations/20261126000000_add_formatted_pages.sql",
 ];
 
 function log(step, message) {
@@ -139,29 +140,34 @@ async function stepSecrets() {
   console.log(`   set ${desired.map((s) => s.name).join(", ")}`);
 }
 
-async function stepFunction() {
-  log("4/5", "Deploying send-push Edge Function");
-  const dir = join(ROOT, "supabase/functions/send-push");
+async function deployFunction(slug) {
+  const dir = join(ROOT, `supabase/functions/${slug}`);
   const source = readFileSync(join(dir, "index.ts"));
   if (dryRun) {
-    console.log(`   would deploy ${source.length} bytes as send-push`);
+    console.log(`   would deploy ${source.length} bytes as ${slug}`);
     return;
   }
   const form = new FormData();
   form.append(
     "metadata",
     JSON.stringify({
-      name: "send-push",
+      name: slug,
       entrypoint_path: "index.ts",
       verify_jwt: false,
     })
   );
   form.append("file", new Blob([source], { type: "text/typescript" }), "index.ts");
-  const result = await api(`/projects/${REF}/functions/deploy?slug=send-push`, {
+  const result = await api(`/projects/${REF}/functions/deploy?slug=${slug}`, {
     method: "POST",
     body: form,
   });
-  console.log(`   deployed send-push v${result?.version ?? "?"} (${result?.status ?? "ok"})`);
+  console.log(`   deployed ${slug} v${result?.version ?? "?"} (${result?.status ?? "ok"})`);
+}
+
+async function stepFunction() {
+  log("4/5", "Deploying Edge Functions");
+  await deployFunction("send-push");
+  await deployFunction("format-pdf");
 }
 
 async function stepWebhook() {
