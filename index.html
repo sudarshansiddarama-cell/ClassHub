@@ -761,11 +761,12 @@ label.f-label{
 .ai-history-delete:hover{background:var(--red-soft);color:var(--red)}
 .ai-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
 .ai-head{
-  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:4px 12px;justify-content:flex-end;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:4px 12px;justify-content:space-between;
   border-bottom:1px solid var(--border);background:var(--bg);
 }
 .ai-head-info{flex:1;min-width:0}
 .ai-head small{display:block;font-family:var(--font-mono);font-size:9.5px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ai-head .page-crumbs{margin:0;flex:1;min-width:0}
 .ai-head-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .ai-head .icon-btn{width:32px;height:32px;border-radius:6px}
 .ai-messages{
@@ -1679,6 +1680,11 @@ Q: Next question... Ans: A
         </aside>
         <div class="ai-main">
           <div class="ai-head">
+            <nav class="page-crumbs" aria-label="Breadcrumb" style="margin:0;flex:1;min-width:0">
+              <button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button>
+              <span class="page-crumbs-sep">›</span>
+              <span class="page-crumb-current">AI Assistant</span>
+            </nav>
             <div class="ai-head-actions">
               <button class="icon-btn ai-history-toggle" type="button" onclick="openAiHistory()" aria-label="Open chat history" aria-controls="aiHistory" aria-expanded="false"><svg class="ic"><use href="#i-history"/></svg></button>
               <button class="icon-btn" type="button" onclick="newAiChat()" aria-label="Start a new chat"><svg class="ic"><use href="#i-plus"/></svg></button>
@@ -2020,7 +2026,7 @@ const PAGE_LABELS = {
   notices:"Notices", assignments:"Assignments", community:"Class Community", "mcq-practice":"MCQ Practice",
   profile:"Student Profile", accounts:"Accounts", chat:"Class Chat", ai:"AI Assistant"
 };
-const TOP_LEVEL_CRUMB_PAGES = new Set(["search","notices","assignments","community","mcq-practice","profile","accounts","chat","ai"]);
+const TOP_LEVEL_CRUMB_PAGES = new Set(["search","notices","assignments","community","mcq-practice","profile","accounts","chat"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
