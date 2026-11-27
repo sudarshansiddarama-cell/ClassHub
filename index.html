@@ -94,9 +94,8 @@ a{color:inherit}
   background:var(--bg);border-bottom:1px solid var(--border);
 }
 .topbar::after{display:none}
-/* Brand title shows only on home screen (item 1: app name not repeated on every page) */
-.brand{display:none;align-items:center;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text)}
-body.on-home .brand{display:flex}
+/* Topbar left: brand on home, current page title elsewhere */
+.brand{display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text)}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:4px}
 .conn-pill{
   display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;
@@ -1198,7 +1197,7 @@ body.sheet-open{overflow:hidden}
 </style>
 <base target="_blank">
 </head>
-<body class="on-home">
+<body>
 
 <!-- SVG SPRITE -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -1234,7 +1233,7 @@ body.sheet-open{overflow:hidden}
 
 <!-- ============ TOPBAR ============ -->
 <header class="topbar" style="position:sticky;z-index:40">
-  <div class="brand" onclick="openSection('home')" style="cursor:pointer" aria-label="ClassHub home">ClassHub</div>
+  <div class="brand" id="topbarTitle" onclick="openSection('home')" style="cursor:pointer" aria-label="ClassHub home">ClassHub</div>
   <div class="topbar-right">
     <div class="conn-pill"><span class="status-dot" id="connDot"></span><span id="connectionStatus">Connecting…</span></div>
     <button class="icon-btn" onclick="openSection('notices')" aria-label="Notices" id="bellBtn">
@@ -2047,6 +2046,11 @@ function setAvatar(imgId, fbId, url, name){
 
 /* ================= NAVIGATION ================= */
 const MORE_PAGES = new Set(["pdfs","photos","notices","assignments","ai","community","accounts","profile","mcq-practice"]);
+const PAGE_LABELS = {
+  home:"ClassHub", search:"Topic Search", notes:"Notes", pdfs:"Test Papers", photos:"Case Studies",
+  notices:"Notices", assignments:"Assignments", community:"Class Community", "mcq-practice":"MCQ Practice",
+  profile:"Student Profile", accounts:"Accounts", chat:"Class Chat", ai:"AI Assistant"
+};
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -2091,6 +2095,11 @@ function openSection(pageId){
   const page = document.getElementById(pageId);
   if(!page) return;
   currentPage = pageId;
+  const topbarTitle = document.getElementById("topbarTitle");
+  if(topbarTitle){
+    topbarTitle.textContent = PAGE_LABELS[pageId] || "ClassHub";
+    topbarTitle.setAttribute("aria-label", pageId==="home" ? "ClassHub home" : PAGE_LABELS[pageId] + " — go home");
+  }
   if(document.getElementById("moreSheet")?.classList.contains("open")) closeMoreSheet(false);
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   page.classList.add("active");
@@ -2098,7 +2107,6 @@ function openSection(pageId){
     const active = b.dataset.page === pageId || (b.dataset.page === "more" && MORE_PAGES.has(pageId));
     b.classList.toggle("active", active);
   });
-  document.body.classList.toggle("on-home", pageId==="home");
   document.body.classList.toggle("chat-open", pageId==="chat" || pageId==="ai");
   if(pageId!=="ai") closeAiHistory();
   if(pageId==="notices"){ unreadNotices=0; updateBellBadge(); localStorage.setItem("classhub_last_seen_notice", Date.now()); }
