@@ -609,6 +609,13 @@ label.f-label{
 
 /* ---------- AI CONTEXT TOGGLES ---------- */
 .ai-context-row{display:flex;flex-wrap:wrap;gap:6px;max-width:900px;margin:0 auto 6px}
+.ai-context-row.collapsed{display:none !important}
+.ai-context-toggle{
+  display:inline-flex;align-items:center;gap:4px;margin:0 0 6px;padding:3px 8px;
+  border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);
+  font-family:var(--font-mono);font-size:9.5px;cursor:pointer;
+}
+.ai-context-toggle:hover{color:var(--text);border-color:var(--border-strong)}
 .ai-context-chip{
   display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
   font-family:var(--font-mono);font-size:10px;color:var(--muted);
@@ -718,7 +725,7 @@ label.f-label{
 #chat.active #chatStatus{flex-shrink:0;margin:0;padding:0 12px}
 #chat.active #chatStatus:empty{display:none}
 #chat.active #chatStatus:not(:empty){padding-bottom:6px}
-#chat.active > .page-crumbs,#ai.active > .page-crumbs{flex-shrink:0;margin-bottom:8px}
+#chat.active > .page-crumbs,#ai.active > .page-crumbs{flex-shrink:0;margin-bottom:4px}
 
 /* ---------- AI ASSISTANT ---------- */
 #ai.active{
@@ -754,7 +761,7 @@ label.f-label{
 .ai-history-delete:hover{background:var(--red-soft);color:var(--red)}
 .ai-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
 .ai-head{
-  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 12px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:4px 12px;
   border-bottom:1px solid var(--border);background:var(--bg);
 }
 .ai-head-info{flex:1;min-width:0}
@@ -763,7 +770,7 @@ label.f-label{
 .ai-head .icon-btn{width:32px;height:32px;border-radius:6px}
 .ai-messages{
   flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-  padding:24px 16px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;
+  padding:16px 12px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;
 }
 .ai-msg{display:flex;align-items:flex-start;gap:8px;max-width:min(760px,94%)}
 .ai-msg-user{margin-left:auto;flex-direction:row-reverse}
@@ -790,15 +797,15 @@ label.f-label{
 @keyframes aiBlink{0%,80%,100%{opacity:.2}40%{opacity:1}}
 .ai-error-text{color:var(--red)}
 .ai-retry{margin-top:8px}
-.ai-welcome{margin:auto;max-width:560px;text-align:left;padding:16px 0}
+.ai-welcome{margin:16px auto 0;max-width:560px;text-align:left;padding:16px 0}
 .ai-orb{
-  width:36px;height:36px;margin:0 0 16px;border-radius:8px;display:grid;place-items:center;
+  width:36px;height:36px;margin:0 0 8px;border-radius:8px;display:grid;place-items:center;
   background:transparent;border:1px solid var(--border);color:var(--muted);box-shadow:none;
 }
 .ai-orb .ic{width:18px;height:18px}
-.ai-welcome h2{font-size:22px;margin:0 0 8px;font-weight:500;letter-spacing:-.03em}
+.ai-welcome h2{font-size:22px;margin:0 0 4px;font-weight:500;letter-spacing:-.03em}
 .ai-welcome p{color:var(--muted);font-size:12.5px;line-height:1.6;margin:0;max-width:460px}
-.ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;margin-top:20px}
+.ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;margin-top:12px}
 .ai-suggestion{
   padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;
   color:var(--muted);font-size:11px;font-weight:400;text-align:left;
@@ -808,7 +815,7 @@ label.f-label{
 .ai-gate{width:100%;max-width:440px;margin:auto}
 .ai-compose-wrap{
   flex-shrink:0;border-top:1px solid var(--border);background:var(--bg);
-  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  padding:6px 12px calc(6px + env(safe-area-inset-bottom));
 }
 .ai-compose{
   display:flex;align-items:flex-end;gap:4px;max-width:900px;margin:0 auto;
@@ -816,7 +823,7 @@ label.f-label{
   padding:4px;box-shadow:none;
 }
 .ai-compose textarea{
-  flex:1;min-width:0;min-height:38px;max-height:160px;resize:none;margin:0;
+  flex:1;min-width:0;min-height:32px;max-height:160px;resize:none;margin:0;
   padding:9px 10px;border-radius:6px;line-height:1.45;font-size:13px;
   background:transparent;border:0;box-shadow:none;
 }
@@ -828,7 +835,7 @@ label.f-label{
   min-height:36px;border-radius:6px;padding:0 10px;font-size:10px;
   font-weight:400;font-family:var(--font-mono);
 }
-.ai-hint{max-width:900px;margin:6px auto 0;font-family:var(--font-mono);font-size:9px;color:var(--muted2);text-align:center;line-height:1.4}
+.ai-hint{max-width:900px;margin:4px auto 0;font-family:var(--font-mono);font-size:9px;color:var(--muted2);text-align:center;line-height:1.4}
 #aiStatus{max-width:900px;margin:0 auto;font-size:11px;min-height:0}
 #aiStatus:not(:empty){margin-top:4px;margin-bottom:2px}
 .ai-messages .empty{margin:auto}
@@ -1673,7 +1680,6 @@ Q: Next question... Ans: A
         <div class="ai-main">
           <div class="ai-head">
             <div class="ai-head-info">
-              <small>Private chats · Saved to your account</small>
             </div>
             <div class="ai-head-actions">
               <button class="icon-btn ai-history-toggle" type="button" onclick="openAiHistory()" aria-label="Open chat history" aria-controls="aiHistory" aria-expanded="false"><svg class="ic"><use href="#i-history"/></svg></button>
@@ -1688,7 +1694,8 @@ Q: Next question... Ans: A
             </div>
           </div>
           <div class="ai-compose-wrap">
-            <div class="ai-context-row auth-hidden" id="aiContextRow">
+            <button class="ai-context-toggle auth-hidden" type="button" onclick="toggleAiContext()" aria-expanded="false" aria-controls="aiContextRow">Sources ▾</button>
+            <div class="ai-context-row auth-hidden collapsed" id="aiContextRow">
               <label class="ai-context-chip" title="Search your class PDFs and attach the best excerpts">
                 <input type="checkbox" id="aiUsePdfs" onchange="onAiContextToggle()">Class PDFs
               </label>
@@ -5687,6 +5694,15 @@ let aiWebContext = false;
 function onAiContextToggle(){
   aiPdfContext = document.getElementById("aiUsePdfs")?.checked || false;
   aiWebContext = document.getElementById("aiUseWeb")?.checked || false;
+}
+function toggleAiContext(){
+  const row = document.getElementById("aiContextRow");
+  const btn = document.querySelector(".ai-context-toggle");
+  if(!row || !btn) return;
+  const nowCollapsed = !row.classList.contains("collapsed");
+  row.classList.toggle("collapsed", nowCollapsed);
+  btn.setAttribute("aria-expanded", String(!nowCollapsed));
+  btn.textContent = nowCollapsed ? "Sources ▾" : "Sources ▴";
 }
 function aiKeywords(text){
   const words = String(text||"").toLowerCase().match(/[a-z0-9][a-z0-9-]{2,}/g) || [];
