@@ -761,7 +761,7 @@ label.f-label{
 .ai-history-delete:hover{background:var(--red-soft);color:var(--red)}
 .ai-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
 .ai-head{
-  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:4px 12px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:4px 12px;justify-content:flex-end;
   border-bottom:1px solid var(--border);background:var(--bg);
 }
 .ai-head-info{flex:1;min-width:0}
@@ -797,7 +797,7 @@ label.f-label{
 @keyframes aiBlink{0%,80%,100%{opacity:.2}40%{opacity:1}}
 .ai-error-text{color:var(--red)}
 .ai-retry{margin-top:8px}
-.ai-welcome{margin:16px auto 0;max-width:560px;text-align:left;padding:16px 0}
+.ai-welcome{margin:16px auto 0;max-width:560px;text-align:left;padding:8px 0}
 .ai-orb{
   width:36px;height:36px;margin:0 0 8px;border-radius:8px;display:grid;place-items:center;
   background:transparent;border:1px solid var(--border);color:var(--muted);box-shadow:none;
@@ -1679,8 +1679,6 @@ Q: Next question... Ans: A
         </aside>
         <div class="ai-main">
           <div class="ai-head">
-            <div class="ai-head-info">
-            </div>
             <div class="ai-head-actions">
               <button class="icon-btn ai-history-toggle" type="button" onclick="openAiHistory()" aria-label="Open chat history" aria-controls="aiHistory" aria-expanded="false"><svg class="ic"><use href="#i-history"/></svg></button>
               <button class="icon-btn" type="button" onclick="newAiChat()" aria-label="Start a new chat"><svg class="ic"><use href="#i-plus"/></svg></button>
@@ -1688,9 +1686,8 @@ Q: Next question... Ans: A
           </div>
           <div id="aiMessages" class="ai-messages" role="log" aria-live="polite" aria-relevant="additions">
             <div class="ai-welcome">
-              <div class="ai-orb"><svg class="ic"><use href="#i-spark"/></svg></div>
               <h2>Ask</h2>
-              <p>Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account.</p>
+              <p>Understand a concept, revise a topic, or make a study plan.</p>
             </div>
           </div>
           <div class="ai-compose-wrap">
@@ -1708,7 +1705,6 @@ Q: Next question... Ans: A
               <button class="btn send-btn" id="aiSendBtn" type="submit" aria-label="Send message"><svg class="ic"><use href="#i-send"/></svg></button>
               <button class="btn secondary ai-stop auth-hidden" id="aiStopBtn" type="button" onclick="stopAiResponse()">Stop</button>
             </form>
-            <div class="ai-hint">ClassHub AI can make mistakes. Check important answers, especially for clinical topics.</div>
             <div id="aiStatus" class="status" aria-live="polite"></div>
           </div>
         </div>
@@ -5947,12 +5943,9 @@ function renderAiWelcome(){
   if(!box) return;
   box.replaceChildren();
   const wrap = makeElement("div","ai-welcome");
-  const orb = makeElement("div","ai-orb");
-  orb.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg>`;
   const name = aiFirstName();
-  wrap.appendChild(orb);
   wrap.appendChild(makeElement("h2","",name ? `Hi ${name}, what are we studying?` : "Ask"));
-  wrap.appendChild(makeElement("p","","Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account."));
+  wrap.appendChild(makeElement("p","","Understand a concept, revise a topic, or make a study plan."));
   const suggestions = makeElement("div","ai-suggestions");
   AI_SUGGESTIONS.forEach(text=>{
     suggestions.appendChild(makeButton(text,()=>sendAiMessage(text),"ai-suggestion"));
