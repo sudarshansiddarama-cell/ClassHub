@@ -176,7 +176,7 @@ main{
 .page-crumbs-sep{font-size:12px;color:var(--border-strong);line-height:1}
 .page-crumb-link{
   background:transparent;border:0;color:var(--text);padding:0;text-align:left;
-  font:inherit;letter-spacing:inherit;cursor:pointer;
+  font:inherit;letter-spacing:inherit;cursor:pointer;min-height:auto;line-height:1.4;
 }
 .page-crumb-link:hover{color:var(--accent);text-decoration:underline}
 .page-crumb-current{color:var(--accent);font-weight:600}
@@ -1169,7 +1169,7 @@ body.sheet-open{overflow:hidden}
   /* 16px inputs avoid iOS auto-zoom on focus */
   main input,main textarea,main select{font-size:16px!important}
   /* 44px tap targets (not inside dense reading-mode chrome) */
-  main .btn,main .link-btn,main .page-crumb-link,main .option-card{min-height:44px}
+  main .btn,main .link-btn,main .option-card{min-height:44px}
   main .page-crumbs{margin-bottom:10px}
 }
 
@@ -2334,7 +2334,9 @@ function renderNotesView(){
     const el = c.onClick ? makeButton(c.label,c.onClick,"notes-breadcrumb-link") : makeElement("span","notes-breadcrumb-current",c.label);
     breadcrumb.appendChild(el);
   });
-  root.appendChild(breadcrumb);
+  const notesSection = root.parentElement;
+  notesSection.querySelectorAll(".notes-breadcrumb").forEach(e=>e.remove());
+  notesSection.insertBefore(breadcrumb, root);
 
   /* ---- Subject picker (top level) ---- */
   if(!selectedNoteSubject){
@@ -2729,10 +2731,12 @@ function renderTestPapersView(){
   root.replaceChildren();
 
   if(!selectedTestCategory){
-    root.appendChild(makeBreadcrumb([
+    const tpSection = root.parentElement;
+    tpSection.querySelectorAll(".page-crumbs").forEach(e=>e.remove());
+    tpSection.insertBefore(makeBreadcrumb([
       {label:"Home", onClick:()=>openSection("home")},
       {label:"Test Papers"}
-    ]));
+    ]), root.parentElement.firstChild);
     root.appendChild(makeElement("h2","panel-title","Choose a collection"));
     const grid = makeElement("div","option-grid");
     [
@@ -2754,12 +2758,14 @@ function renderTestPapersView(){
   const categoryName = selectedTestCategory==="pyqs" ? "PYQs" : "Current Year";
 
   if(!selectedTestFolder){
-    root.appendChild(makeBreadcrumb([
+    const tpSection = root.parentElement;
+    tpSection.querySelectorAll(".page-crumbs").forEach(e=>e.remove());
+    tpSection.insertBefore(makeBreadcrumb([
       {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
       {label:"Test Papers", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
       {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
       {label:categoryName}
-    ]));
+    ]), root.parentElement.firstChild);
     root.appendChild(makeElement("h2","panel-title","Folders"));
     root.appendChild(makeElement("p","muted","Create a folder and add PDFs inside it."));
     const panel = makeElement("div","panel");
@@ -2779,13 +2785,15 @@ function renderTestPapersView(){
     return;
   }
 
-  root.appendChild(makeBreadcrumb([
+  const tpSection = root.parentElement;
+  tpSection.querySelectorAll(".page-crumbs").forEach(e=>e.remove());
+  tpSection.insertBefore(makeBreadcrumb([
     {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
     {label:"Test Papers", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
     {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
     {label:categoryName, onClick:()=>{ selectedTestFolder=null; renderTestPapersView(); }},
     {label:selectedTestFolder.folder_name}
-  ]));
+  ]), root.parentElement.firstChild);
   root.appendChild(makeElement("p","muted","Upload PDFs into this folder."));
 
   const panel = makeElement("div","panel");
@@ -4953,10 +4961,12 @@ function renderCaseStudiesView(){
   root.replaceChildren();
 
   if(!selectedCaseFolder){
-    root.appendChild(makeBreadcrumb([
+    const caseSection = root.parentElement;
+    caseSection.querySelectorAll(".page-crumbs").forEach(e=>e.remove());
+    caseSection.insertBefore(makeBreadcrumb([
       {label:"Home", onClick:()=>openSection("home")},
       {label:"Case Studies"}
-    ]));
+    ]), root.parentElement.firstChild);
     root.appendChild(makeElement("h2","panel-title","Case study folders"));
     const panel = makeElement("div","panel");
     const input = document.createElement("input");
@@ -4977,12 +4987,14 @@ function renderCaseStudiesView(){
   }
 
   const isUnfiled = selectedCaseFolder === "unfiled";
-  root.appendChild(makeBreadcrumb([
+  const caseSection = root.parentElement;
+  caseSection.querySelectorAll(".page-crumbs").forEach(e=>e.remove());
+  caseSection.insertBefore(makeBreadcrumb([
     {label:"Home", onClick:()=>{ selectedCaseFolder=null; openSection("home"); }},
     {label:"Case Studies", onClick:()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }},
     {label:"All folders", onClick:()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }},
     {label:isUnfiled ? "Unfiled photos" : selectedCaseFolder.folder_name}
-  ]));
+  ]), root.parentElement.firstChild);
   root.appendChild(makeElement("p","muted","Upload case study photos into this folder."));
 
   const panel = makeElement("div","panel");
