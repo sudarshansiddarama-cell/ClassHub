@@ -474,13 +474,13 @@ label.f-label{
 
 /* ---------- MCQ PRACTICE ---------- */
 .mcq-grid{display:flex;flex-direction:column;gap:8px}
-.mcq-pdf-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s;max-width:520px}
+.mcq-pdf-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s;max-width:520px}
 .mcq-pdf-card:hover{background:var(--surface-hover);border-color:var(--border-strong)}
 .mcq-pdf-info{min-width:0;flex:1}
 .mcq-pdf-info strong{display:block;font-size:12.5px;font-weight:500;overflow-wrap:anywhere;line-height:1.3}
 .mcq-pdf-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9px;margin-top:1px}
 .mcq-pdf-meta{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
-.mcq-pdf-actions{display:flex;gap:6px;flex-shrink:0}
+.mcq-pdf-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
 .mcq-pdf-status{font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:99px;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
 .mcq-pdf-status.ready{color:var(--green);border-color:var(--green)}
 .mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
@@ -497,7 +497,7 @@ label.f-label{
 .mcq-search-wrap{margin:0 0 10px}
 .mcq-search{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px}
 .mcq-search:focus{border-color:var(--accent);outline:none}
-.mcq-rate-limit{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:6px 0 10px;text-align:right}
+.mcq-rate-limit{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 8px;text-align:right}
 
 /* Generation Progress Modal */
 .mcq-gen-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:16px}
@@ -529,7 +529,7 @@ label.f-label{
 .notepad-status.success{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
 .mcq-notepad-hint{padding:0 16px 16px 16px;font-size:10px;color:var(--muted2);font-family:var(--font-mono)}
 
-.mcq-count-pick{display:flex;align-items:center;gap:10px;margin:10px 0 6px;flex-wrap:wrap}
+.mcq-count-pick{display:flex;align-items:center;gap:10px;margin:8px 0 4px;flex-wrap:wrap}
 .mcq-count-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin:0}
 .mcq-count-btn{width:34px;height:30px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,border-color .12s,color .12s}
 .mcq-count-btn:hover:not(.active){border-color:var(--border-strong);background:var(--surface-hover)}
@@ -1495,8 +1495,9 @@ body.sheet-open{overflow:hidden}
     <!-- MCQ PRACTICE -->
     <section id="mcq-practice" class="page">
       <div class="section-head">
+        <p class="page-sub">Generate MCQs from your PDFs and practice them.</p>
         <div class="section-head-row" style="justify-content:flex-end">
-          <button class="btn secondary" onclick="openUploadMcqPanel()" title="Add MCQs"><svg class="ic ic-sm"><use href="#i-plus"/></svg></button>
+          <button class="icon-btn" onclick="openUploadMcqPanel()" title="Add MCQs" aria-label="Add MCQs"><svg class="ic"><use href="#i-plus"/></svg></button>
         </div>
       </div>
       <div id="mcqStatus" class="status" aria-live="polite"></div>
@@ -1525,6 +1526,7 @@ Q: Next question... Ans: A
       <!-- START VIEW -->
       <div id="mcqViewStart">
         <div class="panel">
+          <h2 class="panel-title">Generate MCQs</h2>
           <div class="mcq-count-pick">
             <label class="mcq-count-label">Questions</label>
             <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
@@ -1537,10 +1539,13 @@ Q: Next question... Ans: A
           <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
           <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by topic</button>
           <div id="mcqRateLimit" class="mcq-rate-limit"></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">Your PDFs</h2>
           <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
           <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading PDFs…</div></div>
         </div>
-        <div class="panel" style="margin-top:12px">
+        <div class="panel">
           <div class="section-head-row">
             <h2 class="panel-title">Previous Practice</h2>
             <button class="btn secondary" onclick="clearMcqPage()" style="padding:6px 10px;font-size:12px">Clear Page</button>
