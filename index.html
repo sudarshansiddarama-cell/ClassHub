@@ -718,6 +718,7 @@ label.f-label{
 #chat.active #chatStatus{flex-shrink:0;margin:0;padding:0 12px}
 #chat.active #chatStatus:empty{display:none}
 #chat.active #chatStatus:not(:empty){padding-bottom:6px}
+#chat.active > .page-crumbs,#ai.active > .page-crumbs{flex-shrink:0;margin-bottom:8px}
 
 /* ---------- AI ASSISTANT ---------- */
 #ai.active{
@@ -2016,6 +2017,7 @@ const PAGE_LABELS = {
   notices:"Notices", assignments:"Assignments", community:"Class Community", "mcq-practice":"MCQ Practice",
   profile:"Student Profile", accounts:"Accounts", chat:"Class Chat", ai:"AI Assistant"
 };
+const TOP_LEVEL_CRUMB_PAGES = new Set(["search","notices","assignments","community","mcq-practice","profile","accounts","chat","ai"]);
 let moreLastFocus = null;
 
 function openMoreSheet(){
@@ -2068,6 +2070,12 @@ function openSection(pageId){
   if(document.getElementById("moreSheet")?.classList.contains("open")) closeMoreSheet(false);
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   page.classList.add("active");
+  if(TOP_LEVEL_CRUMB_PAGES.has(pageId) && ![...page.children].some(el=>el.classList.contains("page-crumbs"))){
+    page.prepend(makeBreadcrumb([
+      {label:"Home", onClick:()=>openSection("home")},
+      {label:PAGE_LABELS[pageId] || pageId}
+    ]));
+  }
   document.querySelectorAll("[data-page]").forEach(b=>{
     const active = b.dataset.page === pageId || (b.dataset.page === "more" && MORE_PAGES.has(pageId));
     b.classList.toggle("active", active);
@@ -2302,10 +2310,16 @@ function renderNotesView(){
   const root = document.getElementById("notesView");
   root.replaceChildren();
 
-  /* ---- Compact breadcrumb: Home > All subjects > [subject] [> category] ---- */
+  /* ---- Compact breadcrumb: Home > Notes > All subjects > [subject] [> category] ---- */
   const breadcrumb = makeElement("div","notes-breadcrumb");
   const crumbs = [];
   crumbs.push({label:"Home", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; openSection("home");}});
+  crumbs.push({
+    label:"Notes",
+    onClick: (selectedNoteSubject || selectedNoteSubcategory)
+      ? ()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}
+      : null
+  });
   if(selectedNoteSubject || selectedNoteSubcategory){
     crumbs.push({label:"All subjects", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}});
   }
@@ -2320,7 +2334,7 @@ function renderNotesView(){
     const el = c.onClick ? makeButton(c.label,c.onClick,"notes-breadcrumb-link") : makeElement("span","notes-breadcrumb-current",c.label);
     breadcrumb.appendChild(el);
   });
-  if(selectedNoteSubject) root.appendChild(breadcrumb);
+  root.appendChild(breadcrumb);
 
   /* ---- Subject picker (top level) ---- */
   if(!selectedNoteSubject){
@@ -2715,6 +2729,10 @@ function renderTestPapersView(){
   root.replaceChildren();
 
   if(!selectedTestCategory){
+    root.appendChild(makeBreadcrumb([
+      {label:"Home", onClick:()=>openSection("home")},
+      {label:"Test Papers"}
+    ]));
     root.appendChild(makeElement("h2","panel-title","Choose a collection"));
     const grid = makeElement("div","option-grid");
     [
@@ -2738,6 +2756,7 @@ function renderTestPapersView(){
   if(!selectedTestFolder){
     root.appendChild(makeBreadcrumb([
       {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
+      {label:"Test Papers", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
       {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
       {label:categoryName}
     ]));
@@ -2762,6 +2781,7 @@ function renderTestPapersView(){
 
   root.appendChild(makeBreadcrumb([
     {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
+    {label:"Test Papers", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
     {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
     {label:categoryName, onClick:()=>{ selectedTestFolder=null; renderTestPapersView(); }},
     {label:selectedTestFolder.folder_name}
@@ -4933,6 +4953,10 @@ function renderCaseStudiesView(){
   root.replaceChildren();
 
   if(!selectedCaseFolder){
+    root.appendChild(makeBreadcrumb([
+      {label:"Home", onClick:()=>openSection("home")},
+      {label:"Case Studies"}
+    ]));
     root.appendChild(makeElement("h2","panel-title","Case study folders"));
     const panel = makeElement("div","panel");
     const input = document.createElement("input");
@@ -4955,6 +4979,7 @@ function renderCaseStudiesView(){
   const isUnfiled = selectedCaseFolder === "unfiled";
   root.appendChild(makeBreadcrumb([
     {label:"Home", onClick:()=>{ selectedCaseFolder=null; openSection("home"); }},
+    {label:"Case Studies", onClick:()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }},
     {label:"All folders", onClick:()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }},
     {label:isUnfiled ? "Unfiled photos" : selectedCaseFolder.folder_name}
   ]));
