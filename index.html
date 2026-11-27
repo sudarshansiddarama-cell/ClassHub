@@ -94,7 +94,9 @@ a{color:inherit}
   background:var(--bg);border-bottom:1px solid var(--border);
 }
 .topbar::after{display:none}
-.brand{display:flex;align-items:center;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text)}
+/* Brand title shows only on home screen (item 1: app name not repeated on every page) */
+.brand{display:none;align-items:center;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text)}
+body.on-home .brand{display:flex}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:4px}
 .conn-pill{
   display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;
@@ -175,6 +177,19 @@ main{
 }
 .back-btn:hover{color:var(--text);border-color:var(--border-strong);background:var(--surface)}
 .back-btn .ic{width:13px;height:13px}
+
+/* Compact breadcrumb replacing standalone back buttons (item 2) */
+.page-crumbs{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin:0 0 14px;font-family:var(--font-mono);font-size:11px;color:var(--muted2);
+}
+.page-crumbs-sep{font-size:12px;color:var(--border-strong);line-height:1}
+.page-crumb-link{
+  background:transparent;border:0;color:var(--text);padding:0;text-align:left;
+  font:inherit;letter-spacing:inherit;cursor:pointer;
+}
+.page-crumb-link:hover{color:var(--accent);text-decoration:underline}
+.page-crumb-current{color:var(--accent);font-weight:600}
 
 /* ---------- PANELS ---------- */
 .panel{
@@ -283,7 +298,7 @@ label.f-label{
 .search-wrap .field{margin:0;padding-left:34px;font-family:var(--font-mono);font-size:12px}
 
 /* ---------- LISTS ---------- */
-.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
 .item:last-child{border-bottom:0}
 .item-icon{
   width:20px;height:20px;flex:0 0 20px;border-radius:0;display:grid;place-items:center;
@@ -1169,10 +1184,21 @@ body.sheet-open{overflow:hidden}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 
+/* ---------- MOBILE BASELINE (item 3) ---------- */
+@media(max-width:640px){
+  /* safe-area padding + no horizontal overflow */
+  main{padding-left:max(12px, env(safe-area-inset-left)); padding-right:max(12px, env(safe-area-inset-right)); overflow-x:hidden}
+  /* 16px inputs avoid iOS auto-zoom on focus */
+  main input,main textarea,main select{font-size:16px!important}
+  /* 44px tap targets (not inside dense reading-mode chrome) */
+  main .btn,main .link-btn,main .page-crumb-link,main .back-btn,main .option-card{min-height:44px}
+  main .page-crumbs{margin-bottom:10px}
+}
+
 </style>
 <base target="_blank">
 </head>
-<body>
+<body class="on-home">
 
 <!-- SVG SPRITE -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -1208,7 +1234,7 @@ body.sheet-open{overflow:hidden}
 
 <!-- ============ TOPBAR ============ -->
 <header class="topbar" style="position:sticky;z-index:40">
-  <div class="brand" onclick="openSection('home')" style="cursor:pointer">Class Hub</div>
+  <div class="brand" onclick="openSection('home')" style="cursor:pointer" aria-label="ClassHub home">ClassHub</div>
   <div class="topbar-right">
     <div class="conn-pill"><span class="status-dot" id="connDot"></span><span id="connectionStatus">Connecting…</span></div>
     <button class="icon-btn" onclick="openSection('notices')" aria-label="Notices" id="bellBtn">
@@ -1347,7 +1373,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- TOPIC SEARCH -->
     <section id="search" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Topic Search</span></nav>
       <div class="section-head">
         <h1 class="page-title">Topic Search</h1>
         <p class="page-sub">Search a word across every book and test paper. Every match is listed with its page number — tap one to open the book at that exact page.</p>
@@ -1365,7 +1391,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- NOTES -->
     <section id="notes" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Notes</span></nav>
       <div class="section-head">
         <h1 class="page-title">Notes</h1>
         <p class="page-sub">Choose a subject to browse or upload its PDFs.</p>
@@ -1376,7 +1402,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- TEST PAPERS -->
     <section id="pdfs" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Test Papers</span></nav>
       <div class="section-head">
         <h1 class="page-title">Test Papers</h1>
         <p class="page-sub">Organise previous-year questions and current-year papers in your own folders.</p>
@@ -1387,7 +1413,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- CASE STUDIES -->
     <section id="photos" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Case Studies</span></nav>
       <div class="section-head">
         <h1 class="page-title">Case Studies</h1>
         <p class="page-sub">Create a folder for each case study, then post photos inside it.</p>
@@ -1398,7 +1424,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- NOTICES -->
     <section id="notices" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Notices</span></nav>
       <div class="section-head">
         <h1 class="page-title">Notices</h1>
         <p class="page-sub">Important announcements for the class.</p>
@@ -1429,7 +1455,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- ASSIGNMENTS -->
     <section id="assignments" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Assignments</span></nav>
       <div class="section-head">
         <h1 class="page-title">Assignments</h1>
         <p class="page-sub">Homework and deadlines posted by the class representative.</p>
@@ -1453,7 +1479,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- COMMUNITY -->
     <section id="community" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Class Community</span></nav>
       <div class="section-head">
         <h1 class="page-title">Class Community</h1>
         <p class="page-sub">Share thoughts, ask questions and interact with classmates.</p>
@@ -1499,7 +1525,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- MCQ PRACTICE -->
     <section id="mcq-practice" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">MCQ Practice</span></nav>
       <div class="section-head">
         <div class="section-head-row">
           <h1 class="page-title">MCQ Practice</h1>
@@ -1621,7 +1647,7 @@ Q: Next question... Ans: A
     <!-- ADD MCQs FROM TOPIC -->
     <!-- PROFILE -->
     <section id="profile" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Student Profile</span></nav>
       <div class="section-head">
         <h1 class="page-title">Student Profile</h1>
         <p class="page-sub">Personalise your ClassHub identity.</p>
@@ -1650,7 +1676,7 @@ Q: Next question... Ans: A
 
     <!-- ACCOUNTS DIRECTORY -->
     <section id="accounts" class="page">
-      <button class="back-btn" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Accounts</span></nav>
       <div class="section-head">
         <h1 class="page-title">Accounts</h1>
         <p class="page-sub">Discover your classmates and view the profile picture, status and bio they've shared with ClassHub members.</p>
@@ -1667,7 +1693,7 @@ Q: Next question... Ans: A
     <section id="chat" class="page">
       <input id="chatName" type="hidden">
       <div class="chat-head">
-        <button class="back-btn" type="button" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+        <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Class Chat</span></nav>
         <h1 class="page-title">Class Chat</h1>
       </div>
       <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
@@ -1695,9 +1721,9 @@ Q: Next question... Ans: A
         </aside>
         <div class="ai-main">
           <div class="ai-head">
-            <button class="back-btn" type="button" onclick="openSection('home')"><svg class="ic ic-sm"><use href="#i-back"/></svg>Home</button>
+            <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">AI Assistant</span></nav>
             <div class="ai-head-info">
-              <h1 id="aiHeading">ClassHub AI</h1>
+              <h1 id="aiHeading">AI Assistant</h1>
               <small>Private chats · Saved to your account</small>
             </div>
             <div class="ai-head-actions">
@@ -1708,7 +1734,7 @@ Q: Next question... Ans: A
           <div id="aiMessages" class="ai-messages" role="log" aria-live="polite" aria-relevant="additions">
             <div class="ai-welcome">
               <div class="ai-orb"><svg class="ic"><use href="#i-spark"/></svg></div>
-              <h2>Ask ClassHub AI</h2>
+              <h2>Ask</h2>
               <p>Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account.</p>
             </div>
           </div>
@@ -2073,6 +2099,7 @@ function openSection(pageId){
     const active = b.dataset.page === pageId || (b.dataset.page === "more" && MORE_PAGES.has(pageId));
     b.classList.toggle("active", active);
   });
+  document.body.classList.toggle("on-home", pageId==="home");
   document.body.classList.toggle("chat-open", pageId==="chat" || pageId==="ai");
   if(pageId!=="ai") closeAiHistory();
   if(pageId==="notices"){ unreadNotices=0; updateBellBadge(); localStorage.setItem("classhub_last_seen_notice", Date.now()); }
