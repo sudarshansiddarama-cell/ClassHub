@@ -309,6 +309,52 @@ label.f-label{
 .empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .empty .ic{width:18px;height:18px;stroke-width:1.5;margin-bottom:8px;color:var(--muted2)}
 
+/* ---------- NOTES PAGE ---------- */
+.notes-breadcrumb{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin:0 0 14px;font-family:var(--font-mono);font-size:11px;color:var(--muted2);
+}
+.notes-breadcrumb-sep{font-size:12px;color:var(--border-strong);line-height:1}
+.notes-breadcrumb-link{
+  background:transparent;border:0;color:var(--text);padding:0;text-align:left;
+  font:inherit;letter-spacing:inherit;cursor:pointer;
+}
+.notes-breadcrumb-link:hover{color:var(--accent);text-decoration:underline}
+.notes-breadcrumb-current{color:var(--accent);font-weight:600}
+.notes-subtitle{
+  font-size:13px;margin:0 0 6px;font-weight:500;letter-spacing:-.01em;font-family:var(--font-sans);color:var(--text)
+}
+.notes-heading{
+  font-size:clamp(17px,4.5vw,20px);margin:0 0 8px;font-weight:600;letter-spacing:-.02em;color:var(--text);word-break:break-word
+}
+.notes-list-title{
+  font-size:11px;margin:14px 0 8px;font-weight:600;letter-spacing:-.01em;text-transform:uppercase;color:var(--muted2);font-family:var(--font-mono)
+}
+.notes-search{margin:0 0 12px}
+.notes-upload-section{
+  border:1px solid var(--border);border-radius:var(--r-md);margin:0 0 12px;background:var(--surface);overflow:hidden
+}
+.notes-upload-header{
+  display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;border:0;
+  padding:10px 12px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text);
+  text-align:left;cursor:pointer;
+}
+.notes-upload-header:hover{background:var(--surface-hover)}
+.notes-upload-header .ic{color:var(--muted);width:16px;height:16px;flex:0 0 16px}
+.notes-upload-arrow{font-size:10px;color:var(--muted2);flex:0 0 14px;line-height:1}
+.notes-upload-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.notes-upload-body.collapsed{display:none}
+.notes-file-label{margin:0;padding:11px 12px;font-size:10.5px}
+.notes-upload-btn{padding:9px 14px;font-size:12px}
+
+/* Tighter PDF cards + actions in the notes list */
+.notes-pdf-list .item{padding:9px 0;gap:10px}
+.notes-pdf-list .item-info strong{font-size:12.5px}
+.notes-pdf-list .item-info small{font-size:9.5px}
+.notes-pdf-list .item-actions .link-btn{
+  padding:5px 8px;font-size:9.5px;white-space:normal;border-radius:5px
+}
+
 /* ---------- SKELETON ---------- */
 .skeleton{position:relative;overflow:hidden;background:var(--surface);border-radius:4px;animation:skPulse 1.2s ease-in-out infinite alternate}
 .skeleton::after{display:none}
@@ -1004,6 +1050,13 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
   .panel{padding:12px}
   .btn.full{padding:10px 14px;font-size:13px}
   #communityPosts .status.error{margin:0 0 12px;padding:8px 10px;border-radius:6px;background:var(--red-soft)}
+  .notes-breadcrumb{font-size:10px;margin-bottom:10px}
+  .notes-heading{font-size:17px;margin-bottom:6px}
+  .notes-search{margin-bottom:10px}
+  .notes-upload-header{padding:9px 11px;font-size:10.5px}
+  .notes-list-title{font-size:10px;margin-top:10px}
+  .notes-pdf-list .item{padding:8px 0}
+  .option-card{padding:11px 0}
 }
 
 /* ---------- ACCOUNTS ---------- */
@@ -2250,12 +2303,34 @@ function renderNotesView(){
   const root = document.getElementById("notesView");
   root.replaceChildren();
 
+  /* ---- Compact breadcrumb: Home > All subjects > [subject] [> category] ---- */
+  const breadcrumb = makeElement("div","notes-breadcrumb");
+  const crumbs = [];
+  crumbs.push({label:"Home", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}});
+  if(selectedNoteSubject || selectedNoteSubcategory){
+    crumbs.push({label:"All subjects", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}});
+  }
+  if(selectedNoteSubject){
+    crumbs.push({label:selectedNoteSubject, onClick: selectedNoteSubcategory ? ()=>{selectedNoteSubcategory=null; renderNotesView();} : null});
+  }
+  if(selectedNoteSubcategory){
+    crumbs.push({label:selectedNoteSubcategory, onClick:null});
+  }
+  crumbs.forEach((c,i)=>{
+    if(i>0) breadcrumb.appendChild(makeElement("span","notes-breadcrumb-sep","›"));
+    const el = c.onClick ? makeButton(c.label,c.onClick,"notes-breadcrumb-link") : makeElement("span","notes-breadcrumb-current",c.label);
+    breadcrumb.appendChild(el);
+  });
+  root.appendChild(breadcrumb);
+
+  /* ---- Subject picker (top level) ---- */
   if(!selectedNoteSubject){
-    root.appendChild(makeElement("h2","panel-title","Choose a subject"));
+    root.appendChild(makeElement("h2","notes-subtitle","Choose a subject"));
+    root.appendChild(makeElement("p","muted","Open a subject to browse its PDFs."));
     const grid = makeElement("div","option-grid");
     noteSubjects.forEach(subject=>{
       const btn = makeElement("button","option-card");
-      btn.type = "button";
+      btn.type="button";
       btn.appendChild(makeElement("strong","",subject.name));
       btn.appendChild(makeElement("small","",subject.subs.length?`${subject.subs.length} categories`:"Open PDF library"));
       btn.addEventListener("click",()=>{ selectedNoteSubject=subject.name; selectedNoteSubcategory=null; renderNotesView(); });
@@ -2267,15 +2342,16 @@ function renderNotesView(){
   }
 
   const subjectInfo = noteSubjects.find(s=>s.name===selectedNoteSubject);
-  root.appendChild(makeButton("← All subjects",()=>{ selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView(); },"back-btn"));
+  const isCategoryView = subjectInfo && subjectInfo.subs.length && !selectedNoteSubcategory;
 
-  if(subjectInfo && subjectInfo.subs.length && !selectedNoteSubcategory){
-    root.appendChild(makeElement("h2","panel-title",selectedNoteSubject));
+  /* ---- Category picker ---- */
+  if(isCategoryView){
+    root.appendChild(makeElement("h2","notes-heading",selectedNoteSubject));
     root.appendChild(makeElement("p","muted","Choose a category."));
     const grid = makeElement("div","option-grid");
     subjectInfo.subs.forEach(sub=>{
       const btn = makeElement("button","option-card");
-      btn.type = "button";
+      btn.type="button";
       btn.appendChild(makeElement("strong","",sub));
       btn.appendChild(makeElement("small","","Open PDF library"));
       btn.addEventListener("click",()=>{ selectedNoteSubcategory=sub; renderNotesView(); });
@@ -2286,35 +2362,50 @@ function renderNotesView(){
     return;
   }
 
-  if(selectedNoteSubcategory){
-    root.appendChild(makeButton("← "+selectedNoteSubject,()=>{ selectedNoteSubcategory=null; renderNotesView(); },"back-btn"));
-  }
-
+  /* ---- PDF list view ---- */
   const categoryLabel = selectedNoteSubject + (selectedNoteSubcategory ? " · "+selectedNoteSubcategory : "");
-  root.appendChild(makeElement("h2","panel-title",categoryLabel));
-  root.appendChild(makeElement("p","muted","Upload PDF files and access shared class notes."));
+  root.appendChild(makeElement("h2","notes-heading",categoryLabel));
 
-  const panel = makeElement("div","panel");
-  const fileLabel = makeElement("label","file-label","Select one PDF (maximum 50 MB)");
-  const input = document.createElement("input");
-  input.type = "file"; input.accept = ".pdf,application/pdf"; input.id = "notePdfFile";
-  fileLabel.appendChild(input);
-  const uploadBtn = makeButton("Upload PDF",()=>uploadNotePDF(input,uploadBtn),"btn full");
-  panel.append(fileLabel,uploadBtn);
-  root.appendChild(panel);
-
-  const searchWrap = makeElement("div","search-wrap");
+  /* ---- Search bar immediately below the subject heading ---- */
+  const searchWrap = makeElement("div","search-wrap notes-search");
   searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
   const searchInput = document.createElement("input");
-  searchInput.className = "field"; searchInput.placeholder = "Search PDFs…";
+  searchInput.className="field"; searchInput.placeholder="Search PDFs…";
   searchInput.setAttribute("aria-label","Search PDFs in this subject");
   searchInput.addEventListener("input",()=>renderNotePDFList(searchInput.value.trim().toLowerCase()));
   searchWrap.appendChild(searchInput);
   root.appendChild(searchWrap);
 
-  root.appendChild(makeElement("h2","panel-title","Available PDFs"));
-  const list = makeElement("div","panel");
-  list.id = "notePDFList";
+  /* ---- Collapsible upload section (collapsed by default) ---- */
+  const uploadSection = makeElement("div","notes-upload-section");
+  const uploadHeader = makeElement("button","notes-upload-header");
+  uploadHeader.type="button";
+  uploadHeader.setAttribute("aria-expanded","false");
+  uploadHeader.setAttribute("aria-controls","notesUploadBody");
+  uploadHeader.innerHTML = `<svg class="ic ic-sm"><use href="#i-upload"/></svg><span>Upload PDF</span><span class="notes-upload-arrow">▾</span>`;
+  const uploadBody = makeElement("div","notes-upload-body collapsed");
+  uploadBody.id="notesUploadBody";
+  const fileLabel = makeElement("label","file-label notes-file-label","Select one PDF (maximum 50 MB)");
+  const input = document.createElement("input");
+  input.type="file"; input.accept=".pdf,application/pdf"; input.id="notePdfFile";
+  fileLabel.appendChild(input);
+  const uploadBtn = makeButton("Upload PDF",()=>uploadNotePDF(input,uploadBtn),"btn full notes-upload-btn");
+  uploadBody.append(fileLabel, uploadBtn);
+  uploadHeader.addEventListener("click",()=>{
+    const nowOpen = !uploadBody.classList.contains("collapsed");
+    uploadBody.classList.toggle("collapsed");
+    uploadHeader.setAttribute("aria-expanded", String(nowOpen));
+    const arrow = uploadHeader.querySelector(".notes-upload-arrow");
+    if(arrow) arrow.textContent = nowOpen ? "▴" : "▾";
+  });
+  uploadSection.appendChild(uploadHeader);
+  uploadSection.appendChild(uploadBody);
+  root.appendChild(uploadSection);
+
+  /* ---- Available PDFs list ---- */
+  root.appendChild(makeElement("h3","notes-list-title","Available PDFs"));
+  const list = makeElement("div","panel notes-pdf-list");
+  list.id="notePDFList";
   skeletonList(list);
   root.appendChild(list);
   loadCategorizedNotePDFs();
