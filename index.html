@@ -95,7 +95,7 @@ a{color:inherit}
 }
 .topbar::after{display:none}
 /* Topbar left: brand on home, current page title elsewhere */
-.brand{display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text)}
+.brand{display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;font-size:16px;font-weight:600;letter-spacing:-.02em;user-select:none;color:var(--text);margin:0}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:4px}
 .conn-pill{
   display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;
@@ -164,20 +164,11 @@ main{
 .page{display:none}
 .page.active{display:block;animation:fadeIn .12s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.page-title{font-size:clamp(22px,3vw,28px);line-height:1.15;margin:0 0 6px;font-weight:600}
 .page-sub{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;max-width:64ch}
 .section-head{margin-bottom:20px}
 .section-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.back-btn{
-  display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;
-  color:var(--muted);font-family:var(--font-mono);font-size:10.5px;font-weight:400;
-  padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:transparent;
-  transition:background-color .12s,border-color .12s,color .12s;
-}
-.back-btn:hover{color:var(--text);border-color:var(--border-strong);background:var(--surface)}
-.back-btn .ic{width:13px;height:13px}
 
-/* Compact breadcrumb replacing standalone back buttons (item 2) */
+/* Breadcrumb navigation for nested views */
 .page-crumbs{
   display:flex;flex-wrap:wrap;align-items:center;gap:6px;
   margin:0 0 14px;font-family:var(--font-mono);font-size:11px;color:var(--muted2);
@@ -337,9 +328,6 @@ label.f-label{
 .notes-breadcrumb-current{color:var(--accent);font-weight:600}
 .notes-subtitle{
   font-size:13px;margin:0 0 6px;font-weight:500;letter-spacing:-.01em;font-family:var(--font-sans);color:var(--text)
-}
-.notes-heading{
-  font-size:clamp(17px,4.5vw,20px);margin:0 0 8px;font-weight:600;letter-spacing:-.02em;color:var(--text);word-break:break-word
 }
 .notes-list-title{
   font-size:11px;margin:14px 0 8px;font-weight:600;letter-spacing:-.01em;text-transform:uppercase;color:var(--muted2);font-family:var(--font-mono)
@@ -725,12 +713,6 @@ label.f-label{
   width:auto!important;max-width:none!important;margin:0!important;padding:0!important;
   border:none!important;background:var(--bg)!important;z-index:50;overflow:hidden;animation:none;
 }
-.chat-head{
-  display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 12px;
-  border-bottom:1px solid var(--border);background:var(--bg);
-}
-.chat-head .back-btn{margin:0;flex-shrink:0}
-.chat-head .page-title{font-size:14px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #chat.active .chat-box{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;border:none!important;background:var(--bg)!important}
 #chat.active .chat-compose{position:static;bottom:auto;left:auto;right:auto;z-index:30;flex-shrink:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--bg)}
 #chat.active #chatStatus{flex-shrink:0;margin:0;padding:0 12px}
@@ -774,9 +756,7 @@ label.f-label{
   display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 12px;
   border-bottom:1px solid var(--border);background:var(--bg);
 }
-.ai-head .back-btn{margin:0;flex-shrink:0}
 .ai-head-info{flex:1;min-width:0}
-.ai-head h1{font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ai-head small{display:block;font-family:var(--font-mono);font-size:9.5px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .ai-head-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .ai-head .icon-btn{width:32px;height:32px;border-radius:6px}
@@ -1054,7 +1034,6 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
 /* ---------- MOBILE POLISH ---------- */
 @media (max-width:640px){
   .home-greeting{font-size:22px}
-  .page-title{font-size:24px}
   .post-card{padding:14px 0}
   .post-actions{gap:2px;flex-wrap:wrap}
   .post-action{padding:6px 7px;font-size:11px;min-height:36px}
@@ -1065,7 +1044,6 @@ mark.hl-text{background:var(--text);color:var(--bg);border-radius:2px;padding:0 
   .btn.full{padding:10px 14px;font-size:13px}
   #communityPosts .status.error{margin:0 0 12px;padding:8px 10px;border-radius:6px;background:var(--red-soft)}
   .notes-breadcrumb{font-size:10px;margin-bottom:10px}
-  .notes-heading{font-size:17px;margin-bottom:6px}
   .notes-search{margin-bottom:10px}
   .notes-upload-header{padding:9px 11px;font-size:10.5px}
   .notes-list-title{font-size:10px;margin-top:10px}
@@ -1190,7 +1168,7 @@ body.sheet-open{overflow:hidden}
   /* 16px inputs avoid iOS auto-zoom on focus */
   main input,main textarea,main select{font-size:16px!important}
   /* 44px tap targets (not inside dense reading-mode chrome) */
-  main .btn,main .link-btn,main .page-crumb-link,main .back-btn,main .option-card{min-height:44px}
+  main .btn,main .link-btn,main .page-crumb-link,main .option-card{min-height:44px}
   main .page-crumbs{margin-bottom:10px}
 }
 
@@ -1233,7 +1211,7 @@ body.sheet-open{overflow:hidden}
 
 <!-- ============ TOPBAR ============ -->
 <header class="topbar" style="position:sticky;z-index:40">
-  <div class="brand" id="topbarTitle" onclick="openSection('home')" style="cursor:pointer" aria-label="ClassHub home">ClassHub</div>
+  <h1 class="brand" id="topbarTitle" onclick="openSection('home')" style="cursor:pointer" aria-label="ClassHub home">ClassHub</h1>
   <div class="topbar-right">
     <div class="conn-pill"><span class="status-dot" id="connDot"></span><span id="connectionStatus">Connecting…</span></div>
     <button class="icon-btn" onclick="openSection('notices')" aria-label="Notices" id="bellBtn">
@@ -1291,7 +1269,7 @@ body.sheet-open{overflow:hidden}
     <!-- HOME -->
     <section id="home" class="page active">
       <div class="home-head">
-        <h1 id="heroTitle" class="home-greeting">Hi, Sudarshan</h1>
+        <h2 id="heroTitle" class="home-greeting">Hi, Sudarshan</h2>
       </div>
       <button class="home-search" type="button" onclick="openSection('search')" aria-label="Search notes, papers, and topics">
         <svg class="ic"><use href="#i-search"/></svg>
@@ -1372,9 +1350,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- TOPIC SEARCH -->
     <section id="search" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Topic Search</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Topic Search</h1>
         <p class="page-sub">Search a word across every book and test paper. Every match is listed with its page number — tap one to open the book at that exact page.</p>
       </div>
       <div class="panel">
@@ -1390,19 +1366,13 @@ body.sheet-open{overflow:hidden}
 
     <!-- NOTES -->
     <section id="notes" class="page">
-      <div class="section-head">
-        <h1 class="page-title">Notes</h1>
-        <p class="page-sub">Choose a subject to browse or upload its PDFs.</p>
-      </div>
       <div id="notesView"></div>
       <div id="notesStatus" class="status" aria-live="polite"></div>
     </section>
 
     <!-- TEST PAPERS -->
     <section id="pdfs" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Test Papers</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Test Papers</h1>
         <p class="page-sub">Organise previous-year questions and current-year papers in your own folders.</p>
       </div>
       <div id="testPapersView"></div>
@@ -1411,9 +1381,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- CASE STUDIES -->
     <section id="photos" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Case Studies</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Case Studies</h1>
         <p class="page-sub">Create a folder for each case study, then post photos inside it.</p>
       </div>
       <div id="caseView"></div>
@@ -1422,9 +1390,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- NOTICES -->
     <section id="notices" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Notices</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Notices</h1>
         <p class="page-sub">Important announcements for the class.</p>
       </div>
       <div class="panel">
@@ -1453,9 +1419,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- ASSIGNMENTS -->
     <section id="assignments" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Assignments</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Assignments</h1>
         <p class="page-sub">Homework and deadlines posted by the class representative.</p>
       </div>
       <div class="panel">
@@ -1477,9 +1441,7 @@ body.sheet-open{overflow:hidden}
 
     <!-- COMMUNITY -->
     <section id="community" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Class Community</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Class Community</h1>
         <p class="page-sub">Share thoughts, ask questions and interact with classmates.</p>
       </div>
       <div class="panel compose-panel" id="composePanel">
@@ -1523,10 +1485,8 @@ body.sheet-open{overflow:hidden}
 
     <!-- MCQ PRACTICE -->
     <section id="mcq-practice" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">MCQ Practice</span></nav>
       <div class="section-head">
-        <div class="section-head-row">
-          <h1 class="page-title">MCQ Practice</h1>
+        <div class="section-head-row" style="justify-content:flex-end">
           <button class="btn secondary" onclick="openUploadMcqPanel()" title="Add MCQs"><svg class="ic ic-sm"><use href="#i-plus"/></svg></button>
         </div>
       </div>
@@ -1645,9 +1605,7 @@ Q: Next question... Ans: A
     <!-- ADD MCQs FROM TOPIC -->
     <!-- PROFILE -->
     <section id="profile" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Student Profile</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Student Profile</h1>
         <p class="page-sub">Personalise your ClassHub identity.</p>
       </div>
       <div class="panel">
@@ -1674,9 +1632,7 @@ Q: Next question... Ans: A
 
     <!-- ACCOUNTS DIRECTORY -->
     <section id="accounts" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Accounts</span></nav>
       <div class="section-head">
-        <h1 class="page-title">Accounts</h1>
         <p class="page-sub">Discover your classmates and view the profile picture, status and bio they've shared with ClassHub members.</p>
       </div>
       <div class="accounts-toolbar">
@@ -1690,10 +1646,6 @@ Q: Next question... Ans: A
     <!-- CHAT -->
     <section id="chat" class="page">
       <input id="chatName" type="hidden">
-      <div class="chat-head">
-        <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Class Chat</span></nav>
-        <h1 class="page-title">Class Chat</h1>
-      </div>
       <div id="chatMessages" class="chat-box"><div class="empty">Loading messages…</div></div>
       <div id="chatStatus" class="status" aria-live="polite"></div>
       <form id="chatForm" class="chat-compose auth-hidden">
@@ -1703,7 +1655,7 @@ Q: Next question... Ans: A
     </section>
 
     <!-- AI STUDY ASSISTANT -->
-    <section id="ai" class="page" aria-labelledby="aiHeading">
+    <section id="ai" class="page" aria-label="AI Assistant">
       <div class="ai-shell">
         <aside class="ai-history" id="aiHistory" aria-label="AI conversation history">
           <div class="ai-history-head">
@@ -1719,9 +1671,7 @@ Q: Next question... Ans: A
         </aside>
         <div class="ai-main">
           <div class="ai-head">
-            <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">AI Assistant</span></nav>
             <div class="ai-head-info">
-              <h1 id="aiHeading">AI Assistant</h1>
               <small>Private chats · Saved to your account</small>
             </div>
             <div class="ai-head-actions">
@@ -2019,6 +1969,21 @@ function makeButton(label, callback, className="btn secondary"){
   b.type = "button";
   b.addEventListener("click", callback);
   return b;
+}
+function makeBreadcrumb(items){
+  const nav = makeElement("nav","page-crumbs");
+  nav.setAttribute("aria-label","Breadcrumb");
+  items.forEach((item,i)=>{
+    if(i) nav.appendChild(makeElement("span","page-crumbs-sep","›"));
+    if(item.onClick){
+      const link = makeButton(item.label,item.onClick,"page-crumb-link");
+      link.type = "button";
+      nav.appendChild(link);
+    } else {
+      nav.appendChild(makeElement("span","page-crumb-current",item.label));
+    }
+  });
+  return nav;
 }
 function skeletonList(target, rows=3){
   target.replaceChildren();
@@ -2340,7 +2305,7 @@ function renderNotesView(){
   /* ---- Compact breadcrumb: Home > All subjects > [subject] [> category] ---- */
   const breadcrumb = makeElement("div","notes-breadcrumb");
   const crumbs = [];
-  crumbs.push({label:"Home", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}});
+  crumbs.push({label:"Home", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; openSection("home");}});
   if(selectedNoteSubject || selectedNoteSubcategory){
     crumbs.push({label:"All subjects", onClick:()=>{selectedNoteSubject=null; selectedNoteSubcategory=null; renderNotesView();}});
   }
@@ -2355,12 +2320,11 @@ function renderNotesView(){
     const el = c.onClick ? makeButton(c.label,c.onClick,"notes-breadcrumb-link") : makeElement("span","notes-breadcrumb-current",c.label);
     breadcrumb.appendChild(el);
   });
-  root.appendChild(breadcrumb);
+  if(selectedNoteSubject) root.appendChild(breadcrumb);
 
   /* ---- Subject picker (top level) ---- */
   if(!selectedNoteSubject){
     root.appendChild(makeElement("h2","notes-subtitle","Choose a subject"));
-    root.appendChild(makeElement("p","muted","Open a subject to browse its PDFs."));
     const grid = makeElement("div","option-grid");
     noteSubjects.forEach(subject=>{
       const btn = makeElement("button","option-card");
@@ -2380,7 +2344,6 @@ function renderNotesView(){
 
   /* ---- Category picker ---- */
   if(isCategoryView){
-    root.appendChild(makeElement("h2","notes-heading",selectedNoteSubject));
     root.appendChild(makeElement("p","muted","Choose a category."));
     const grid = makeElement("div","option-grid");
     subjectInfo.subs.forEach(sub=>{
@@ -2397,10 +2360,7 @@ function renderNotesView(){
   }
 
   /* ---- PDF list view ---- */
-  const categoryLabel = selectedNoteSubject + (selectedNoteSubcategory ? " · "+selectedNoteSubcategory : "");
-  root.appendChild(makeElement("h2","notes-heading",categoryLabel));
-
-  /* ---- Search bar immediately below the subject heading ---- */
+  /* ---- Search bar immediately below the subject breadcrumb ---- */
   const searchWrap = makeElement("div","search-wrap notes-search");
   searchWrap.innerHTML = `<svg class="ic"><use href="#i-search"/></svg>`;
   const searchInput = document.createElement("input");
@@ -2437,7 +2397,7 @@ function renderNotesView(){
   root.appendChild(uploadSection);
 
   /* ---- Available PDFs list ---- */
-  root.appendChild(makeElement("h3","notes-list-title","Available PDFs"));
+  root.appendChild(makeElement("h2","notes-list-title","Available PDFs"));
   const list = makeElement("div","panel notes-pdf-list");
   list.id="notePDFList";
   skeletonList(list);
@@ -2774,10 +2734,14 @@ function renderTestPapersView(){
   }
 
   const categoryName = selectedTestCategory==="pyqs" ? "PYQs" : "Current Year";
-  root.appendChild(makeButton("← Test Papers",()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); },"back-btn"));
 
   if(!selectedTestFolder){
-    root.appendChild(makeElement("h2","panel-title",categoryName+" · Folders"));
+    root.appendChild(makeBreadcrumb([
+      {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
+      {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
+      {label:categoryName}
+    ]));
+    root.appendChild(makeElement("h2","panel-title","Folders"));
     root.appendChild(makeElement("p","muted","Create a folder and add PDFs inside it."));
     const panel = makeElement("div","panel");
     const input = document.createElement("input");
@@ -2796,8 +2760,12 @@ function renderTestPapersView(){
     return;
   }
 
-  root.appendChild(makeButton("← "+categoryName+" folders",()=>{ selectedTestFolder=null; renderTestPapersView(); },"back-btn"));
-  root.appendChild(makeElement("h2","panel-title",selectedTestFolder.folder_name));
+  root.appendChild(makeBreadcrumb([
+    {label:"Home", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; openSection("home"); }},
+    {label:"All collections", onClick:()=>{ selectedTestCategory=null; selectedTestFolder=null; renderTestPapersView(); }},
+    {label:categoryName, onClick:()=>{ selectedTestFolder=null; renderTestPapersView(); }},
+    {label:selectedTestFolder.folder_name}
+  ]));
   root.appendChild(makeElement("p","muted","Upload PDFs into this folder."));
 
   const panel = makeElement("div","panel");
@@ -4966,7 +4934,6 @@ function renderCaseStudiesView(){
 
   if(!selectedCaseFolder){
     root.appendChild(makeElement("h2","panel-title","Case study folders"));
-    root.appendChild(makeElement("p","muted","Create a folder per case, then post the photos inside it."));
     const panel = makeElement("div","panel");
     const input = document.createElement("input");
     input.className = "field"; input.id = "newCaseFolderName"; input.maxLength = 100;
@@ -4986,8 +4953,11 @@ function renderCaseStudiesView(){
   }
 
   const isUnfiled = selectedCaseFolder === "unfiled";
-  root.appendChild(makeButton("← All folders", ()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }, "back-btn"));
-  root.appendChild(makeElement("h2","panel-title", isUnfiled ? "Unfiled photos" : selectedCaseFolder.folder_name));
+  root.appendChild(makeBreadcrumb([
+    {label:"Home", onClick:()=>{ selectedCaseFolder=null; openSection("home"); }},
+    {label:"All folders", onClick:()=>{ selectedCaseFolder=null; renderCaseStudiesView(); }},
+    {label:isUnfiled ? "Unfiled photos" : selectedCaseFolder.folder_name}
+  ]));
   root.appendChild(makeElement("p","muted","Upload case study photos into this folder."));
 
   const panel = makeElement("div","panel");
@@ -5914,7 +5884,6 @@ function renderAiAuthGate(){
   box.replaceChildren();
   const gate = makeElement("div","gate ai-gate");
   gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-spark"/></svg>
-    <h2 class="panel-title" style="justify-content:center">AI Assistant</h2>
     <p class="muted" style="margin-bottom:14px">Sign in with Google to ask the AI questions and keep your chat history saved to your account.</p>`;
   gate.appendChild(makeButton("Continue with Google",()=>signInWithGoogle(),"btn"));
   box.appendChild(gate);
