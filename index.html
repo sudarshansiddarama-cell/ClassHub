@@ -1391,7 +1391,6 @@ body.sheet-open{overflow:hidden}
 
     <!-- NOTES -->
     <section id="notes" class="page">
-      <nav class="page-crumbs" aria-label="Breadcrumb"><button class="page-crumb-link" type="button" onclick="openSection('home')">Home</button><span class="page-crumbs-sep">›</span><span class="page-crumb-current">Notes</span></nav>
       <div class="section-head">
         <h1 class="page-title">Notes</h1>
         <p class="page-sub">Choose a subject to browse or upload its PDFs.</p>
@@ -5907,7 +5906,7 @@ function renderAiAuthGate(){
   box.replaceChildren();
   const gate = makeElement("div","gate ai-gate");
   gate.innerHTML = `<svg class="ic ic-lg" style="color:var(--accent);margin-bottom:10px"><use href="#i-spark"/></svg>
-    <h2 class="panel-title" style="justify-content:center">ClassHub AI</h2>
+    <h2 class="panel-title" style="justify-content:center">AI Assistant</h2>
     <p class="muted" style="margin-bottom:14px">Sign in with Google to ask the AI questions and keep your chat history saved to your account.</p>`;
   gate.appendChild(makeButton("Continue with Google",()=>signInWithGoogle(),"btn"));
   box.appendChild(gate);
@@ -5922,7 +5921,7 @@ function renderAiWelcome(){
   orb.innerHTML = `<svg class="ic"><use href="#i-spark"/></svg>`;
   const name = aiFirstName();
   wrap.appendChild(orb);
-  wrap.appendChild(makeElement("h2","",name ? `Hi ${name}, what are we studying?` : "Ask ClassHub AI"));
+  wrap.appendChild(makeElement("h2","",name ? `Hi ${name}, what are we studying?` : "Ask"));
   wrap.appendChild(makeElement("p","","Understand a concept, revise a topic, make a study plan, or let me quiz you. Your chats stay private to your account."));
   const suggestions = makeElement("div","ai-suggestions");
   AI_SUGGESTIONS.forEach(text=>{
