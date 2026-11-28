@@ -515,8 +515,8 @@ label.f-label{
 /* Search */
 .mcq-search-wrap{margin:0 0 12px}
 .mcq-search{
-  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
-  background:var(--bg);color:var(--text);font-size:13px;font-family:var(--font-mono);
+  width:100%;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);font-size:13px;
 }
 .mcq-search::placeholder{color:var(--muted2);font-family:var(--font-mono);font-size:12px}
 .mcq-search:focus{border-color:var(--accent);outline:none;background:var(--surface)}
@@ -1606,7 +1606,10 @@ Q: Next question... Ans: A
             <h2 class="mcq-section-title">Your PDFs</h2>
             <span class="mcq-section-meta" id="mcqPdfCount"></span>
           </div>
-          <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
+          <div class="search-wrap mcq-search-wrap">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input id="mcqPdfSearch" class="field mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)">
+          </div>
           <div id="mcqPdfList" class="mcq-list"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading PDFs…</div></div>
         </div>
 
