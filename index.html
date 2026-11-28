@@ -477,10 +477,10 @@ label.f-label{
 #mcq-practice:not(.mcq-view-start) .mcq-start-only{display:none}
 
 /* Section scaffold */
-.mcq-section{margin:0 0 24px}
+.mcq-section{margin:0 0 20px}
 .mcq-section-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border);
+  margin:0 0 8px;padding:0 0 6px;border-bottom:1px solid var(--border);
 }
 .mcq-section-title{
   font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
@@ -494,8 +494,8 @@ label.f-label{
 .mcq-section-action:hover{color:var(--text)}
 
 /* New practice block */
-.mcq-new-practice{margin:0 0 24px}
-.mcq-count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.mcq-new-practice{margin:0 0 20px}
+.mcq-count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
 .mcq-count-label{font-family:var(--font-mono);font-size:10px;color:var(--muted2);letter-spacing:.04em;text-transform:uppercase;margin:0}
 .mcq-count-btn{
   width:30px;height:28px;border:1px solid var(--border);border-radius:6px;
@@ -543,7 +543,7 @@ label.f-label{
 .mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
 .mcq-pdf-status.failed{color:var(--red);border-color:var(--red)}
 .mcq-pdf-status.none{color:var(--muted2);border-color:var(--border-strong)}
-.mcq-empty{text-align:left;color:var(--muted);padding:14px 0;font-size:12px;font-family:var(--font-mono);line-height:1.6}
+.mcq-empty{text-align:left;color:var(--muted);padding:12px 0;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .mcq-empty .ic{width:16px;height:16px;stroke-width:1.5;margin-bottom:6px;color:var(--muted2)}
 
 /* Practice view */
@@ -557,11 +557,11 @@ label.f-label{
 .mcq-question-card{background:transparent;border:0;padding:0;margin:0 0 16px}
 .mcq-meta{display:flex;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
 .mcq-meta .tag{color:var(--muted2);font-weight:400;letter-spacing:0}
-.mcq-qtext{font-size:17px;line-height:1.45;margin:0 0 16px;font-weight:500;letter-spacing:-.01em;overflow-wrap:anywhere}
+.mcq-qtext{font-size:16px;line-height:1.45;margin:0 0 14px;font-weight:500;letter-spacing:-.01em;overflow-wrap:anywhere}
 .mcq-options{display:flex;flex-direction:column;gap:8px}
 .mcq-option{
   position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;
-  padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;
+  padding:11px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;
   color:var(--text);text-align:left;cursor:pointer;transition:border-color .12s,background-color .12s;
 }
 .mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface)}
@@ -582,7 +582,7 @@ label.f-label{
 .mcq-option-mark{font-weight:700;font-size:13px}
 .mcq-check{margin-top:14px}
 .mcq-explanation{
-  margin-top:14px;padding:12px 14px;border-radius:8px;border:1px solid var(--border);
+  margin-top:12px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
   font-size:12.5px;line-height:1.55;color:var(--text);white-space:pre-line;background:var(--surface);
 }
 .mcq-explanation.correct{border-color:var(--green)}
@@ -7283,7 +7283,7 @@ window.loadMcqPractice = async function(){
     // Show rate limit (generations this hour)
     const recentGenerations = sessions.filter(s=>Date.now() - new Date(s.created_at).getTime() < 3600000).length;
     const remaining = Math.max(0, 20 - recentGenerations);
-    if(rateEl) rateEl.textContent = `🔄 ${remaining} generations left this hour`;
+    if(rateEl) rateEl.textContent = `${remaining} generations left this hour`;
   }catch(error){
     console.error("MCQ start:", error);
     const message = mcqErrorMessage(error,"Could not load MCQ practice.");
@@ -7315,8 +7315,6 @@ function renderMcqPdfList(pdfs, sessionByPdf, attemptBySession){
     if(pdf.subject) meta.push(pdf.subject);
     if(pdf.subcategory) meta.push(pdf.subcategory);
     if(completed) meta.push(`Score ${attempt.score}/${attempt.total}`);
-    else if(session && session.status === "ready") meta.push(`${session.total_questions} questions`);
-    else meta.push(mcqStatusLabel(session ? session.status : "none"));
     info.appendChild(makeElement("small","",meta.join(" · ")));
     card.appendChild(info);
 
