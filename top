@@ -1,0 +1,281 @@
+[1mdiff --git a/supabase/functions/ai-chat/index.ts b/supabase/functions/ai-chat/index.ts[m
+[1mindex 4c0b661..e0fa788 100644[m
+[1m--- a/supabase/functions/ai-chat/index.ts[m
+[1m+++ b/supabase/functions/ai-chat/index.ts[m
+[36m@@ -39,6 +39,8 @@[m [mconst SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")[m
+   ?? "";[m
+ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";[m
+ const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || DEFAULT_MODEL;[m
+[32m+[m[32mconst DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY") ?? "";[m
+[32m+[m[32mconst DEEPSEEK_MODEL = Deno.env.get("DEEPSEEK_MODEL") || "deepseek-flash";[m
+ const RATE_LIMIT_PER_MINUTE = 10;[m
+ const GEMINI_MAX_ATTEMPTS = 4;[m
+ [m
+[36m@@ -170,6 +172,35 @@[m [masync function callGeminiWithRetry([m
+   return response;[m
+ }[m
+ [m
+[32m+[m
+[32m+[m[32masync function callDeepSeek([m
+[32m+[m[32m  history: Array<{ role: "user" | "assistant"; content: string }>,[m
+[32m+[m[32m): Promise<Response> {[m
+[32m+[m[32m  const messages = [[m
+[32m+[m[32m    { role: "system", content: SYSTEM_PROMPT },[m
+[32m+[m[32m    ...history.map((item) => ({[m
+[32m+[m[32m      role: item.role,[m
+[32m+[m[32m      content: item.content,[m
+[32m+[m[32m    })),[m
+[32m+[m[32m  ];[m
+[32m+[m
+[32m+[m[32m  return await fetch("https://api.deepseek.com/chat/completions", {[m
+[32m+[m[32m    method: "POST",[m
+[32m+[m[32m    headers: {[m
+[32m+[m[32m      "Content-Type": "application/json",[m
+[32m+[m[32m      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,[m
+[32m+[m[32m    },[m
+[32m+[m[32m    body: JSON.stringify({[m
+[32m+[m[32m      model: DEEPSEEK_MODEL,[m
+[32m+[m[32m      messages,[m
+[32m+[m[32m      stream: true,[m
+[32m+[m[32m      thinking: { type: "disabled" },[m
+[32m+[m[32m      max_tokens: 4096,[m
+[32m+[m[32m    }),[m
+[32m+[m[32m    signal: AbortSignal.timeout(120_000),[m
+[32m+[m[32m  });[m
+[32m+[m[32m}[m
+[32m+[m
+ Deno.serve(async (request: Request) => {[m
+   if (request.method === "OPTIONS") {[m
+     return new Response(null, { status: 204, headers: corsHeaders });[m
+[36m@@ -177,8 +208,8 @@[m [mDeno.serve(async (request: Request) => {[m
+   if (request.method !== "POST") {[m
+     return json(405, { error: "Method not allowed." });[m
+   }[m
+[31m-  if (!GEMINI_API_KEY) {[m
+[31m-    console.error("ai-chat: GEMINI_API_KEY is not configured");[m
+[32m+[m[32m  if (!GEMINI_API_KEY && !DEEPSEEK_API_KEY) {[m
+[32m+[m[32m    console.error("ai-chat: no AI provider API key is configured");[m
+     return json(503, { error: "The AI assistant is not configured yet." });[m
+   }[m
+ [m
+[36m@@ -262,90 +293,147 @@[m [mDeno.serve(async (request: Request) => {[m
+   }[m
+ [m
+   let previousInteractionId: string | null = conversation.last_interaction_id || null;[m
+[31m-  let geminiResponse: Response;[m
+[31m-  try {[m
+[31m-    geminiResponse = await callGeminiWithRetry(message, previousInteractionId);[m
+[31m-  } catch (error) {[m
+[31m-    await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);[m
+[31m-    console.error("ai-chat: Gemini fetch failed", error);[m
+[31m-    return json(502, { error: "Could not reach the AI service. Please try again." });[m
+[32m+[m[32m  let geminiResponse: Response | null = null;[m
+[32m+[m[32m  let aiProvider: "gemini" | "deepseek" = "gemini";[m
+[32m+[m
+[32m+[m[32m  if (GEMINI_API_KEY) {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      geminiResponse = await callGeminiWithRetry(message, previousInteractionId);[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error("ai-chat: Gemini fetch failed; will try backup", error);[m
+[32m+[m[32m    }[m
+   }[m
+ [m
+[31m-  // If Google has expired the stored interaction, start a fresh one rather[m
+[31m-  // than failing the conversation. History in Supabase remains available in[m
+[31m-  // the UI; the model simply begins a new reasoning context.[m
+[31m-  if (!geminiResponse.ok && previousInteractionId && [400, 404].includes(geminiResponse.status)) {[m
+[32m+[m[32m  // If Google has expired the stored interaction, replay recent chat history.[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    geminiResponse &&[m
+[32m+[m[32m    !geminiResponse.ok &&[m
+[32m+[m[32m    previousInteractionId &&[m
+[32m+[m[32m    [400, 404].includes(geminiResponse.status)[m
+[32m+[m[32m  ) {[m
+     const detail = await readErrorBody(geminiResponse);[m
+     console.warn("ai-chat: retrying without previous interaction", geminiResponse.status, detail);[m
+[32m+[m
+     await supabase[m
+       .from("ai_conversations")[m
+       .update({ last_interaction_id: null })[m
+       .eq("id", conversation.id);[m
+[32m+[m
+     previousInteractionId = null;[m
+ [m
+[31m-    // Replay the latest stored turns so the conversation keeps its context[m
+[31m-    // even when Google has expired the stored interaction.[m
+     const { data: historyRows, error: historyError } = await supabase[m
+       .from("ai_messages")[m
+       .select("role, content")[m
+       .eq("conversation_id", conversation.id)[m
+       .order("created_at", { ascending: false })[m
+       .limit(MAX_HISTORY_MESSAGES);[m
+[32m+[m
+     if (historyError) {[m
+[31m-      console.error("ai-chat: could not load history fallback", historyError.message);[m
+[32m+[m[32m      console.error("ai-chat: could not load history replay", historyError.message);[m
+     }[m
+[31m-    const historyInput = historyError || !historyRows?.length[m
+[31m-      ? null[m
+[31m-      : historyToInteractionInput(normaliseHistory(historyRows.slice().reverse()));[m
+[32m+[m
+[32m+[m[32m    const replayHistory = historyError || !historyRows?.length[m
+[32m+[m[32m      ? [][m
+[32m+[m[32m      : normaliseHistory(historyRows.slice().reverse());[m
+ [m
+     try {[m
+       geminiResponse = await callGeminiWithRetry([m
+[31m-        historyInput?.length ? historyInput : message,[m
+[32m+[m[32m        replayHistory.length[m
+[32m+[m[32m          ? historyToInteractionInput(replayHistory)[m
+[32m+[m[32m          : message,[m
+         null,[m
+       );[m
+     } catch (error) {[m
+[32m+[m[32m      console.error("ai-chat: Gemini history replay failed", error);[m
+[32m+[m[32m      geminiResponse = null;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  let upstreamResponse: Response | null = geminiResponse;[m
+[32m+[m
+[32m+[m[32m  // Gemini is unavailable: use DeepSeek as the backup provider.[m
+[32m+[m[32m  if (!upstreamResponse?.ok || !upstreamResponse.body) {[m
+[32m+[m[32m    if (!DEEPSEEK_API_KEY) {[m
+       await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);[m
+[31m-      console.error("ai-chat: Gemini retry failed", error);[m
+[31m-      return json(502, { error: "Could not reach the AI service. Please try again." });[m
+[32m+[m
+[32m+[m[32m      if (upstreamResponse) {[m
+[32m+[m[32m        const detail = await readErrorBody(upstreamResponse);[m
+[32m+[m[32m        console.error("ai-chat: Gemini rejected request", upstreamResponse.status, detail);[m
+[32m+[m
+[32m+[m[32m        if (isRetryableStatus(upstreamResponse.status)) {[m
+[32m+[m[32m          return json([m
+[32m+[m[32m            503,[m
+[32m+[m[32m            { error: AI_BUSY_MESSAGE, code: "GEMINI_BUSY" },[m
+[32m+[m[32m            { "Retry-After": "5" },[m
+[32m+[m[32m          );[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return json(502, {[m
+[32m+[m[32m          error: upstreamErrorMessage(detail, upstreamResponse.status),[m
+[32m+[m[32m          code: "GEMINI_ERROR",[m
+[32m+[m[32m        });[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      return json(503, { error: AI_BUSY_MESSAGE, code: "AI_UNAVAILABLE" });[m
+     }[m
+ [m
+[31m-    // If replaying steps is rejected, still answer this turn from the new[m
+[31m-    // message alone instead of failing the chat.[m
+[31m-    if (!geminiResponse.ok && historyInput?.length) {[m
+[31m-      const replayDetail = await readErrorBody(geminiResponse);[m
+[31m-      console.warn("ai-chat: history replay rejected", geminiResponse.status, replayDetail);[m
+[31m-      try {[m
+[31m-        geminiResponse = await callGeminiWithRetry(message, null);[m
+[31m-      } catch (error) {[m
+[32m+[m[32m    console.warn("ai-chat: switching from Gemini to DeepSeek");[m
+[32m+[m
+[32m+[m[32m    const { data: historyRows, error: historyError } = await supabase[m
+[32m+[m[32m      .from("ai_messages")[m
+[32m+[m[32m      .select("role, content")[m
+[32m+[m[32m      .eq("conversation_id", conversation.id)[m
+[32m+[m[32m      .order("created_at", { ascending: false })[m
+[32m+[m[32m      .limit(MAX_HISTORY_MESSAGES);[m
+[32m+[m
+[32m+[m[32m    if (historyError) {[m
+[32m+[m[32m      console.error("ai-chat: could not load DeepSeek history", historyError.message);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    let deepSeekHistory = historyError || !historyRows?.length[m
+[32m+[m[32m      ? [][m
+[32m+[m[32m      : normaliseHistory(historyRows.slice().reverse());[m
+[32m+[m
+[32m+[m[32m    if (!deepSeekHistory.length) {[m
+[32m+[m[32m      deepSeekHistory = [{ role: "user", content: message }];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const deepSeekResponse = await callDeepSeek(deepSeekHistory);[m
+[32m+[m
+[32m+[m[32m      if (!deepSeekResponse.ok || !deepSeekResponse.body) {[m
+[32m+[m[32m        const detail = await readErrorBody(deepSeekResponse);[m
+[32m+[m[32m        console.error("ai-chat: DeepSeek rejected request", deepSeekResponse.status, detail);[m
+[32m+[m
+         await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);[m
+[31m-        console.error("ai-chat: Gemini fallback failed", error);[m
+[31m-        return json(502, { error: "Could not reach the AI service. Please try again." });[m
+[32m+[m
+[32m+[m[32m        return json(503, {[m
+[32m+[m[32m          error: "Both AI services are temporarily unavailable. Please try again shortly.",[m
+[32m+[m[32m          code: "AI_PROVIDERS_UNAVAILABLE",[m
+[32m+[m[32m        });[m
+       }[m
+[31m-    }[m
+[31m-  }[m
+ [m
+[31m-  if (!geminiResponse.ok || !geminiResponse.body) {[m
+[31m-    const detail = await readErrorBody(geminiResponse);[m
+[31m-    await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);[m
+[31m-    console.error("ai-chat: Gemini rejected request", geminiResponse.status, detail);[m
+[31m-    if (isRetryableStatus(geminiResponse.status)) {[m
+[31m-      return json([m
+[31m-        503,[m
+[31m-        { error: AI_BUSY_MESSAGE, code: "GEMINI_BUSY" },[m
+[31m-        { "Retry-After": "5" },[m
+[31m-      );[m
+[32m+[m[32m      upstreamResponse = deepSeekResponse;[m
+[32m+[m[32m      aiProvider = "deepseek";[m
+[32m+[m[32m      previousInteractionId = null;[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error("ai-chat: DeepSeek fetch failed", error);[m
+[32m+[m[32m      await supabase.from("ai_messages").delete().eq("id", savedUserMessage.id);[m
+[32m+[m
+[32m+[m[32m      return json(503, {[m
+[32m+[m[32m        error: "Both AI services are temporarily unavailable. Please try again shortly.",[m
+[32m+[m[32m        code: "AI_PROVIDERS_UNAVAILABLE",[m
+[32m+[m[32m      });[m
+     }[m
+[31m-    return json(502, {[m
+[31m-      error: upstreamErrorMessage(detail, geminiResponse.status),[m
+[31m-      code: "GEMINI_ERROR",[m
+[31m-    });[m
+   }[m
+ [m
+[31m-  const upstreamBody = geminiResponse.body;[m
+[32m+[m[32m  const upstreamBody = upstreamResponse!.body!;[m
+   const encoder = new TextEncoder();[m
+   const decoder = new TextDecoder();[m
+   let assistantText = "";[m
+[31m-  let interactionId: string | null = previousInteractionId;[m
+[32m+[m[32m  let interactionId: string | null = aiProvider === "gemini"[m
+[32m+[m[32m    ? previousInteractionId[m
+[32m+[m[32m    : null;[m
+   let streamError = "";[m
+   let closed = false;[m
+ [m
+[36m@@ -372,6 +460,24 @@[m [mDeno.serve(async (request: Request) => {[m
+         if (!event.data || event.data === "[DONE]") return false;[m
+         const payload = parseJsonSafe(event.data);[m
+         if (!payload) return false;[m
+[32m+[m[32m        if (aiProvider === "deepseek") {[m
+[32m+[m[32m          const record = payload as Record<string, any>;[m
+[32m+[m
+[32m+[m[32m          if (record.error) {[m
+[32m+[m[32m            streamError = typeof record.error.message === "string"[m
+[32m+[m[32m              ? record.error.message[m
+[32m+[m[32m              : "DeepSeek returned an error.";[m
+[32m+[m[32m            return true;[m
+[32m+[m[32m          }[m
+[32m+[m
+[32m+[m[32m          const content = record.choices?.[0]?.delta?.content;[m
+[32m+[m[32m          if (typeof content === "string" && content) {[m
+[32m+[m[32m            assistantText += content;[m
+[32m+[m[32m            send("delta", { text: content });[m
+[32m+[m[32m          }[m
+[32m+[m[32m          return false;[m
+[32m+[m[32m        }[m
+[32m+[m
+         const result = readInteractionEvent(payload);[m
+ [m
+         if (result.error) {[m
