@@ -483,8 +483,8 @@ label.f-label{
   margin:0 0 8px;padding:0 0 6px;border-bottom:1px solid var(--border);
 }
 .mcq-section-title{
-  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--muted2);font-family:var(--font-mono);margin:0;
+  font-size:12px;font-weight:500;letter-spacing:-.01em;
+  color:var(--text);font-family:var(--font-sans);margin:0;
 }
 .mcq-section-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
 .mcq-section-action{
@@ -1586,14 +1586,12 @@ Q: Next question... Ans: A
             <span class="mcq-section-meta" id="mcqRateLimit"></span>
           </div>
           <div class="mcq-count-row">
-            <span class="mcq-count-label">Questions</span>
             <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
             <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
           </div>
-          <label class="f-label" for="mcqTopicInput">Topic / chapter</label>
           <div class="mcq-topic-row">
             <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
             <button class="btn" onclick="startTopicPractice()"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start</button>
