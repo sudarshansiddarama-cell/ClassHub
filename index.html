@@ -473,116 +473,170 @@ label.f-label{
 .post-media-preview .remove-media{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:var(--red);color:var(--bg);border:none;display:grid;place-items:center;cursor:pointer;font-size:14px;line-height:1}
 
 /* ---------- MCQ PRACTICE ---------- */
-.mcq-grid{display:flex;flex-direction:column;gap:8px}
-.mcq-pdf-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:background-color .12s,border-color .12s;max-width:520px}
-.mcq-pdf-card:hover{background:var(--surface-hover);border-color:var(--border-strong)}
-.mcq-pdf-info{min-width:0;flex:1}
-.mcq-pdf-info strong{display:block;font-size:12.5px;font-weight:500;overflow-wrap:anywhere;line-height:1.3}
-.mcq-pdf-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9px;margin-top:1px}
-.mcq-pdf-meta{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
-.mcq-pdf-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
-.mcq-pdf-status{font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:99px;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+#mcq-practice{position:relative}
+#mcq-practice:not(.mcq-view-start) .mcq-start-only{display:none}
+
+/* Section scaffold */
+.mcq-section{margin:0 0 24px}
+.mcq-section-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid var(--border);
+}
+.mcq-section-title{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted2);font-family:var(--font-mono);margin:0;
+}
+.mcq-section-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
+.mcq-section-action{
+  background:transparent;border:0;color:var(--muted);font-family:var(--font-mono);
+  font-size:10.5px;padding:2px 0;cursor:pointer;transition:color .12s;
+}
+.mcq-section-action:hover{color:var(--text)}
+
+/* New practice block */
+.mcq-new-practice{margin:0 0 24px}
+.mcq-count-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.mcq-count-label{font-family:var(--font-mono);font-size:10px;color:var(--muted2);letter-spacing:.04em;text-transform:uppercase;margin:0}
+.mcq-count-btn{
+  width:30px;height:28px;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--text);font-size:12px;font-weight:500;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:background-color .12s,border-color .12s,color .12s;font-family:var(--font-mono);
+}
+.mcq-count-btn:hover:not(.active){border-color:var(--border-strong);background:var(--surface-hover)}
+.mcq-count-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.mcq-count-hint{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-left:auto}
+@media (max-width:560px){.mcq-count-hint{margin-left:8px}}
+.mcq-topic-row{display:flex;gap:8px;align-items:stretch}
+.mcq-topic-row .field{margin:0;flex:1;min-width:0}
+.mcq-topic-row .btn{flex:0 0 auto;padding:0 18px;white-space:nowrap}
+@media (max-width:560px){.mcq-topic-row{flex-direction:column}.mcq-topic-row .btn{width:100%}}
+
+/* Search */
+.mcq-search-wrap{margin:0 0 12px}
+.mcq-search{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);font-size:13px;font-family:var(--font-mono);
+}
+.mcq-search::placeholder{color:var(--muted2);font-family:var(--font-mono);font-size:12px}
+.mcq-search:focus{border-color:var(--accent);outline:none;background:var(--surface)}
+.mcq-rate-limit{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 8px;text-align:right}
+
+/* Rows (PDFs + sessions) */
+.mcq-list{display:flex;flex-direction:column;border-top:1px solid var(--border)}
+.mcq-pdf-card,.mcq-session-card{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border);background:transparent;
+  max-width:none;margin:0;transition:background-color .12s;
+}
+.mcq-pdf-card:hover,.mcq-session-card:hover{background:var(--surface)}
+.mcq-pdf-info,.mcq-session-info{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mcq-pdf-info strong,.mcq-session-info strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.mcq-pdf-info small,.mcq-session-info small{font-family:var(--font-mono);font-size:10px;color:var(--muted2);overflow-wrap:anywhere}
+.mcq-pdf-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:2px}
+.mcq-pdf-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.mcq-pdf-status{
+  font-family:var(--font-mono);font-size:9.5px;padding:2px 7px;border-radius:4px;
+  border:1px solid var(--border);color:var(--muted);white-space:nowrap;background:transparent;
+}
 .mcq-pdf-status.ready{color:var(--green);border-color:var(--green)}
 .mcq-pdf-status.generating{color:var(--amber);border-color:var(--amber)}
 .mcq-pdf-status.failed{color:var(--red);border-color:var(--red)}
 .mcq-pdf-status.none{color:var(--muted2);border-color:var(--border-strong)}
-.mcq-session-card{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface)}
-.mcq-session-info{min-width:0;flex:1}
-.mcq-session-info strong{display:block;font-size:12.5px;font-weight:500}
-.mcq-session-info small{display:block;color:var(--muted2);font-family:var(--font-mono);font-size:9.5px;margin-top:1px}
-.mcq-empty{text-align:center;color:var(--muted);padding:16px 8px;font-size:11.5px;font-family:var(--font-mono);line-height:1.5}
+.mcq-empty{text-align:left;color:var(--muted);padding:14px 0;font-size:12px;font-family:var(--font-mono);line-height:1.6}
 .mcq-empty .ic{width:16px;height:16px;stroke-width:1.5;margin-bottom:6px;color:var(--muted2)}
 
-/* MCQ Search & Rate Limit */
-.mcq-search-wrap{margin:0 0 10px}
-.mcq-search{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px}
-.mcq-search:focus{border-color:var(--accent);outline:none}
-.mcq-rate-limit{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 8px;text-align:right}
+/* Practice view */
+.mcq-practice-shell{max-width:720px;margin:0 auto}
+.mcq-practice-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px}
+.mcq-practice-title{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcq-progress{display:flex;align-items:center;gap:10px;margin:0 0 16px}
+.mcq-progress-text{font-family:var(--font-mono);font-size:10.5px;color:var(--muted2);white-space:nowrap}
+.mcq-progress-bar{flex:1;height:2px;background:var(--border);border-radius:1px;overflow:hidden}
+.mcq-progress-fill{height:100%;background:var(--accent);width:0%;transition:width .2s ease}
+.mcq-question-card{background:transparent;border:0;padding:0;margin:0 0 16px}
+.mcq-meta{display:flex;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
+.mcq-meta .tag{color:var(--muted2);font-weight:400;letter-spacing:0}
+.mcq-qtext{font-size:17px;line-height:1.45;margin:0 0 16px;font-weight:500;letter-spacing:-.01em;overflow-wrap:anywhere}
+.mcq-options{display:flex;flex-direction:column;gap:8px}
+.mcq-option{
+  position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;
+  color:var(--text);text-align:left;cursor:pointer;transition:border-color .12s,background-color .12s;
+}
+.mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface)}
+.mcq-option input{position:absolute;opacity:0;pointer-events:none}
+.mcq-option-letter{
+  width:24px;height:24px;display:grid;place-items:center;border-radius:6px;
+  border:1px solid var(--border);font-family:var(--font-mono);font-size:11px;font-weight:500;
+  color:var(--muted2);background:var(--bg);transition:all .12s;
+}
+.mcq-option.selected{border-color:var(--accent)}
+.mcq-option.selected .mcq-option-letter{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.mcq-option.correct{border-color:var(--green);background:var(--green-soft)}
+.mcq-option.correct .mcq-option-letter{border-color:var(--green);color:var(--green);background:transparent}
+.mcq-option.wrong{border-color:var(--red);background:var(--red-soft)}
+.mcq-option.wrong .mcq-option-letter{border-color:var(--red);color:var(--red);background:transparent}
+.mcq-option.locked{cursor:default}
+.mcq-option-label{font-size:13.5px;line-height:1.45;overflow-wrap:anywhere}
+.mcq-option-mark{font-weight:700;font-size:13px}
+.mcq-check{margin-top:14px}
+.mcq-explanation{
+  margin-top:14px;padding:12px 14px;border-radius:8px;border:1px solid var(--border);
+  font-size:12.5px;line-height:1.55;color:var(--text);white-space:pre-line;background:var(--surface);
+}
+.mcq-explanation.correct{border-color:var(--green)}
+.mcq-explanation.correct strong{color:var(--green)}
+.mcq-explanation.incorrect{border-color:var(--red)}
+.mcq-explanation.incorrect strong{color:var(--red)}
+.mcq-nav{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.mcq-nav .btn{flex:1 1 0;min-width:0}
 
-/* Generation Progress Modal */
+/* Result */
+.mcq-result{max-width:560px;margin:0 auto}
+.mcq-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;margin:0 0 16px}
+.mcq-result-label{font-family:var(--font-mono);font-size:10px;color:var(--muted2);letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px}
+.mcq-score{font-size:44px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.mcq-score.correct{color:var(--green)}
+.mcq-score.incorrect{color:var(--red)}
+.mcq-result-message{font-size:13px;color:var(--muted);margin:10px 0 0}
+.mcq-result-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.mcq-result-meta span{font-family:var(--font-mono);font-size:10px;color:var(--muted2);display:flex;flex-direction:column;gap:2px}
+.mcq-result-meta strong{font-size:16px;color:var(--text);font-weight:600}
+.mcq-result-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Generation modal */
 .mcq-gen-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:16px}
-.mcq-gen-modal{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
-.mcq-gen-title{font-size:16px;font-weight:600;margin:0 0 6px}
-.mcq-gen-sub{font-size:12px;color:var(--muted);margin:0 0 16px}
-.mcq-gen-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin:12px 0}
+.mcq-gen-modal{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.mcq-gen-title{font-size:15px;font-weight:600;margin:0 0 4px}
+.mcq-gen-sub{font-size:12px;color:var(--muted);margin:0 0 14px}
+.mcq-gen-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin:12px 0}
 .mcq-gen-fill{height:100%;width:0%;background:var(--accent);transition:width .3s ease}
-.mcq-gen-stage{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:8px 0;text-align:center}
+.mcq-gen-stage{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:8px 0 0;text-align:left}
+.mcq-gen-progress{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 0;min-height:14px}
 .mcq-gen-cancel{width:100%;margin-top:16px}
 
-/* ---------- MCQ NOTEPAD OVERLAY ---------- */
-.mcq-notepad-overlay{
-  position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;
-}
-.mcq-notepad-header{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);
-}
+/* Notepad overlay */
+.mcq-notepad-overlay{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column}
+.mcq-notepad-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
 .mcq-notepad-header .panel-title{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mcq-notepad-header .btn{flex-shrink:0}
 .notepad-topic{width:100%;max-width:720px;margin:0 auto;padding:10px 14px;font-size:14px}
-.notepad-textarea{
-  flex:1;width:100%;max-width:900px;margin:0 auto;padding:14px;font-size:14px;line-height:1.6;
-  border:none;border-radius:0;resize:vertical;min-height:340px;font-family:inherit;
-  box-sizing:border-box;
-}
+.notepad-textarea{flex:1;width:100%;max-width:900px;margin:0 auto;padding:14px;font-size:14px;line-height:1.6;border:none;border-radius:0;resize:vertical;min-height:340px;font-family:inherit;box-sizing:border-box}
 .notepad-textarea:focus{outline:2px solid var(--accent);outline-offset:-2px}
 .notepad-status{margin:10px 0;padding:10px 16px;text-align:center;font-weight:500}
 .notepad-status.success{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
 .mcq-notepad-hint{padding:0 16px 16px 16px;font-size:10px;color:var(--muted2);font-family:var(--font-mono)}
 
-.mcq-count-pick{display:flex;align-items:center;gap:10px;margin:8px 0 4px;flex-wrap:wrap}
-.mcq-count-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin:0}
-.mcq-count-btn{width:34px;height:30px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,border-color .12s,color .12s}
-.mcq-count-btn:hover:not(.active){border-color:var(--border-strong);background:var(--surface-hover)}
-.mcq-count-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
-.mcq-count-hint{font-size:11px;color:var(--muted2);font-family:var(--font-mono);margin-left:auto}
-@media (max-width:560px){
-  .mcq-count-hint{margin-left:8px}
-}
-
-.mcq-question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin:0 auto 12px}
-.mcq-progress{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;color:var(--muted2)}
-.mcq-progress-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-.mcq-progress-fill{height:100%;background:var(--accent);width:0%}
-.mcq-qtext{font-size:14.5px;line-height:1.45;margin:0 0 10px;font-weight:500;overflow-wrap:anywhere}
-.mcq-meta{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;font-size:10px;color:var(--muted);font-family:var(--font-mono)}
-.mcq-meta .tag{border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:transparent;color:var(--muted2);font-size:9px}
-.mcq-options{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.mcq-option{position:relative;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background-color .12s,border-color .12s}
-.mcq-option:hover:not(.locked){border-color:var(--border-strong);background:var(--surface-hover)}
-.mcq-option input{appearance:none;width:16px;height:16px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;margin:0;flex-shrink:0}
-.mcq-option input:checked{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--surface)}
-.mcq-option.correct{background:var(--green-soft);border-color:var(--green);color:var(--green)}
-.mcq-option.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
-.mcq-option.locked{cursor:not-allowed}
-.mcq-option-mark{margin-left:auto;font-weight:700;flex-shrink:0}
-.mcq-option .ic{width:14px;height:14px;stroke-width:2;flex-shrink:0}
-.mcq-option.correct .ic{stroke:var(--green)}
-.mcq-option.wrong .ic{stroke:var(--red)}
-.mcq-check{margin-top:10px}
-.mcq-check:disabled{background:var(--surface);border-color:var(--border);color:var(--muted2);opacity:1}
-.mcq-gen-progress{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin:4px 0 0;min-height:14px}
-.mcq-explanation{margin-top:8px;padding:8px 10px;border-radius:5px;border:1px solid var(--border);font-size:11.5px;line-height:1.4;color:var(--text);white-space:pre-line}
-.mcq-explanation.correct{color:var(--green);border-color:var(--green);background:rgba(91,211,139,.08)}
-.mcq-explanation.incorrect{color:var(--red);border-color:var(--red);background:rgba(255,107,94,.08)}
-.mcq-nav{display:flex;gap:8px;margin-top:12px}
-
-.mcq-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;text-align:center;margin-bottom:12px}
-.mcq-score{font-size:36px;font-weight:600;letter-spacing:-.02em}
-.mcq-score.correct{color:var(--green)}
-.mcq-score.incorrect{color:var(--red)}
-.mcq-result-meta{display:flex;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--font-mono);flex-wrap:wrap}
+/* Mobile */
 @media (max-width:640px){
-  .mcq-pdf-card,.mcq-session-card{flex-wrap:wrap}
-  .mcq-pdf-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
-  .mcq-options{grid-template-columns:1fr}
-  .mcq-result-meta{flex-wrap:wrap;gap:8px 14px}
-  .mcq-nav{flex-wrap:wrap}
+  .mcq-pdf-card,.mcq-session-card{grid-template-columns:minmax(0,1fr);gap:8px}
+  .mcq-pdf-actions{justify-content:flex-start;width:100%}
+  .mcq-options{gap:6px}
+  .mcq-result-meta{grid-template-columns:1fr 1fr;gap:8px 12px}
   .mcq-nav .btn{flex:1 1 auto}
 }
-#mcq-practice .panel{max-width:520px;margin:0 auto 16px}
-.mcq-question-card{max-width:520px;margin:0 auto 16px}
-.mcq-result-card{max-width:520px;margin:0 auto 16px}
-.mcq-pdf-card,.mcq-session-card{max-width:520px;margin:0 auto}
+
 .profile-hero{display:flex;align-items:center;gap:12px}
 .profile-avatar{
   width:56px;height:56px;border-radius:50%;object-fit:cover;padding:0;
@@ -1493,10 +1547,10 @@ body.sheet-open{overflow:hidden}
     </section>
 
     <!-- MCQ PRACTICE -->
-    <section id="mcq-practice" class="page">
-      <div class="section-head">
+    <section id="mcq-practice" class="page mcq-view-start">
+      <div class="section-head mcq-start-only">
         <p class="page-sub">Generate MCQs from your PDFs and practice them.</p>
-        <div class="section-head-row" style="justify-content:flex-end">
+        <div class="section-head-row mcq-start-only" style="justify-content:flex-end">
           <button class="icon-btn" onclick="openUploadMcqPanel()" title="Add MCQs" aria-label="Add MCQs"><svg class="ic"><use href="#i-plus"/></svg></button>
         </div>
       </div>
@@ -1525,82 +1579,104 @@ Q: Next question... Ans: A
 
       <!-- START VIEW -->
       <div id="mcqViewStart">
-        <div class="panel">
-          <h2 class="panel-title">Generate MCQs</h2>
-          <div class="mcq-count-pick">
-            <label class="mcq-count-label">Questions</label>
+        <!-- New practice -->
+        <div class="mcq-new-practice">
+          <div class="mcq-section-head">
+            <h2 class="mcq-section-title">New practice</h2>
+            <span class="mcq-section-meta" id="mcqRateLimit"></span>
+          </div>
+          <div class="mcq-count-row">
+            <span class="mcq-count-label">Questions</span>
             <button class="mcq-count-btn active" type="button" onclick="setMcqCount(10)">10</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(20)">20</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(30)">30</button>
             <button class="mcq-count-btn" type="button" onclick="setMcqCount(50)">50</button>
             <span class="mcq-count-hint" id="mcqCountHint">10 questions</span>
           </div>
-          <label class="f-label" for="mcqTopicInput">Topic / chapter name</label>
-          <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
-          <button class="btn full" onclick="startTopicPractice()" style="margin-top:10px"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start by topic</button>
-          <div id="mcqRateLimit" class="mcq-rate-limit"></div>
-        </div>
-        <div class="panel">
-          <h2 class="panel-title">Your PDFs</h2>
-          <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
-          <div id="mcqPdfList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading PDFs…</div></div>
-        </div>
-        <div class="panel">
-          <div class="section-head-row">
-            <h2 class="panel-title">Previous Practice</h2>
-            <button class="btn secondary" onclick="clearMcqPage()" style="padding:6px 10px;font-size:12px">Clear Page</button>
+          <label class="f-label" for="mcqTopicInput">Topic / chapter</label>
+          <div class="mcq-topic-row">
+            <input id="mcqTopicInput" class="field" type="text" placeholder="e.g. Tridosha, Panchakarma…" maxlength="120" onkeydown="if(event.key==='Enter')startTopicPractice()">
+            <button class="btn" onclick="startTopicPractice()"><svg class="ic ic-sm"><use href="#i-mcq"/></svg>Start</button>
           </div>
-          <div id="mcqSessionList" class="mcq-grid"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
+        </div>
+
+        <!-- Your PDFs -->
+        <div class="mcq-section">
+          <div class="mcq-section-head">
+            <h2 class="mcq-section-title">Your PDFs</h2>
+            <span class="mcq-section-meta" id="mcqPdfCount"></span>
+          </div>
+          <div class="mcq-search-wrap"><input id="mcqPdfSearch" class="mcq-search" type="search" placeholder="Search your PDFs…" aria-label="Search PDFs" oninput="filterMcqPdfs(this.value)"></div>
+          <div id="mcqPdfList" class="mcq-list"><div class="mcq-empty"><svg class="ic"><use href="#i-folder"/></svg><br>Loading PDFs…</div></div>
+        </div>
+
+        <!-- Previous practice -->
+        <div class="mcq-section">
+          <div class="mcq-section-head">
+            <h2 class="mcq-section-title">Previous practice</h2>
+            <button class="mcq-section-action" onclick="clearMcqPage()">Clear view</button>
+          </div>
+          <div id="mcqSessionList" class="mcq-list"><div class="mcq-empty"><svg class="ic"><use href="#i-history"/></svg><br>Loading sessions…</div></div>
         </div>
       </div>
 
       <!-- GENERATING VIEW -->
       <div id="mcqViewGenerating" style="display:none">
         <div class="panel">
-          <h2 class="panel-title" id="mcqGenTitle">Generating questions…</h2>
+          <p class="mcq-result-label">Generating</p>
+          <h2 class="mcq-gen-title" id="mcqGenTitle">Generating questions…</h2>
           <p class="muted" id="mcqGenMsg">Reading the PDF and asking the AI to write questions.</p>
           <p class="mcq-gen-progress" id="mcqGenProgress" aria-live="polite"></p>
-          <div class="skeleton" style="height:100px;width:100%;margin-top:10px"></div>
-          <button class="btn secondary" onclick="cancelMcqGenerate()" style="margin-top:12px">Cancel</button>
+          <div class="skeleton" style="height:80px;width:100%;margin-top:12px"></div>
+          <button class="btn secondary full" onclick="cancelMcqGenerate()" style="margin-top:12px">Cancel</button>
         </div>
       </div>
 
       <!-- PRACTICE VIEW -->
       <div id="mcqViewPractice" style="display:none">
-        <div class="mcq-question-card">
+        <div class="mcq-practice-shell">
+          <div class="mcq-practice-head">
+            <span class="mcq-practice-title" id="mcqPracticeSessionTitle">Practice</span>
+            <button class="btn secondary" onclick="openSection('mcq-practice')" style="padding:6px 12px;font-size:12px">Exit</button>
+          </div>
           <div class="mcq-progress">
-            <span id="mcqProgressText">1 / 10</span>
+            <span class="mcq-progress-text" id="mcqProgressText">1 / 10</span>
             <div class="mcq-progress-bar"><div class="mcq-progress-fill" id="mcqProgressFill" style="width:0%"></div></div>
           </div>
-          <div id="mcqQuestionMeta" class="mcq-meta"></div>
-          <h2 id="mcqQuestionText" class="mcq-qtext"></h2>
-          <div id="mcqOptions" class="mcq-options"></div>
-          <button class="btn full mcq-check" id="mcqCheckBtn" onclick="checkMcqAnswer()">Check Answer</button>
-          <div id="mcqExplanation" class="mcq-explanation" aria-live="polite"></div>
-          <div class="mcq-nav">
-            <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Prev</button>
-            <button class="btn" id="mcqNextBtn" onclick="mcqNextQuestion()" disabled>Next</button>
-            <button class="btn secondary" id="mcqFinishBtn" onclick="finishMcqPractice()" style="display:none">Finish &amp; Review</button>
+          <div class="mcq-question-card">
+            <div id="mcqQuestionMeta" class="mcq-meta"></div>
+            <h2 id="mcqQuestionText" class="mcq-qtext"></h2>
+            <div id="mcqOptions" class="mcq-options"></div>
+            <button class="btn full mcq-check" id="mcqCheckBtn" onclick="checkMcqAnswer()">Check Answer</button>
+            <div id="mcqExplanation" class="mcq-explanation" aria-live="polite"></div>
+            <div class="mcq-nav">
+              <button class="btn secondary" id="mcqPrevBtn" onclick="mcqPrevQuestion()" disabled>Prev</button>
+              <button class="btn" id="mcqNextBtn" onclick="mcqNextQuestion()" disabled>Next</button>
+              <button class="btn secondary" id="mcqFinishBtn" onclick="finishMcqPractice()" style="display:none">Finish</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- RESULT VIEW -->
       <div id="mcqViewResult" style="display:none">
-        <div class="mcq-result-card">
-          <div id="mcqResultScore" class="mcq-score">0%</div>
-          <p id="mcqResultMessage" class="muted" style="margin-top:8px"></p>
-          <div class="mcq-result-meta">
-            <span><strong id="mcqResultCorrect">0</strong> correct</span>
-            <span><strong id="mcqResultIncorrect">0</strong> incorrect</span>
-            <span id="mcqResultUnansweredWrap" style="display:none"><strong id="mcqResultUnanswered">0</strong> unanswered</span>
-            <span><strong id="mcqResultTotal">0</strong> questions</span>
-            <span id="mcqResultTime"><strong>0</strong>s</span>
+        <div class="mcq-result">
+          <div class="mcq-result-card">
+            <p class="mcq-result-label">Score</p>
+            <div id="mcqResultScore" class="mcq-score">0%</div>
+            <p id="mcqResultMessage" class="mcq-result-message"></p>
+            <div class="mcq-result-meta">
+              <span><strong id="mcqResultCorrect">0</strong>correct</span>
+              <span><strong id="mcqResultIncorrect">0</strong>incorrect</span>
+              <span id="mcqResultUnansweredWrap" style="display:none"><strong id="mcqResultUnanswered">0</strong>unanswered</span>
+              <span><strong id="mcqResultTotal">0</strong>questions</span>
+              <span id="mcqResultTime"><strong>0</strong>s</span>
+            </div>
           </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn secondary full" onclick="retryMcqPractice()">Retry Practice</button>
-          <button class="btn ghost full" onclick="openSection('mcq-practice')">Back to MCQ</button>
+          <div class="mcq-result-actions">
+            <button class="btn secondary" onclick="retryMcqPractice()">Retry practice</button>
+            <button class="btn ghost" onclick="openSection('mcq-practice')">Back to MCQ</button>
+          </div>
         </div>
       </div>
 
@@ -1615,6 +1691,8 @@ Q: Next question... Ans: A
         </div>
       </div>
     </section>
+
+    <!-- ADD MCQs FROM TOPIC -->
 
     <!-- ADD MCQs FROM TOPIC -->
     <!-- PROFILE -->
@@ -6988,6 +7066,12 @@ function showMcqView(view){
     const el = document.getElementById("mcqView"+v.charAt(0).toUpperCase()+v.slice(1));
     if(el) el.style.display = v === view ? "" : "none";
   });
+  const section = document.getElementById("mcq-practice");
+  if(section) section.classList.toggle("mcq-view-start", view === "start");
+  if(view === "practice"){
+    const titleEl = document.getElementById("mcqPracticeSessionTitle");
+    if(titleEl && mcqState && mcqState.session) titleEl.textContent = mcqState.session.title || "Practice";
+  }
 }
 
 function setMcqStatus(message, type=""){
@@ -7192,6 +7276,8 @@ window.loadMcqPractice = async function(){
 
     renderMcqPdfList(pdfs, sessionByPdf, attemptBySession);
     renderMcqSessionList(sessions, attemptBySession);
+    const pdfCountEl = document.getElementById("mcqPdfCount");
+    if(pdfCountEl) pdfCountEl.textContent = pdfs.length + (pdfs.length === 1 ? " PDF" : " PDFs");
     showMcqView("start");
     
     // Show rate limit (generations this hour)
@@ -7672,12 +7758,12 @@ function renderMcqPractice(){
 
   const optionsBox = document.getElementById("mcqOptions");
   optionsBox.replaceChildren();
-  (question.options || []).forEach(option=>{
+  (question.options || []).forEach((option, optIndex)=>{
     const selected = mcqState.answers[question.id] === option.index;
     const isCorrect = locked && option.index === correctIndex;
     const isWrong = locked && !result.is_correct && selected;
 
-    const label = makeElement("label","mcq-option" + (locked ? " locked" : "") + (isCorrect ? " correct" : "") + (isWrong ? " wrong" : ""));
+    const label = makeElement("label","mcq-option" + (locked ? " locked" : "") + (isCorrect ? " correct" : "") + (isWrong ? " wrong" : "") + (selected ? " selected" : ""));
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "mcqOption";
@@ -7686,6 +7772,7 @@ function renderMcqPractice(){
     input.disabled = locked;
     input.addEventListener("change",()=>selectMcqOption(question.id,option.index));
     label.appendChild(input);
+    label.appendChild(makeElement("span","mcq-option-letter",String.fromCharCode(65 + optIndex)));
     label.appendChild(makeElement("span","mcq-option-label",option.text));
     if(isCorrect || isWrong){
       label.appendChild(makeElement("span","mcq-option-mark",isCorrect ? "✓" : "✕"));
